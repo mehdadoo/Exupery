@@ -45,27 +45,57 @@ void receiveAndParseMessage()
   }
 }
 
-void parseMessage() 
-{
-  if (receivedMsg != "") 
-  {
+void parseMessage() {
+  if (receivedMsg != "") {
     // Remove START and END markers
     receivedMsg.replace("START|", "");
     receivedMsg.replace("|END", "");
 
-    // Extract values for B3, B5, B7, B36, B38, B40
-    b3 = receivedMsg.substring(receivedMsg.indexOf("B3:") + 3, receivedMsg.indexOf("|B5:")).toInt();
-    b5 = receivedMsg.substring(receivedMsg.indexOf("B5:") + 3, receivedMsg.indexOf("|B7:")).toInt();
-    b7 = receivedMsg.substring(receivedMsg.indexOf("B7:") + 3, receivedMsg.indexOf("|B36:")).toInt();
-    b36 = receivedMsg.substring(receivedMsg.indexOf("B36:") + 4, receivedMsg.indexOf("|B38:")).toInt();
-    b38 = receivedMsg.substring(receivedMsg.indexOf("B38:") + 4, receivedMsg.indexOf("|B40:")).toInt();
-    b40 = receivedMsg.substring(receivedMsg.indexOf("B40:") + 4).toInt();
+    // Process the message
+    int pos = 0;
+    while (pos < receivedMsg.length()) {
+      String key;
+      int value;
+
+      // Extract key (B3, B5, etc.)
+      int keyStart = receivedMsg.indexOf("B", pos);
+      int keyEnd = receivedMsg.indexOf(":", keyStart);
+      if (keyStart != -1 && keyEnd != -1) {
+        key = receivedMsg.substring(keyStart, keyEnd + 1);
+
+        // Extract value
+        int nextKeyPos = receivedMsg.indexOf("B", keyEnd);
+        if (nextKeyPos == -1) {
+          value = receivedMsg.substring(keyEnd + 1).toInt();
+          pos = receivedMsg.length(); // Exit loop if it's the last value
+        } else {
+          value = receivedMsg.substring(keyEnd + 1, nextKeyPos).toInt();
+          pos = nextKeyPos;
+        }
+
+        // Assign value based on key
+        if (key == "B3:") {
+          b3 = value;
+        } else if (key == "B5:") {
+          b5 = value;
+        } else if (key == "B7:") {
+          b7 = value;
+        } else if (key == "B36:") {
+          b36 = value;
+        } else if (key == "B38:") {
+          b38 = value;
+        } else if (key == "B40:") {
+          b40 = value;
+        }
+      }
+    }
 
     // Reset received message after processing
     messageStarted = false;
     receivedMsg = "";
   }
 }
+
 
  void drawSquares() 
   {
