@@ -52,18 +52,32 @@ void loop()
   {
     // Creating the message string
     String message = "START";
-    message += "|B3:";
-    message += button3State;
-    message += "|B5:";
-    message += button5State;
-    message += "|B7:";
-    message += button7State;
-    message += "|B36:";
-    message += button36State;
-    message += "|B38:";
-    message += button38State;
-    message += "|B40:";
-    message += button40State;
+    
+    if (prevButton3State != button3State) {
+      message += "|B3:";
+      message += button3State;
+    }
+    if (prevButton5State != button5State) {
+      message += "|B5:";
+      message += button5State;
+    }
+    if (prevButton7State != button7State) {
+      message += "|B7:";
+      message += button7State;
+    }
+    if (prevButton36State != button36State) {
+      message += "|B36:";
+      message += button36State;
+    }
+    if (prevButton38State != button38State) {
+      message += "|B38:";
+      message += button38State;
+    }
+    if (prevButton40State != button40State) {
+      message += "|B40:";
+      message += button40State;
+    }
+    
     message += "|END";
 
     // Print to Serial Monitor
