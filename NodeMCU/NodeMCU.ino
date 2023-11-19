@@ -13,16 +13,26 @@ bool b36 = false;
 bool b38 = false;
 bool b40 = false;
 
+unsigned long lastDisplayUpdateTime = 0;
+const unsigned long displayUpdateInterval = 250; // Update display every 250 milliseconds
+
+
 void setup() 
 {
   u8g2.begin();
   Serial.begin(115200);
+  
 }
 
 void loop() 
 {
   receiveAndParseMessage();
-  drawSquares();
+
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastDisplayUpdateTime >= displayUpdateInterval) {
+    drawSquares();
+    lastDisplayUpdateTime = currentMillis;
+  }
 }
 
 void receiveAndParseMessage() 
@@ -40,13 +50,18 @@ void receiveAndParseMessage()
     if (messageStarted && receivedMsg.endsWith("END")) 
     {
       parseMessage();
+      
       break;
     }
   }
 }
 
-void parseMessage() {
-  if (receivedMsg != "") {
+void parseMessage() 
+{
+  if (receivedMsg != "") 
+  {
+    Serial.println(receivedMsg);
+
     // Remove START and END markers
     receivedMsg.replace("START|", "");
     receivedMsg.replace("|END", "");
@@ -97,22 +112,22 @@ void parseMessage() {
 }
 
 
- void drawSquares() 
-  {
-    u8g2.clearBuffer();
+void drawSquares() 
+{
+  u8g2.clearBuffer();
 
-    if (!b3)
-      u8g2.drawBox(0, 0, 10, 10);
-    if (!b5)
-      u8g2.drawBox(20, 0, 10, 10);
-    if (!b7)
-      u8g2.drawBox(40, 0, 10, 10);
-    if (!b36)
-      u8g2.drawBox(60, 0, 10, 10);
-    if (!b38)
-      u8g2.drawBox(80, 0, 10, 10);
-    if (!b40)
-      u8g2.drawBox(100, 0, 10, 10);
+  if (b3)
+    u8g2.drawBox(0, 0, 10, 10);
+  if (b5)
+    u8g2.drawBox(20, 0, 10, 10);
+  if (b7)
+    u8g2.drawBox(40, 0, 10, 10);
+  if (b36)
+    u8g2.drawBox(60, 0, 10, 10);
+  if (b38)
+    u8g2.drawBox(80, 0, 10, 10);
+  if (b40)
+    u8g2.drawBox(100, 0, 10, 10);
 
-    u8g2.sendBuffer();
-  }
+  u8g2.sendBuffer();
+}
