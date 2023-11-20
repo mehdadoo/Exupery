@@ -3,11 +3,15 @@
 
 U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ 12, /* data=*/ 14, /* reset=*/ U8X8_PIN_NONE);
 
+
 String receivedMsg = "";
 bool messageStarted = false;
 
 // Array to hold button states
-bool buttonStates[6] = {false, false, false, false, false, false};
+const int numButtons = 6;
+int buttonPins[numButtons] = {3, 5, 7, 2, 4, 6};
+bool buttonStates[numButtons] = {false};
+bool prevButtonStates[numButtons] = {false}; 
 
 // Variables for display timing
 unsigned long lastDisplayUpdateTime = 0;
@@ -27,7 +31,7 @@ void loop()
   // Update display at regular intervals
   if (currentMillis - lastDisplayUpdateTime >= displayUpdateInterval) 
   {
-    drawSquares();
+    updateOLED();
     lastDisplayUpdateTime = currentMillis;
   }
 }
@@ -99,8 +103,6 @@ void parseMessage()
         else if (key == "B2:") buttonStates[3] = value;
         else if (key == "B4:") buttonStates[4] = value;
         else if (key == "B6:") buttonStates[5] = value;
-
-
       }
     }
 
@@ -122,4 +124,32 @@ void drawSquares()
   }
 
   u8g2.sendBuffer();
+}
+
+
+
+void updateOLED() 
+{
+ // Clear the internal memory
+  for (int i = 0; i < numButtons; i++) {
+    // Only update the part of the screen that has changed
+    if (buttonStates[i] != prevButtonStates[i]) {
+      prevButtonStates[i] = buttonStates[i]; // Update previous state
+      
+      // Example values, adjust based on your screen layout and preferences
+      int x = i * 20; // Position for squares
+      int y = 0; 
+      int w = 10; // Size of squares
+      int h = 10;
+      
+      if (buttonStates[i]) {
+        u8g2.setDrawColor(1);
+        u8g2.drawBox(x, y, w, h); // Draw a filled square
+      } else {
+        u8g2.setDrawColor(0);
+        u8g2.drawBox(x, y, w, h); // Draw an empty square
+      }
+    }
+  }
+  u8g2.sendBuffer(); // Transfer internal memory to the display
 }

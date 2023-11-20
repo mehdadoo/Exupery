@@ -85,8 +85,8 @@ void setup() {
   }
 
   // Initialize the ST7735 display
-  tft.initR(INITR_BLACKTAB); // Init display with black tab
-  tft.fillScreen(ST7735_BLACK); // Clear the screen
+  tft.initR(INITR_144GREENTAB); // Init display with black tab
+  tft.fillScreen(ST77XX_BLACK); // Clear the screen
 }
 
 void loop() {
