@@ -6,13 +6,8 @@ U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ 12, /* data=*/ 14,
 String receivedMsg = "";
 bool messageStarted = false;
 
-// Variables to hold button states
-bool b3 = false;
-bool b5 = false;
-bool b7 = false;
-bool b36 = false;
-bool b38 = false;
-bool b40 = false;
+// Array to hold button states
+bool buttonStates[6] = {false, false, false, false, false, false};
 
 // Variables for display timing
 unsigned long lastDisplayUpdateTime = 0;
@@ -99,27 +94,27 @@ void parseMessage()
         // Assign value based on key
         if (key == "B3:") 
         {
-          b3 = value;
+          buttonStates[0] = value;
         } 
         else if (key == "B5:") 
         {
-          b5 = value;
+          buttonStates[1] = value;
         } 
         else if (key == "B7:") 
         {
-          b7 = value;
+          buttonStates[2] = value;
         } 
-        else if (key == "B36:") 
+        else if (key == "B2:") 
         {
-          b36 = value;
+          buttonStates[3] = value;
         } 
-        else if (key == "B38:") 
+        else if (key == "B4:") 
         {
-          b38 = value;
+          buttonStates[4] = value;
         } 
-        else if (key == "B40:") 
+        else if (key == "B6:") 
         {
-          b40 = value;
+          buttonStates[5] = value;
         }
       }
     }
@@ -135,18 +130,11 @@ void drawSquares()
 {
   u8g2.clearBuffer();
 
-  if (b3)
-    u8g2.drawBox(0, 0, 10, 10);
-  if (b5)
-    u8g2.drawBox(20, 0, 10, 10);
-  if (b7)
-    u8g2.drawBox(40, 0, 10, 10);
-  if (b36)
-    u8g2.drawBox(60, 0, 10, 10);
-  if (b38)
-    u8g2.drawBox(80, 0, 10, 10);
-  if (b40)
-    u8g2.drawBox(100, 0, 10, 10);
+  for (int i = 0; i < 6; i++) {
+    if (buttonStates[i]) {
+      u8g2.drawBox(i * 20, 0, 10, 10);
+    }
+  }
 
   u8g2.sendBuffer();
 }
