@@ -16,6 +16,8 @@ bool prevButtonStates[numButtons] = {false};
 // Variables for joystick values
 int joystickX = 0;
 int joystickY = 0;
+bool hasJoystickX = false;
+bool hasJoystickY = false;
 
 // Variables for display timing
 unsigned long lastDisplayUpdateTime = 0;
@@ -100,15 +102,20 @@ void parseMessage()
         }
 
         // Assign value based on key
-
         if (key == "B3:") buttonStates[0] = value;
         else if (key == "B5:") buttonStates[1] = value;
         else if (key == "B7:") buttonStates[2] = value;
         else if (key == "B2:") buttonStates[3] = value;
         else if (key == "B4:") buttonStates[4] = value;
         else if (key == "B6:") buttonStates[5] = value;
-        else if (key == "BX:") joystickX = value;
-        else if (key == "BY:") joystickY = value;
+        else if (key == "JX:") {
+          joystickX = value;
+          hasJoystickX = true;
+        } else if (key == "JY:") {
+          joystickY = value;
+          hasJoystickY = true;
+        }
+
       }
     }
 
@@ -137,11 +144,9 @@ void drawSquares()
 void updateOLED() 
 {
  // Clear the internal memory
-  for (int i = 0; i < numButtons; i++) 
-  {
+  for (int i = 0; i < numButtons; i++) {
     // Only update the part of the screen that has changed
-    if (buttonStates[i] != prevButtonStates[i]) 
-    {
+    if (buttonStates[i] != prevButtonStates[i]) {
       prevButtonStates[i] = buttonStates[i]; // Update previous state
       
       // Example values, adjust based on your screen layout and preferences
@@ -150,17 +155,31 @@ void updateOLED()
       int w = 10; // Size of squares
       int h = 10;
       
-      if (buttonStates[i]) 
-      {
+      if (buttonStates[i]) {
         u8g2.setDrawColor(1);
         u8g2.drawBox(x, y, w, h); // Draw a filled square
-      }
-      else 
-      {
+      } else {
         u8g2.setDrawColor(0);
         u8g2.drawBox(x, y, w, h); // Draw an empty square
       }
     }
   }
+
+  if (hasJoystickX || hasJoystickY) 
+  {
+    Serial.print("Joystick X: ");
+    Serial.print(joystickX);
+    Serial.print(" | Joystick Y: ");
+    Serial.println(joystickY);
+    // Print on OLED
+    // u8g2.setCursor(0, 20);
+    // u8g2.print("Joystick X: ");
+    // u8g2.print(joystickX);
+    // u8g2.setCursor(0, 30);
+    // u8g2.print("Joystick Y: ");
+    // u8g2.print(joystickY);
+  }
+
+
   u8g2.sendBuffer(); // Transfer internal memory to the display
 }

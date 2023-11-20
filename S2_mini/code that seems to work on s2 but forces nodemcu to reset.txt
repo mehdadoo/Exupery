@@ -1,0 +1,159 @@
+#include <HardwareSerial.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7735.h>
+
+// Use UART1
+HardwareSerial SerialPort(1);
+
+// Pins for UART1
+const int SERIAL_TX_PIN = 9;
+const int SERIAL_RX_PIN = 11;
+
+// ST7735 display pins
+#define TFT_SCK 36
+#define TFT_SDA 21
+#define TFT_A0   40
+#define TFT_RESET  38 
+#define TFT_CS   34
+
+// Initialize Adafruit ST7735 with hardware SPI
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_A0, TFT_SDA, TFT_SCK, TFT_RESET);
+
+// Button pin assignments and states
+const int buttonPins[] = {3, 5, 1, 1, 1, 1};
+const int numButtons = sizeof(buttonPins) / sizeof(buttonPins[0]);
+int prevButtonStates[numButtons] = {0};
+int buttonStates[numButtons] = {0}; // Moved to program scope
+
+// Joystick pins and last known values
+const int joystickYPin = 7; // Joystick Y pin connected to GPIO 7
+const int joystickXPin = 15; // Joystick X pin connected to GPIO 15
+int lastJoystickX = -1; // Initialize with invalid value to make sure it sends the first reading
+int lastJoystickY = -1; // Initialize with invalid value to make sure it sends the first reading
+
+bool stateChanged;
+
+void readButtonData() 
+{
+  for (int i = 0; i < numButtons; i++) 
+  {
+    buttonStates[i] = !digitalRead(buttonPins[i]);
+  }
+}
+
+void readJoystickData(int &joystickX, int &joystickY) 
+{
+  joystickX = analogRead(joystickXPin);
+  joystickY = analogRead(joystickYPin);
+}
+
+
+// Function to update the display with squares corresponding to button states
+void updateDisplay() 
+{
+  if (!stateChanged) 
+    return;
+
+  for (int i = 0; i < numButtons; i++) {
+    if (buttonStates[i] != prevButtonStates[i]) {
+      // Only update display if button state has changed
+      int color = buttonStates[i] ? ST7735_WHITE : ST7735_BLACK;
+      // Choose your square positions and size according to your display and preferences
+      int x = i * 20; // Example x position
+      int y = 50; // Example y position
+      int w = 18; // Example width of square
+      int h = 18; // Example height of square
+      prevButtonStates[i] = buttonStates[i];
+      // Update the specific square section for each button
+      tft.fillRect(x, y, w, h, color);
+    }
+  }
+}
+
+void sendSerialData() 
+{
+  stateChanged = false;
+  String message = "START";
+
+  // Include button states in the message if any button state has changed
+  for (int i = 0; i < numButtons; i++) {
+    if (prevButtonStates[i] != buttonStates[i]) {
+      message += "|B" + String(buttonPins[i]) + ":" + String(buttonStates[i]);
+      //prevButtonStates[i] = buttonStates[i]; // Update the previous button states
+      stateChanged = true;
+    }
+  }
+
+  // Read the current joystick values
+  int joystickXValue, joystickYValue;
+  readJoystickData(joystickXValue, joystickYValue);
+  
+  // Include joystick values in the message if the joystick state has changed
+  if (joystickXValue != lastJoystickX || joystickYValue != lastJoystickY) {
+    message += "|JX:" + String(joystickXValue) + "|JY:" + String(joystickYValue);
+    lastJoystickX = joystickXValue;
+    lastJoystickY = joystickYValue;
+    stateChanged = true;
+  }
+
+  // If there has been a state change, send the message
+  if (stateChanged) 
+  {
+    message += "|END";
+    Serial.println(message); // Debug output
+    SerialPort.print(message); // Send message over UART
+  }
+}
+
+// Function to handle the main logic of checking button states and sending data
+void handleButtonStates() 
+{
+  stateChanged = false;
+  String message = "START";
+  int buttonStates[numButtons] = {0};
+
+  for (int i = 0; i < numButtons; i++) {
+    buttonStates[i] = !digitalRead(buttonPins[i]);
+    // Check if button state has changed
+    if (prevButtonStates[i] != buttonStates[i]) {
+      message += "|B" + String(buttonPins[i]) + ":" + String(buttonStates[i]);
+      
+      stateChanged = true;
+    }
+  }
+
+  if (stateChanged) {
+    message += "|END";
+    // Print the message to Serial Monitor
+    Serial.println(message);
+    // Send the message over UART
+    SerialPort.print(message);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  SerialPort.begin(115200, SERIAL_8N1, SERIAL_TX_PIN, SERIAL_RX_PIN);
+
+  // Initialize joystick pins as analog input
+  pinMode(joystickXPin, INPUT);
+  pinMode(joystickYPin, INPUT);
+
+  // Initialize button pins as inputs with internal pull-up
+  for (int i = 0; i < numButtons; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
+  }
+
+  // Initialize the ST7735 display
+  tft.initR(INITR_144GREENTAB); // Init display with black tab
+  tft.fillScreen(ST77XX_BLACK); // Clear the screen
+}
+
+void loop() 
+{
+  readButtonData();  // Read button data
+  sendSerialData();  // Send button and joystick data over UART if there has been a change
+  updateDisplay();  // Update the display
+
+  delay(25); // Delay to avoid excessive looping
+}
