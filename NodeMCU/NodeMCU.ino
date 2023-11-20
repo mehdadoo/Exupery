@@ -92,30 +92,15 @@ void parseMessage()
         }
 
         // Assign value based on key
-        if (key == "B3:") 
-        {
-          buttonStates[0] = value;
-        } 
-        else if (key == "B5:") 
-        {
-          buttonStates[1] = value;
-        } 
-        else if (key == "B7:") 
-        {
-          buttonStates[2] = value;
-        } 
-        else if (key == "B2:") 
-        {
-          buttonStates[3] = value;
-        } 
-        else if (key == "B4:") 
-        {
-          buttonStates[4] = value;
-        } 
-        else if (key == "B6:") 
-        {
-          buttonStates[5] = value;
-        }
+
+        if (key == "B3:") buttonStates[0] = value;
+        else if (key == "B5:") buttonStates[1] = value;
+        else if (key == "B7:") buttonStates[2] = value;
+        else if (key == "B2:") buttonStates[3] = value;
+        else if (key == "B4:") buttonStates[4] = value;
+        else if (key == "B6:") buttonStates[5] = value;
+
+
       }
     }
 
