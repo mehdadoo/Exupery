@@ -8,8 +8,8 @@ String receivedMsg = "";
 bool messageStarted = false;
 
 // Array to hold button states
-const int numButtons = 6;
-int buttonPins[numButtons] = {3, 5, 7, 2, 4, 6};
+const int numButtons = 7;
+
 bool buttonStates[numButtons] = {false};
 bool prevButtonStates[numButtons] = {false}; 
 
@@ -101,12 +101,13 @@ void parseMessage()
 
         // Assign value based on key
 
-        if (key == "B3:") buttonStates[0] = value;
-        else if (key == "B5:") buttonStates[1] = value;
-        else if (key == "B7:") buttonStates[2] = value;
-        else if (key == "B2:") buttonStates[3] = value;
+        if (key == "B0:") buttonStates[0] = value;
+        else if (key == "B1:") buttonStates[1] = value;
+        else if (key == "B2:") buttonStates[2] = value;
+        else if (key == "B3:") buttonStates[3] = value;
         else if (key == "B4:") buttonStates[4] = value;
-        else if (key == "B6:") buttonStates[5] = value;
+        else if (key == "B5:") buttonStates[5] = value;
+        else if (key == "B6:") buttonStates[6] = value;
         else if (key == "BX:") joystickX = value;
         else if (key == "BY:") joystickY = value;
       }
@@ -133,6 +134,8 @@ void drawSquares()
 }
 
 
+int pixel_x = 0;
+int pixel_y = 0;
 
 void updateOLED() 
 {
@@ -162,5 +165,19 @@ void updateOLED()
       }
     }
   }
+
+  
+  // clear drawn pixel only
+   u8g2.setDrawColor(0);
+   u8g2.drawPixel( pixel_x, pixel_y);
+
+  pixel_x =   ((joystickX * 44) / 3500) + 1;
+  pixel_y = 62 - ((joystickY * 44) / 3500);
+
+  u8g2.setDrawColor(1);
+  u8g2.drawPixel( pixel_x, pixel_y);
+
+  u8g2.drawFrame(0,16,48,48);
+
   u8g2.sendBuffer(); // Transfer internal memory to the display
 }
