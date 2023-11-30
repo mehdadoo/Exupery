@@ -35,12 +35,12 @@ void setup()
   
   pinMode(mosfetPin_Horn, OUTPUT); // Set MOSFET pin as output
   pinMode(mosfetPin_BrakeLight, OUTPUT); // Set MOSFET pin as output
-  
 }
 
 void loop() 
 {
-  receiveAndParseMessage();
+  receiveMessage();
+  parseMessage();
 
   unsigned long currentMillis = millis();
   // Update display at regular intervals
@@ -54,82 +54,80 @@ void loop()
 }
 
 // Function to receive and parse incoming messages
-void receiveAndParseMessage() 
+void receiveMessage() 
 {
   while (Serial.available()) 
   {
     char character = Serial.read();
     receivedMsg.concat(character);
-
-    if (receivedMsg.endsWith("START")) 
-    {
-      messageStarted = true;
-    }
-
-    if (messageStarted && receivedMsg.endsWith("END")) 
-    {
-      parseMessage();
-      break;
-    }
   }
 }
-
-// Function to parse the received message and update button states
 void parseMessage() 
 {
-  if (receivedMsg != "") 
+  if (receivedMsg.startsWith("START")) 
+    messageStarted = true;
+
+  if (messageStarted && receivedMsg.endsWith("END")) 
+    decodeMessage();
+}
+
+
+// Function to parse the received message and update button states
+void decodeMessage() 
+{
+  if (receivedMsg == "") 
+    return;
+  
+  Serial.println(receivedMsg);
+
+  // Remove START and END markers
+  receivedMsg.replace("START|", "");
+  receivedMsg.replace("|END", "");
+
+  // Process the message to extract key-value pairs
+  int pos = 0;
+  while (pos < receivedMsg.length()) 
   {
-    Serial.println(receivedMsg);
+    String key;
+    int value;
 
-    // Remove START and END markers
-    receivedMsg.replace("START|", "");
-    receivedMsg.replace("|END", "");
-
-    // Process the message to extract key-value pairs
-    int pos = 0;
-    while (pos < receivedMsg.length()) 
+    // Extract key (B3, B5, etc.)
+    int keyStart = receivedMsg.indexOf("B", pos);
+    int keyEnd = receivedMsg.indexOf(":", keyStart);
+    if (keyStart != -1 && keyEnd != -1) 
     {
-      String key;
-      int value;
+      key = receivedMsg.substring(keyStart, keyEnd + 1);
 
-      // Extract key (B3, B5, etc.)
-      int keyStart = receivedMsg.indexOf("B", pos);
-      int keyEnd = receivedMsg.indexOf(":", keyStart);
-      if (keyStart != -1 && keyEnd != -1) 
+      // Extract value
+      int nextKeyPos = receivedMsg.indexOf("B", keyEnd);
+      if (nextKeyPos == -1) 
       {
-        key = receivedMsg.substring(keyStart, keyEnd + 1);
-
-        // Extract value
-        int nextKeyPos = receivedMsg.indexOf("B", keyEnd);
-        if (nextKeyPos == -1) 
-        {
-          value = receivedMsg.substring(keyEnd + 1).toInt();
-          pos = receivedMsg.length(); // Exit loop if it's the last value
-        } 
-        else 
-        {
-          value = receivedMsg.substring(keyEnd + 1, nextKeyPos).toInt();
-          pos = nextKeyPos;
-        }
-
-        // Assign value based on key
-
-        if (key == "B0:") buttonStates[0] = value;
-        else if (key == "B1:") buttonStates[1] = value;
-        else if (key == "B2:") buttonStates[2] = value;
-        else if (key == "B3:") buttonStates[3] = value;
-        else if (key == "B4:") buttonStates[4] = value;
-        else if (key == "B5:") buttonStates[5] = value;
-        else if (key == "B6:") buttonStates[6] = value;
-        else if (key == "BX:") joystickX = value;
-        else if (key == "BY:") joystickY = value;
+        value = receivedMsg.substring(keyEnd + 1).toInt();
+        pos = receivedMsg.length(); // Exit loop if it's the last value
+      } 
+      else 
+      {
+        value = receivedMsg.substring(keyEnd + 1, nextKeyPos).toInt();
+        pos = nextKeyPos;
       }
-    }
 
-    // Reset received message after processing
-    messageStarted = false;
-    receivedMsg = "";
+      // Assign value based on key
+
+      if (key == "B0:") buttonStates[0] = value;
+      else if (key == "B1:") buttonStates[1] = value;
+      else if (key == "B2:") buttonStates[2] = value;
+      else if (key == "B3:") buttonStates[3] = value;
+      else if (key == "B4:") buttonStates[4] = value;
+      else if (key == "B5:") buttonStates[5] = value;
+      else if (key == "B6:") buttonStates[6] = value;
+      else if (key == "BX:") joystickX = value;
+      else if (key == "BY:") joystickY = value;
+    }
   }
+
+  // Reset received message after processing
+  messageStarted = false;
+  receivedMsg = "";
 }
 
 // Function to draw squares based on button states

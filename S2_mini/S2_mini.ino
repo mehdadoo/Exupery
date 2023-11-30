@@ -198,7 +198,7 @@ void compileVoltageSerialData()
     if( voltageReading != prevVoltageReading)
     {
       float voltage = (float)voltageReading / 4095 * 4200; // Convert reading to voltage
-      UARTMessage += "|RV:" + String(voltageReading);
+      UARTMessage += "|BR:" + String(voltageReading);
       UARTMessage += "|BV:" + String(voltage);
 
       voltageReading = prevVoltageReading;
@@ -258,7 +258,7 @@ void setup()
   tft.initR(INITR_144GREENTAB); // Init display with black tab
   tft.fillScreen(ST7735_WHITE); // Clear the screen
 
-  SerialPort.print("START|END");
+  SerialPort.print("START|BX:0|BY:0|END");
 }
 
 void loop() 
