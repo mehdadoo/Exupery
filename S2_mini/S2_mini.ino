@@ -47,7 +47,7 @@ int lastJoystickX = -1; // Initialize with invalid value to make sure it sends t
 int lastJoystickY = -1; // Initialize with invalid value to make sure it sends the first reading
 int smoothedJoystickX = 0; // Smoothed joystick X value
 int smoothedJoystickY = 0; // Smoothed joystick Y value
-const int numReadings = 10; // Number of readings to smooth joystick input
+const int numReadings = 5; // Number of readings to smooth joystick input
 int joystickReadingsX[numReadings] = {0}; // Array to store joystick X readings
 int joystickReadingsY[numReadings] = {0}; // Array to store joystick Y readings
 unsigned int currentIndex = 0; // Index for readings arrays
@@ -76,7 +76,7 @@ void updateDisplay(int buttonStates[])
       int color = buttonStates[i] ? ST7735_BLACK : ST7735_WHITE;
       // Choose your square positions and size according to your display and preferences
       int x = i * 18; // Example x position
-      int y = 50; // Example y position
+      int y = 0; // Example y position
       int w = 18; // Example width of square
       int h = 18; // Example height of square
       
@@ -87,25 +87,29 @@ void updateDisplay(int buttonStates[])
     }
   }
 
- // Clear a white rectangle behind the text
-  int xTextPos = 3; // X position for text
-  int yTextPos = 50 + 18 + 5; // Y position for text, adjust as needed
-  int textWidth = 50; // Adjust based on the width of text
+  updateJoystickDisplay();
+}
 
-  tft.fillRect(xTextPos, yTextPos, textWidth, 30, ST7735_WHITE); // Fill a white rectangle behind the text
+int pixel_x = 0;
+int pixel_y = 0;
 
-  tft.setCursor(xTextPos, yTextPos); // Set cursor position for text
-  tft.setTextColor(ST7735_BLACK); // Text color
-  tft.setTextSize(1); // Text size
-  tft.println("X: " + String(lastJoystickX)); // Display lastJoystickX
+int square_x = 0; //  x position
+int square_y = 20; //  y position
+int square_width = 100; //  width of square
+int joystick_maxValue = 3500;
 
-  yTextPos += 10; // Move to the next line for Y value
-  tft.setCursor(xTextPos, yTextPos); // Set cursor position for text
-  tft.println("Y: " + String(lastJoystickY)); // Display lastJoystickY
+void updateJoystickDisplay() 
+{
+  tft.drawPixel(pixel_x, pixel_y, ST7735_WHITE); 
 
-  // Add the voltage display code here
-  
-  
+  // Map joystick values to screen coordinates
+  pixel_x =  map(lastJoystickX, joystick_maxValue, 0, square_x, square_x + square_width); // Map joystick X value to screen width
+  pixel_y =  map(lastJoystickY, 0, joystick_maxValue, square_y, square_y + square_width); // Map joystick Y value to screen height
+
+  tft.drawPixel(pixel_x, pixel_y, ST7735_BLACK);
+
+  // Draw the frame for the joystick display area
+  tft.drawRect(square_x, square_y, square_width, square_width, ST7735_BLACK);
 }
 
 

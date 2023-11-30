@@ -148,6 +148,11 @@ void drawSquares()
 int pixel_x = 0;
 int pixel_y = 0;
 
+int square_x = 0; //  x position
+int square_y = 16; //  y position
+int square_width = 48; //  width of square
+int joystick_maxValue = 3500;
+
 void updateOLED() 
 {
  // Clear the internal memory
@@ -182,16 +187,18 @@ void updateOLED()
    u8g2.setDrawColor(0);
    u8g2.drawPixel( pixel_x, pixel_y);
 
-  pixel_x =  (( (3500 - joystickX) * 46) / 3500);
-  pixel_y =  ((joystickY * 46) / 3500) + 20;
+  pixel_x =  map(joystickX, joystick_maxValue, 0, square_x, square_width + square_x) ;
+  pixel_y =  map(joystickY, 0, joystick_maxValue, square_y, square_width + square_y);
 
   u8g2.setDrawColor(1);
   u8g2.drawPixel( pixel_x, pixel_y);
 
-  u8g2.drawFrame(0,16,48,48);
+  u8g2.drawFrame(square_x, square_y, square_width, square_width);
 
   u8g2.sendBuffer(); // Transfer internal memory to the display
 }
+
+
 
 // Function to control MOSFET based on received message
 void controlMOSFET() 
