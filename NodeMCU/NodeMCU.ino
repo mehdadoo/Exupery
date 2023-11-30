@@ -21,10 +21,21 @@ int joystickY = 0;
 unsigned long lastDisplayUpdateTime = 0;
 const unsigned long displayUpdateInterval = 250; // Update display every 250 milliseconds
 
+
+// Pin for Horn MOSFET control
+const int mosfetPin_Horn = D2;
+const int mosfetPin_BrakeLight = D3;
+
+
 void setup() 
 {
   u8g2.begin();
   Serial.begin(115200);
+
+  
+  pinMode(mosfetPin_Horn, OUTPUT); // Set MOSFET pin as output
+  pinMode(mosfetPin_BrakeLight, OUTPUT); // Set MOSFET pin as output
+  
 }
 
 void loop() 
@@ -38,6 +49,8 @@ void loop()
     updateOLED();
     lastDisplayUpdateTime = currentMillis;
   }
+
+  controlMOSFET(); // Function call to control the MOSFET
 }
 
 // Function to receive and parse incoming messages
@@ -171,8 +184,8 @@ void updateOLED()
    u8g2.setDrawColor(0);
    u8g2.drawPixel( pixel_x, pixel_y);
 
-  pixel_x =   ((joystickX * 44) / 3500) + 1;
-  pixel_y = 62 - ((joystickY * 44) / 3500);
+  pixel_x =  (( (3500 - joystickX) * 46) / 3500);
+  pixel_y =  ((joystickY * 46) / 3500) + 20;
 
   u8g2.setDrawColor(1);
   u8g2.drawPixel( pixel_x, pixel_y);
@@ -180,4 +193,28 @@ void updateOLED()
   u8g2.drawFrame(0,16,48,48);
 
   u8g2.sendBuffer(); // Transfer internal memory to the display
+}
+
+// Function to control MOSFET based on received message
+void controlMOSFET() 
+{
+  if (buttonStates[2]) 
+  { 
+    // Check the value of B2 received from the sender
+    digitalWrite(mosfetPin_Horn, HIGH); // Set MOSFET pin high
+  } 
+  else 
+  {
+    digitalWrite(mosfetPin_Horn, LOW); // Set MOSFET pin low
+  }
+
+  if (buttonStates[3]) 
+  { 
+    // Check the value of B2 received from the sender
+    digitalWrite(mosfetPin_BrakeLight, HIGH); // Set MOSFET pin high
+  } 
+  else 
+  {
+    digitalWrite(mosfetPin_BrakeLight, LOW); // Set MOSFET pin low
+  }
 }
