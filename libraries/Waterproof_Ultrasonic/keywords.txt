@@ -1,0 +1,23 @@
+#######################################
+# Syntax Coloring Map For Waterproof_Ultrasonic
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Waterproof_Ultrasonic				KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+ping_cm							KEYWORD2
+getMode							KEYWORD2
+getR27							KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+Waterproof_Ultrasonic		LITERAL1
