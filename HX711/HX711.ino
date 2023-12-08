@@ -18,89 +18,67 @@
        float newCalibrationValue = LoadCell.getNewCalibration(known_mass);
 */
 #include <Arduino.h>
-#include <U8g2lib.h>
 #include <Wire.h>
 #include <HX711_ADC.h>
 #include <iostream>
 #include <string>
-
-#if defined(ESP8266)|| defined(ESP32) || defined(AVR)
 #include <EEPROM.h>
-#endif
+
 
 //pins:
-const int HX711_dout = 4; //mcu > HX711 dout pin
-const int HX711_sck = 5; //mcu > HX711 sck pin
+const int HX711_dout = D2; //mcu > HX711 dout pin
+const int HX711_sck = D3; //mcu > HX711 sck pin
 
-//HX711 constructor:
 HX711_ADC LoadCell(HX711_dout, HX711_sck);
 
 const int calVal_eepromAdress = 0;
 unsigned long t = 0;
 
-U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ 12, /* data=*/ 14, /* reset=*/ U8X8_PIN_NONE);
-
-String name = "David Prentice";
-float value = 3.14;
-
-int joystick_value = 0;
 
 void setup()
 {
-  //pinMode(7, INPUT_PULLUP);
+  //u8g2.begin();
+  Serial.begin(9600); 
 
-  u8g2.begin();
 
-  Serial.begin(57600); delay(10);
-  Serial.println();
   Serial.println("Starting...");
   
-  /*LoadCell.begin();
+  LoadCell.begin();
   //LoadCell.setReverseOutput(); //uncomment to turn a negative output value to positive
   unsigned long stabilizingtime = 3000; // preciscion right after power-up can be improved by adding a few seconds of stabilizing time
   boolean _tare = false; //set this to false if you don't want tare to be performed in the next step
   LoadCell.start(stabilizingtime, _tare);
-  if (LoadCell.getTareTimeoutFlag() || LoadCell.getSignalTimeoutFlag()) {
+  
+  if (LoadCell.getTareTimeoutFlag() || LoadCell.getSignalTimeoutFlag()) 
+  {
     Serial.println("Timeout, check MCU>HX711 wiring and pin designations");
     while (1);
   }
-  else {
+  else 
+  {
     LoadCell.setCalFactor(10.0); // user set calibration value (float), initial value 1.0 may be used for this sketch
     Serial.println("Startup is complete");
   }
   while (!LoadCell.update());
-  calibrate(); //start calibration procedure
-*/
-  //EEPROM.begin(512);
-  //EEPROM.get(calVal_eepromAdress, calibrationValue);
+
+  Serial.println("Initial load cell data update complete");
+  calibrate(); 
+  //start calibration procedure
 }
 
 
 void loop()
 {
-  u8g2.clearBuffer();					         // clear the internal memory
-  u8g2.setFont(u8g2_font_7x14B_tr);	   // choose a suitable font
-  u8g2.drawStr(0,10,"Exupéry!" );	 // write something to the internal memory
-  u8g2.sendBuffer();	
-  
-  joystick_value = analogRead(A0);	// read X axis value [0..1023]
-  name = String(joystick_value);
-  u8g2.drawStr(0, 30, name.c_str() );
 
-  /*joystick_value = analogRead(A1);	// read Y axis value [0..1023]
-  Serial.print(" | Y:");
-  Serial.print(joystick_value, DEC);
-  joystick_value = digitalRead(7);	// read Button state [0,1]
-  Serial.print(" | Button:");
-  Serial.println(joystick_value, DEC);
-*/
-
-/*
   static boolean newDataReady = 0;
   const int serialPrintInterval = 100; //increase value to slow down serial print activity
 
   // check for new data/start next conversion:
-  if (LoadCell.update()) newDataReady = true;
+  if (LoadCell.update())
+  {
+    newDataReady = true;
+    Serial.println("New load cell data ready"); // Debugging statement
+  }
 
   // get smoothed value from the dataset:
   if (newDataReady) {
@@ -112,10 +90,9 @@ void loop()
       t = millis();
 
 
-      name = String(i);
+      //name = String(i);
       
-      u8g2.drawStr(0, 50, name.c_str() );
-     
+      //u8g2.drawStr(0, 50, name.c_str() );
     }
   }
 
@@ -130,12 +107,9 @@ void loop()
   // check if last tare operation is complete
   if (LoadCell.getTareStatus() == true) {
     Serial.println("Tare complete");
-  }*/
+  }
 
-
-
-   u8g2.sendBuffer();					         // transfer internal memory to the display// transfer internal memory to the display
-
+  delay(100);
 }
 
 void calibrate() {
@@ -192,13 +166,10 @@ void calibrate() {
     if (Serial.available() > 0) {
       char inByte = Serial.read();
       if (inByte == 'y') {
-#if defined(ESP8266)|| defined(ESP32)
+
         EEPROM.begin(512);
-#endif
         EEPROM.put(calVal_eepromAdress, newCalibrationValue);
-#if defined(ESP8266)|| defined(ESP32)
         EEPROM.commit();
-#endif
         EEPROM.get(calVal_eepromAdress, newCalibrationValue);
         Serial.print("Value ");
         Serial.print(newCalibrationValue);
@@ -248,13 +219,9 @@ void changeSavedCalFactor() {
     if (Serial.available() > 0) {
       char inByte = Serial.read();
       if (inByte == 'y') {
-#if defined(ESP8266)|| defined(ESP32)
         EEPROM.begin(512);
-#endif
         EEPROM.put(calVal_eepromAdress, newCalibrationValue);
-#if defined(ESP8266)|| defined(ESP32)
         EEPROM.commit();
-#endif
         EEPROM.get(calVal_eepromAdress, newCalibrationValue);
         Serial.print("Value ");
         Serial.print(newCalibrationValue);
