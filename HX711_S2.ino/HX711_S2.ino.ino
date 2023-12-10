@@ -1,16 +1,18 @@
 #include <HX711_ADC.h>
-#include <EEPROM.h>
+#include <Preferences.h> // Include Preferences library instead of EEPROM
 
-const int HX711_dout = D2; // HX711 dout pin
-const int HX711_sck = D3;  // HX711 sck pin
-const int numReadings = 50; // Number of readings to smooth
-const float knownWeight = 66.0; // Known weight for calibration
-const int calVal_eepromAddress = 0; // EEPROM address for storing the calibration factor
+// Define constants for HX711 pins
+const int HX711_dout = 2; // Adjusted for S2 Mini GPIO numbers
+const int HX711_sck = 4;  // Adjusted for S2 Mini GPIO numbers
+const int numReadings = 50;
+const float knownWeight = 66.0;
+const char *calVal_preferenceKey = "calFactor"; // Key for Preferences
 
+// Initialize HX711
 HX711_ADC LoadCell(HX711_dout, HX711_sck);
 
-enum State 
-{
+// Define the state machine states
+enum State {
   START_UP,
   IDLE,
   TARE,
@@ -18,46 +20,42 @@ enum State
   READ_WEIGHT
 } state = START_UP;
 
+// Initialize variables
 unsigned long lastReadTime = 0;
-const unsigned long readInterval = 10000; // Read weight every 10 seconds
+const unsigned long readInterval = 10000; // Interval for weight readings
 unsigned long startUpStabilizingtime = 2000;
 
+Preferences preferences; // Create a Preferences object
+
 String printStateValue = "";
-void printState(String _printStateValue)
-{
-  if (printStateValue != _printStateValue) 
-  {
+
+void printState(String _printStateValue) {
+  // Print state if it has changed
+  if (printStateValue != _printStateValue) {
     printStateValue = _printStateValue;
-    Serial.println( printStateValue );
+    Serial.println(printStateValue);
   }
 }
 
-void setup() 
-{
-  Serial.begin(9600); 
-  startUpRoutine();
-  
+void setup() {
+  Serial.begin(9600); // Begin Serial communication at 9600 baud rate
+  startUpRoutine(); // Perform initial setup routine
 }
 
-
-
-void startUpRoutine()
-{
+void startUpRoutine() {
+  // Initialization routine for load cell
   Serial.println("Initial Startup Routine...");
-  
   LoadCell.begin();
   LoadCell.start(startUpStabilizingtime, true);
 
+  // Read calibration value from Preferences
   float calibrationValue = readCalibrationValue();
   LoadCell.setCalFactor(calibrationValue);
   Serial.print("Calibration value: ");
   Serial.println(calibrationValue);
 
-  Serial.print("Calibration complete. New calibration value: ");
-  Serial.println(calibrationValue);
-
-  lastReadTime = millis();
-  state = START_UP;
+  lastReadTime = millis(); // Record current time
+  state = IDLE; // Set state to IDLE after startup
 }
 
 void loop() 
@@ -169,47 +167,23 @@ void loop()
 }
 
 float readCalibrationValue() {
-  // Create a temporary buffer to hold the read bytes from EEPROM
-  union {
-    float calibrationValue;
-    byte bytes[sizeof(float)];
-  } data;
-
-  // Read the bytes from EEPROM into the buffer
-  for (unsigned int i = 0; i < sizeof(float); i++) {
-    data.bytes[i] = EEPROM.read(calVal_eepromAddress + i);
-  }
-
-  Serial.print("read from EEPROM: ");
-  Serial.println(data.calibrationValue);
-
-  // Check if the calibration value read makes sense
-  if (data.calibrationValue >= 1e-6 && data.calibrationValue <= 1e6) {
-    return data.calibrationValue; // Valid calibration value was read
-  } else {
-    // If the read value was not valid, assign a default value
-    Serial.println("Invalid calibration value in EEPROM, using default");
-    return 15159.0; // Default value if not valid or not set
-  }
+  // Read calibration value from Preferences
+  preferences.begin("calibration", false); // Open Preferences with readonly access
+  float calibrationValue = preferences.getFloat(calVal_preferenceKey, 15159.0); // Use default if no value was previously stored
+  preferences.end(); // Close Preferences
+  Serial.print("Read from Preferences: ");
+  Serial.println(calibrationValue);
+  return calibrationValue;
 }
-
 
 void writeCalibrationValue(float calibrationValue) {
-  // Create a buffer to hold the bytes to be written to EEPROM
-  union {
-    float calibrationValue;
-    byte bytes[sizeof(float)];
-  } data;
-
-  data.calibrationValue = calibrationValue;
-
-  // Write the bytes to EEPROM
-  for (unsigned int i = 0; i < sizeof(float); i++) {
-    EEPROM.write(calVal_eepromAddress + i, data.bytes[i]);
-  }
-
-  EEPROM.commit(); // Ensure EEPROM write is completed properly
-
-  Serial.print("Written to EEPROM with success: ");
+  // Write calibration value to Preferences
+  preferences.begin("calibration", false); // Open Preferences with read/write access
+  preferences.putFloat(calVal_preferenceKey, calibrationValue); // Store calibration value using the defined key
+  preferences.end(); // Close Preferences
+  Serial.print("Written to Preferences with success: ");
   Serial.println(calibrationValue);
 }
+
+// The rest of your code remains the same.
+// ...
