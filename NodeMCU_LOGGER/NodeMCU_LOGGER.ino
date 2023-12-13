@@ -31,7 +31,7 @@ void parseMessage() {
       // Remove START and END markers
       receivedMsg.replace("START|", "");
       receivedMsg.replace("|END", "");
-      Serial.println("receivedMsg);
+      Serial.println(receivedMsg);
     }
     // Reset variables after processing
     messageStarted = false;

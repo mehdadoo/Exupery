@@ -102,8 +102,8 @@ void QMC5883LCompass::setADDR(byte b){
 void QMC5883LCompass::_writeReg(byte r, byte v){
 	    
 	    _wire->beginTransmission(_ADDR);
-	    _wire->write(reg);
-	    _wire->write(val);
+	    _wire->write(r);
+	    _wire->write(v);
 }
 
 
@@ -261,26 +261,23 @@ void QMC5883LCompass::clearCalibration(){
 	
 	@since v0.1;
 **/
-void QMC5883LCompass::read(){
-	    
-	Wire.write(0x00);
-	int err =     _wire->write(val);
-	if (!err) {
-		Wire.requestFrom(_ADDR, (byte)6);
-		_vRaw[0] = (int)(int16_t)(Wire.read() | Wire.read() << 8);
-		_vRaw[1] = (int)(int16_t)(Wire.read() | Wire.read() << 8);
-		_vRaw[2] = (int)(int16_t)(Wire.read() | Wire.read() << 8);
+void QMC5883LCompass::read() {
+    _wire->beginTransmission(_ADDR);
+    _wire->write(0x00); // Assuming 0x00 is the register to initiate read
+    _wire->endTransmission();
 
-		_applyCalibration();
-		
-		if ( _smoothUse ) {
-			_smoothing();
-		}
-		
-		//byte overflow = Wire.read() & 0x02;
-		//return overflow << 2;
-	}
+    _wire->requestFrom(_ADDR, (byte)6);
+    _vRaw[0] = (int)(int16_t)(_wire->read() | _wire->read() << 8);
+    _vRaw[1] = (int)(int16_t)(_wire->read() | _wire->read() << 8);
+    _vRaw[2] = (int)(int16_t)(_wire->read() | _wire->read() << 8);
+
+    _applyCalibration();
+    
+    if (_smoothUse) {
+        _smoothing();
+    }
 }
+
 
 /**
     APPLY CALIBRATION

@@ -16,6 +16,12 @@ Release under the GNU General Public License v3
 //I2c Pins
 #define I2C_SDA 8
 #define I2C_SCL 9
+// Pins for UART1
+#define SERIAL_TX_PIN 38
+#define SERIAL_RX_PIN 40
+
+// Use UART1
+HardwareSerial SerialPort(1);
 
 TwoWire customWire = TwoWire(0);
 QMC5883LCompass compass(customWire);
@@ -23,14 +29,19 @@ QMC5883LCompass compass(customWire);
 
 void setup() 
 {
+   pinMode(LED_BUILTIN, OUTPUT);
+
   Serial.begin(9600);
+  SerialPort.begin(9600, SERIAL_8N1, SERIAL_TX_PIN, SERIAL_RX_PIN);
 
   customWire.begin( I2C_SDA, I2C_SCL );
   compass.init();
-  
+
+  SerialPort.print("START|Compass|END");
 }
 
-void loop() {
+void loop() 
+{
   int x, y, z;
   
   // Read compass values
@@ -48,6 +59,12 @@ void loop() {
   Serial.print(" Z: ");
   Serial.print(z);
   Serial.println();
+
+  SerialPort.print("START|" + String(x) + ", " + String(y) + ", " + String(z) + "|END");
+
   
-  delay(250);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(100);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
 }
