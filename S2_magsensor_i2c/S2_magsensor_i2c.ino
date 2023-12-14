@@ -3,29 +3,34 @@
 #include <Adafruit_HMC5883_U.h>
 
 //I2c Pins
-#define I2C_SDA 8
-#define I2C_SCL 9
+#define I2C_SDA 18
+#define I2C_SCL 16
 // Pins for UART1
-#define SERIAL_TX_PIN 38
-#define SERIAL_RX_PIN 39
+#define SERIAL_TX_PIN 35
+#define SERIAL_RX_PIN 33
 
 // Use UART1
 HardwareSerial SerialPort(1);
 
 //I2C custom Wire
 TwoWire I2C_magsensor = TwoWire(0);
-
-/* Assign a unique ID to this sensor at the same time */
-Adafruit_HMC5883_Unified magsensor = Adafruit_HMC5883_Unified(&I2C_magsensor,12345);
-
-
+Adafruit_HMC5883_Unified magsensor = Adafruit_HMC5883_Unified(&I2C_magsensor,666);
 
 void setup() 
 {
+  pinMode(LED_BUILTIN, OUTPUT);
+
   Serial.begin(9600);
   SerialPort.begin(9600, SERIAL_8N1, SERIAL_TX_PIN, SERIAL_RX_PIN);
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  delay(4000);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(50);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(50);
+
+  SerialPort.print("START|v1|END");
+  Serial.println("v1");
   
   I2C_magsensor.begin(I2C_SDA, I2C_SCL, 100000);
   delay(3000);
@@ -73,14 +78,14 @@ void loop()
   // Convert radians to degrees for readability.
   float headingDegrees = heading * 180/M_PI; 
   
-  Serial.print("Heading (degrees): "); Serial.println(headingDegrees);
+  Serial.print("Heading (degrees): "); 
+  Serial.println(headingDegrees);
+  SerialPort.print("START|loop|END");
 
-  //SerialPort.print("START|A:1|END");
-  
   digitalWrite(LED_BUILTIN, HIGH);
   delay(50);
   digitalWrite(LED_BUILTIN, LOW);
-  delay(200);
+  delay(250);
 }
 
 void displaySensorDetails(void)
