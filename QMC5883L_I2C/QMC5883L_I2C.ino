@@ -2,8 +2,8 @@
 #include <Wire.h>
 
 //I2c Pins
-#define I2C_SDA 8
-#define I2C_SCL 9
+#define I2C_SDA 18
+#define I2C_SCL 16
 // Pins for UART1
 #define SERIAL_TX_PIN 35 // <- receive pin
 #define SERIAL_RX_PIN 33 // -> send pin, connects to target RX
@@ -23,19 +23,27 @@ void setup()
   SerialPort.begin(9600, SERIAL_8N1, SERIAL_TX_PIN, SERIAL_RX_PIN);
 
  
- SerialPort.print("START|Compass version 2|END");
+  SerialPort.print("START|Compass, v5|END");
   
 
-  customWire.begin( I2C_SDA, I2C_SCL );
-  compass.init();
+  customWire.begin( I2C_SDA, I2C_SCL, 100000 );
 
+  String result = compass.init();
   
-  
+  if (result == "Success") 
+  {
+      Serial.println("Sensor initialized successfully");
+  }
+  else
+  {
+      Serial.print("Error initializing sensor: ");
+      Serial.println(result);
+  }
 }
 
 void loop() 
 {
-  SerialPort.print("START|version: 2|END");
+  SerialPort.print("START|loop, v5|END");
  
  
   digitalWrite(LED_BUILTIN, HIGH);

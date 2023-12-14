@@ -9,7 +9,7 @@ class QMC5883LCompass{
 	
   public:
     QMC5883LCompass(TwoWire &wire);
-	void init();
+	String init();
     void setADDR(byte b);
     void setMode(byte mode, byte odr, byte rng, byte osr);
 	void setMagneticDeclination(int degrees, uint8_t minutes);

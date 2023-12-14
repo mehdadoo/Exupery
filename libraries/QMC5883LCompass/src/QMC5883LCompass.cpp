@@ -68,14 +68,34 @@ QMC5883LCompass::QMC5883LCompass(TwoWire &wire) : _wire(&wire) {
 	
 	@since v0.1;
 **/
-void QMC5883LCompass::init(){
+String QMC5883LCompass::init()
+{
 	
-    // Modification to use a custom Wire object
-    _wire->begin(); _wire->begin();
+    String errorMessage = "Success"; // Default message if no exception occurs
 
-	_writeReg(0x0B,0x01);
-	setMode(0x01,0x0C,0x10,0X00);
+    try 
+	{
+        _wire->begin(); // Attempt to initialize I2C communication
+
+        // Initialization steps...
+        _writeReg(0x0B, 0x01);
+        setMode(0x01, 0x0C, 0x10, 0X00);
+    } 
+	catch
+	(const std::exception &e)
+	{
+        errorMessage = "Exception occurred: ";
+        errorMessage += e.what();
+    } 
+	catch (...) 
+	{
+        errorMessage = "Unknown exception occurred";
+    }
+
+    return errorMessage;
 }
+
+
 
 
 /**
