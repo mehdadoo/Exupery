@@ -12,8 +12,7 @@
 HardwareSerial SerialPort(1);
 
 TwoWire customWire = TwoWire(0);
-QMC5883LCompass compass(customWire);
-
+QMC5883LCompass compass = QMC5883LCompass(&customWire);
 
 void setup() 
 {
@@ -22,14 +21,25 @@ void setup()
   Serial.begin(9600);
   SerialPort.begin(9600, SERIAL_8N1, SERIAL_TX_PIN, SERIAL_RX_PIN);
 
- 
-  SerialPort.print("START|Compass, v5|END");
-  
+  delay(4000);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(50);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(50);
+
+  SerialPort.print("START|v6|END");
+  Serial.println("v10");
+
 
   customWire.begin( I2C_SDA, I2C_SCL, 100000 );
 
+  Serial.println("customWire.begin");
+  delay(3000);
+
   String result = compass.init();
   
+  Serial.println("compass.init()");
+
   if (result == "Success") 
   {
       Serial.println("Sensor initialized successfully");
@@ -43,8 +53,9 @@ void setup()
 
 void loop() 
 {
-  SerialPort.print("START|loop, v5|END");
- 
+  SerialPort.print("START|loop|END");
+  Serial.println("loop");
+
  
   digitalWrite(LED_BUILTIN, HIGH);
   delay(50);

@@ -57,7 +57,9 @@ OVER SAMPLE RATIO (OSR)
 #include <Wire.h>
 
 
-QMC5883LCompass::QMC5883LCompass(TwoWire &wire) : _wire(&wire) {
+QMC5883LCompass::QMC5883LCompass(TwoWire *I2C) 
+{
+  _wire = I2C; // Use the provided I2C instance
 }
 
 
@@ -81,8 +83,7 @@ String QMC5883LCompass::init()
         _writeReg(0x0B, 0x01);
         setMode(0x01, 0x0C, 0x10, 0X00);
     } 
-	catch
-	(const std::exception &e)
+	catch (const std::exception &e)
 	{
         errorMessage = "Exception occurred: ";
         errorMessage += e.what();
