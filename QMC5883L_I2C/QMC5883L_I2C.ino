@@ -29,7 +29,7 @@ QMC5883LCompass compass(customWire);
 
 void setup() 
 {
-   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   Serial.begin(9600);
   SerialPort.begin(9600, SERIAL_8N1, SERIAL_TX_PIN, SERIAL_RX_PIN);
