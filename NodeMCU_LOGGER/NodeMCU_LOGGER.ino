@@ -6,9 +6,12 @@ bool messageStarted = false;
 void setup() 
 {
   Serial.begin(9600);
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
-void loop() {
+void loop() 
+{
+
   receiveMessage();
   parseMessage();
 }

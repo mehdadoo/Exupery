@@ -51,6 +51,8 @@ void loop()
   magnetometer.getEvent(&event);
   Serial.println(event.magnetic.z);
 
+ 
+
   digitalWrite(LED_BUILTIN, HIGH);
   delay(150);
   digitalWrite(LED_BUILTIN, LOW);
