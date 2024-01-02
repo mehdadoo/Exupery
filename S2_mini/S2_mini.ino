@@ -27,9 +27,7 @@ const int buttonPins[] = {5, 7, 13, 16, 8, 10, 6};
 const int joystickYPin = 4; // Joystick Y pin connected to GPIO 4
 const int joystickXPin = 2; // Joystick X pin connected to GPIO 6
 
-const int batteryVoltagePin = 11;
-int voltageReading = 0;
-int prevVoltageReading = 0;
+
 
 
 // Initialize Adafruit ST7735 with hardware SPI
@@ -47,10 +45,10 @@ int lastJoystickX = -1; // Initialize with invalid value to make sure it sends t
 int lastJoystickY = -1; // Initialize with invalid value to make sure it sends the first reading
 int smoothedJoystickX = 0; // Smoothed joystick X value
 int smoothedJoystickY = 0; // Smoothed joystick Y value
-const int numReadings = 5; // Number of readings to smooth joystick input
-int joystickReadingsX[numReadings] = {0}; // Array to store joystick X readings
-int joystickReadingsY[numReadings] = {0}; // Array to store joystick Y readings
-unsigned int currentIndex = 0; // Index for readings arrays
+const int numJoystickReadings = 50; // Number of readings to smooth joystick input
+int joystickReadingsX[numJoystickReadings] = {0}; // Array to store joystick X readings
+int joystickReadingsY[numJoystickReadings] = {0}; // Array to store joystick Y readings
+unsigned int currentJoystickReadingtIndex = 0; // Index for readings arrays
 unsigned int readingsCount = 0; // Counter for readings
 int averageJoystickX = 0;
 int averageJoystickY = 0;
@@ -64,6 +62,28 @@ bool stateChanged = false;
 String UARTMessage = "";
 
 
+
+// battery voltage reading
+const int INTERVAL_BETWEEN_VOLTAGE_READINGS_CYCLE = 5000;
+const int MAX_VOLTAGE_READINGS_PER_CYCLE = 100;
+const int batteryVoltagePin = 11;
+int avarageBatteryADCReading  = 0;
+int voltageReadingsCount = 0; // Counter for readings
+unsigned long previousVoltageTime = 0;
+
+int voltageReadings[MAX_VOLTAGE_READINGS_PER_CYCLE];
+bool isNewVoltageADCReadingAvailable = false;
+
+void drawText(int x, int y, String text, int color) 
+{
+  tft.setCursor(x, y);
+  tft.setTextColor(color);
+  tft.print(text);
+}
+
+void clearLine(int line) {
+  tft.fillRect(0, line * 8, 128, 8, ST7735_WHITE); // Adjust the screen width accordingly
+}
 
 // Function to update the display with squares corresponding to button states
 void updateDisplay(int buttonStates[]) 
@@ -88,28 +108,53 @@ void updateDisplay(int buttonStates[])
   }
 
   updateJoystickDisplay();
+
+
+  if( isNewVoltageADCReadingAvailable )
+  {
+    clearLine(0); // Clear line 0
+    drawText(0, 0, "ADC Reading: " + String(avarageBatteryADCReading), ST7735_BLACK);
+
+    clearLine(1); // Clear line 1
+    drawText(0, 8, "Battery Voltage: " + String(calculateBatteryVoltage(avarageBatteryADCReading)) + "v", ST7735_BLACK);
+
+    clearLine(2); // Clear line 2
+    drawText(0, 16, "Battery Percentage: " + String(calculateBatteryPercentage(avarageBatteryADCReading)) + "%", ST7735_BLACK);
+  }
+
+  isNewVoltageADCReadingAvailable = false;
+
 }
 
 int pixel_x = 0;
 int pixel_y = 0;
 
 int square_x = 0; //  x position
-int square_y = 20; //  y position
-int square_width = 100; //  width of square
-int joystick_maxValue = 3500;
+int square_y = 0; //  y position
+int square_width = 128; //  width of square
+int joystick_maxValue = 2048;
 
 void updateJoystickDisplay() 
 {
-  tft.drawPixel(pixel_x, pixel_y, ST7735_WHITE); 
+  tft.drawPixel(pixel_x, pixel_y, ST7735_WHITE);
+  tft.drawPixel(pixel_x+1, pixel_y, ST7735_WHITE);
+  tft.drawPixel(pixel_x, pixel_y+1, ST7735_WHITE);
+  tft.drawPixel(pixel_x-1, pixel_y, ST7735_WHITE);
+  tft.drawPixel(pixel_x, pixel_y-1, ST7735_WHITE);
 
   // Map joystick values to screen coordinates
   pixel_x =  map(lastJoystickX, joystick_maxValue, 0, square_x, square_x + square_width); // Map joystick X value to screen width
   pixel_y =  map(lastJoystickY, 0, joystick_maxValue, square_y, square_y + square_width); // Map joystick Y value to screen height
 
   tft.drawPixel(pixel_x, pixel_y, ST7735_BLACK);
+  tft.drawPixel(pixel_x+1, pixel_y, ST7735_BLACK);
+  tft.drawPixel(pixel_x, pixel_y+1, ST7735_BLACK);
+  tft.drawPixel(pixel_x-1, pixel_y, ST7735_BLACK);
+  tft.drawPixel(pixel_x, pixel_y-1, ST7735_BLACK);
+  
 
   // Draw the frame for the joystick display area
-  tft.drawRect(square_x, square_y, square_width, square_width, ST7735_BLACK);
+  //tft.drawRect(square_x, square_y, square_width, square_width, ST7735_BLACK);
 }
 
 
@@ -124,22 +169,89 @@ void readButtonData()
 
 
 
+
+float mapFloat(float x, float in_min, float in_max, float out_min, float out_max) 
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+float calculateBatteryVoltage(int adcReading) 
+{
+  float batteryVoltage = mapFloat(adcReading, 627, 822, 3.3, 4.0);
+  return batteryVoltage;
+}
+
+int calculateBatteryPercentage(int adcReading) 
+{
+  float percentage = cubicEaseInOut(mapFloat(adcReading, 625, 825, 0.0, 1.0));
+  return int(percentage * 100);
+}
+
+// Cubic easing function
+float cubicEaseInOut(float t) 
+{
+  return t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2;
+}
+
 void readVoltageData() 
 {
-  if (readingsCount == 0) 
-  {
-    voltageReading = analogRead(batteryVoltagePin);
+  // Check if enough time has passed since the last voltage interval
+  unsigned long currentMillis = millis();
 
+  if (currentMillis - previousVoltageTime >= INTERVAL_BETWEEN_VOLTAGE_READINGS_CYCLE) 
+  {
+    // Check if the number of readings is less than the maximum
+    if (voltageReadingsCount < MAX_VOLTAGE_READINGS_PER_CYCLE) 
+    {
+      // Read voltage and store in the array
+      voltageReadings[voltageReadingsCount] = analogRead(batteryVoltagePin);
+      voltageReadingsCount++;
+
+      // If reached the maximum readings, compile and send data
+      if (voltageReadingsCount >= MAX_VOLTAGE_READINGS_PER_CYCLE) 
+      {
+        long voltageSum = 0;
+
+        for (int i = 0; i < MAX_VOLTAGE_READINGS_PER_CYCLE; i++) 
+        {
+            voltageSum += voltageReadings[i];
+        }
+
+        avarageBatteryADCReading = voltageSum / MAX_VOLTAGE_READINGS_PER_CYCLE;
+
+        // Reset readings count and time counter
+        voltageReadingsCount = 0;
+        previousVoltageTime = currentMillis;
+        isNewVoltageADCReadingAvailable = true;
+      }
+    }
   }
 }
 
+void compileVoltageSerialData() 
+{
+  if( isNewVoltageADCReadingAvailable )
+  {
+    UARTMessage += "|Br:" + String( avarageBatteryADCReading );
+    UARTMessage += "|Bv:" + String( calculateBatteryVoltage(avarageBatteryADCReading) );
+    UARTMessage += "|B%:" + String( calculateBatteryPercentage(avarageBatteryADCReading) );
+
+
+    stateChanged = true;
+    //isNewVoltageADCReadingAvailable = false;
+  }
+}
+
+
+
+
 void readJoystickData() 
 {
-  if (readingsCount < numReadings) 
+  if (readingsCount < numJoystickReadings) 
   {
-    joystickReadingsX[currentIndex] = analogRead(joystickXPin);
-    joystickReadingsY[currentIndex] = analogRead(joystickYPin);
-    currentIndex = (currentIndex + 1) % numReadings;
+    joystickReadingsX[currentJoystickReadingtIndex] = analogRead(joystickXPin);
+    joystickReadingsY[currentJoystickReadingtIndex] = analogRead(joystickYPin);
+    currentJoystickReadingtIndex = (currentJoystickReadingtIndex + 1) % numJoystickReadings;
     readingsCount++;
   } 
   else 
@@ -148,7 +260,7 @@ void readJoystickData()
     int totalX = 0;
     int totalY = 0;
 
-    for (int i = 0; i < numReadings; i++) 
+    for (int i = 0; i < numJoystickReadings; i++) 
     {
       totalX += joystickReadingsX[i];
       totalY += joystickReadingsY[i];
@@ -156,12 +268,12 @@ void readJoystickData()
       joystickReadingsY[i] = 0; // Clear the array for next readings
     }
 
-    averageJoystickX = totalX / numReadings;
-    averageJoystickY = totalY / numReadings;
+    averageJoystickX = totalX / numJoystickReadings;
+    averageJoystickY = totalY / numJoystickReadings;
 
     // Reset variables for next set of readings
     readingsCount = 0;
-    currentIndex = 0;
+    currentJoystickReadingtIndex = 0;
   }
 }
 
@@ -178,9 +290,9 @@ void compileButtonStatesSerialData()
     }
   }
 }
-
 void compileJoystickSerialData() 
 {
+
   // Only send the data if the change in joystick value exceeds the threshold
   if (abs(averageJoystickX - lastJoystickX) > threshold || abs(averageJoystickY - lastJoystickY) > threshold) 
   {
@@ -190,25 +302,12 @@ void compileJoystickSerialData()
     lastJoystickY = averageJoystickY;
 
     // Append joystick values to the UARTMessage
+
     UARTMessage += "|BX:" + String(lastJoystickX) + "|BY:" + String(lastJoystickY);
   }
 }
 
 
-
-void compileVoltageSerialData() 
-{
-  return;
-    if( voltageReading != prevVoltageReading)
-    {
-      float voltage = (float)voltageReading / 4095 * 4200; // Convert reading to voltage
-      UARTMessage += "|BR:" + String(voltageReading);
-      UARTMessage += "|BV:" + String(voltage);
-
-      voltageReading = prevVoltageReading;
-      stateChanged = true;
-    }
-}
 
 // Function to handle the main logic of checking button states and sending data
 void compileSerialData() 
@@ -231,6 +330,8 @@ void sendSerialData()
     Serial.println(UARTMessage);
     // Send the UARTMessage over UART
     SerialPort.print(UARTMessage);
+    // Delay to avoid excessive looping
+    delay(5); 
   }
 }
 
@@ -241,7 +342,7 @@ void setup()
 
 
   // Configure ADC for ESP32-S2
-  analogReadResolution(12); // Set ADC resolution to 12 bits
+  analogReadResolution(11); // Set ADC resolution to 12 bits
 
   // Configure ADC attenuation for the battery voltage pin
   adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_11); // Assuming ADC1_CHANNEL_0, adjust if necessary
@@ -278,8 +379,6 @@ void loop()
     updateDisplay(buttonStates);
 
   controlLED();
-  
-  delay(25); // Delay to avoid excessive looping
 }
 
 void controlLED() 

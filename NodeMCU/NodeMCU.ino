@@ -26,6 +26,10 @@ const unsigned long displayUpdateInterval = 250; // Update display every 250 mil
 const int mosfetPin_Horn = D2;
 const int mosfetPin_BrakeLight = D3;
 
+float battery_voltage=0.0;
+int battery_percent=0;
+int battery_adc=0;
+
 
 void setup() 
 {
@@ -77,19 +81,23 @@ void decodeMessage()
 {
   if (receivedMsg == "") 
     return;
-  
-  Serial.println(receivedMsg);
 
   // Remove START and END markers
+  receivedMsg.replace("|ENDSTART|", "|");
   receivedMsg.replace("START|", "");
   receivedMsg.replace("|END", "");
+
+  // print properly on serial plotter 
+  String modifiedMsg = receivedMsg;
+  modifiedMsg.replace("|", ",");
+  Serial.println(modifiedMsg);
 
   // Process the message to extract key-value pairs
   int pos = 0;
   while (pos < receivedMsg.length()) 
   {
     String key;
-    int value;
+    float value;
 
     // Extract key (B3, B5, etc.)
     int keyStart = receivedMsg.indexOf("B", pos);
@@ -102,46 +110,35 @@ void decodeMessage()
       int nextKeyPos = receivedMsg.indexOf("B", keyEnd);
       if (nextKeyPos == -1) 
       {
-        value = receivedMsg.substring(keyEnd + 1).toInt();
+        value = receivedMsg.substring(keyEnd + 1).toFloat();
         pos = receivedMsg.length(); // Exit loop if it's the last value
       } 
       else 
       {
-        value = receivedMsg.substring(keyEnd + 1, nextKeyPos).toInt();
+        value = receivedMsg.substring(keyEnd + 1, nextKeyPos).toFloat();
         pos = nextKeyPos;
       }
 
       // Assign value based on key
 
-      if (key == "B0:") buttonStates[0] = value;
-      else if (key == "B1:") buttonStates[1] = value;
-      else if (key == "B2:") buttonStates[2] = value;
-      else if (key == "B3:") buttonStates[3] = value;
-      else if (key == "B4:") buttonStates[4] = value;
-      else if (key == "B5:") buttonStates[5] = value;
-      else if (key == "B6:") buttonStates[6] = value;
-      else if (key == "BX:") joystickX = value;
-      else if (key == "BY:") joystickY = value;
+      if (key == "B0:") buttonStates[0] = int(value);
+      else if (key == "B1:") buttonStates[1] = int(value);
+      else if (key == "B2:") buttonStates[2] = int(value);
+      else if (key == "B3:") buttonStates[3] = int(value);
+      else if (key == "B4:") buttonStates[4] = int(value);
+      else if (key == "B5:") buttonStates[5] = int(value);
+      else if (key == "B6:") buttonStates[6] = int(value);
+      else if (key == "BX:") joystickX = int(value);
+      else if (key == "BY:") joystickY = int(value);
+      else if (key == "Bv:") battery_voltage = value;
+      else if (key == "B%:") battery_percent = int(value);
+      else if (key == "Br:") battery_adc = int(value);
     }
   }
 
   // Reset received message after processing
   messageStarted = false;
   receivedMsg = "";
-}
-
-// Function to draw squares based on button states
-void drawSquares() 
-{
-  u8g2.clearBuffer();
-
-  for (int i = 0; i < 6; i++) {
-    if (buttonStates[i]) {
-      u8g2.drawBox(i * 20, 0, 10, 10);
-    }
-  }
-
-  u8g2.sendBuffer();
 }
 
 
@@ -151,11 +148,14 @@ int pixel_y = 0;
 int square_x = 0; //  x position
 int square_y = 16; //  y position
 int square_width = 48; //  width of square
-int joystick_maxValue = 3500;
+int joystick_maxValue = 2048;
 
 void updateOLED() 
 {
- // Clear the internal memory
+
+  // Clear the internal memory
+  u8g2.clearBuffer();
+
   for (int i = 0; i < numButtons; i++) 
   {
     // Only update the part of the screen that has changed
@@ -194,6 +194,21 @@ void updateOLED()
   u8g2.drawPixel( pixel_x, pixel_y);
 
   u8g2.drawFrame(square_x, square_y, square_width, square_width);
+
+
+
+
+  u8g2.setFont(u8g2_font_ncenB08_tr);
+  u8g2.setCursor(55, 24);
+  u8g2.print(battery_voltage);
+  u8g2.setCursor(80, 24);
+  u8g2.print("v");
+  u8g2.setCursor(55, 34);
+  u8g2.print(battery_percent);
+  u8g2.setCursor(80, 34);
+   u8g2.print("%");
+  u8g2.setCursor(55, 44);
+  u8g2.print(battery_adc);
 
   u8g2.sendBuffer(); // Transfer internal memory to the display
 }
