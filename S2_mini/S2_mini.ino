@@ -112,14 +112,14 @@ void updateDisplay(int buttonStates[])
 
   if( isNewVoltageADCReadingAvailable )
   {
-    clearLine(0); // Clear line 0
-    drawText(0, 0, "ADC Reading: " + String(avarageBatteryADCReading), ST7735_BLACK);
+    clearLine(1); // Clear line 0
+    drawText(0, 8, " ADC: " + String(avarageBatteryADCReading), ST7735_BLACK);
 
-    clearLine(1); // Clear line 1
-    drawText(0, 8, "Battery Voltage: " + String(calculateBatteryVoltage(avarageBatteryADCReading)) + "v", ST7735_BLACK);
+    clearLine(2); // Clear line 1
+    drawText(0, 16, " " + String(calculateBatteryVoltage(avarageBatteryADCReading)) + "v", ST7735_BLACK);
 
-    clearLine(2); // Clear line 2
-    drawText(0, 16, "Battery Percentage: " + String(calculateBatteryPercentage(avarageBatteryADCReading)) + "%", ST7735_BLACK);
+    clearLine(3); // Clear line 2
+    drawText(0, 24, " " + String(calculateBatteryPercentage(avarageBatteryADCReading)) + "%", ST7735_BLACK);
   }
 
   isNewVoltageADCReadingAvailable = false;
