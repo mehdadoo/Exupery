@@ -52,7 +52,13 @@ unsigned int currentJoystickReadingtIndex = 0; // Index for readings arrays
 unsigned int readingsCount = 0; // Counter for readings
 int averageJoystickX = 0;
 int averageJoystickY = 0;
-const int threshold = 25; // Threshold for change in joystick values to trigger sending data
+const int threshold = 20; // Threshold for change in joystick values to trigger sending data
+int centerJoystickX = 995;
+int centerJoystickY = 966;
+int minJoystickX = 0;
+int maxJoystickX = 1976;
+int minJoystickY = 0;
+int maxJoystickY = 1982;
 
 
 
@@ -132,7 +138,7 @@ int pixel_y = 0;
 int square_x = 0; //  x position
 int square_y = 0; //  y position
 int square_width = 128; //  width of square
-int joystick_maxValue = 2048;
+//int joystick_maxValue = 2048;
 
 void updateJoystickDisplay() 
 {
@@ -142,9 +148,12 @@ void updateJoystickDisplay()
   tft.drawPixel(pixel_x-1, pixel_y, ST7735_WHITE);
   tft.drawPixel(pixel_x, pixel_y-1, ST7735_WHITE);
 
+  int joystick_x_percentage = calculatePercentage(lastJoystickX, centerJoystickX, minJoystickX, maxJoystickX );
+  int joystick_y_percentage = calculatePercentage(lastJoystickY, centerJoystickY, minJoystickY, maxJoystickY );
+
   // Map joystick values to screen coordinates
-  pixel_x =  map(lastJoystickX, joystick_maxValue, 0, square_x, square_x + square_width); // Map joystick X value to screen width
-  pixel_y =  map(lastJoystickY, 0, joystick_maxValue, square_y, square_y + square_width); // Map joystick Y value to screen height
+  pixel_x =  map(joystick_x_percentage, 100 , -100 , square_x, square_x + square_width); // Map joystick X value to screen width
+  pixel_y =  map(joystick_y_percentage, -100, 100, square_y, square_y + square_width); // Map joystick Y value to screen height
 
   tft.drawPixel(pixel_x, pixel_y, ST7735_BLACK);
   tft.drawPixel(pixel_x+1, pixel_y, ST7735_BLACK);
@@ -155,6 +164,14 @@ void updateJoystickDisplay()
 
   // Draw the frame for the joystick display area
   //tft.drawRect(square_x, square_y, square_width, square_width, ST7735_BLACK);
+}
+
+int calculatePercentage(int value, int center, int minVal, int maxVal) {
+  if (value >= center) {
+    return map(value, center, maxVal, 0, 100);
+  } else {
+    return -map(value, center, minVal, 0, 100);
+  }
 }
 
 
@@ -177,14 +194,15 @@ float mapFloat(float x, float in_min, float in_max, float out_min, float out_max
 
 float calculateBatteryVoltage(int adcReading) 
 {
-  float batteryVoltage = mapFloat(adcReading, 627, 822, 3.3, 4.0);
+  float batteryVoltage = mapFloat(adcReading, 700, 840, 3.3, 4.0);
   return batteryVoltage;
 }
 
 int calculateBatteryPercentage(int adcReading) 
 {
-  float percentage = cubicEaseInOut(mapFloat(adcReading, 625, 825, 0.0, 1.0));
-  return int(percentage * 100);
+  float percentage = cubicEaseInOut(mapFloat(adcReading, 700, 830, 0.0, 1.0)) * 100;
+  percentage = constrain(percentage, 0, 100);
+  return int(percentage);
 }
 
 // Cubic easing function
@@ -243,7 +261,16 @@ void compileVoltageSerialData()
 }
 
 
+void calibrateJoystick() 
+{
+  // Read joystick data to get the center point
+  readJoystickData();
 
+  // Set the center point
+  centerJoystickX = averageJoystickX;
+  centerJoystickY = averageJoystickY;
+
+}
 
 void readJoystickData() 
 {
@@ -277,6 +304,21 @@ void readJoystickData()
   }
 }
 
+void updateJoystickLimits() 
+{
+  if (averageJoystickX < minJoystickX) {
+    minJoystickX = averageJoystickX;
+  } else if (averageJoystickX > maxJoystickX) {
+    maxJoystickX = averageJoystickX;
+  }
+
+  if (averageJoystickY < minJoystickY) {
+    minJoystickY = averageJoystickY;
+  } else if (averageJoystickY > maxJoystickY) {
+    maxJoystickY = averageJoystickY;
+  }
+}
+
 void compileButtonStatesSerialData() 
 {
   for (int i = 0; i < numButtons; i++) 
@@ -287,6 +329,19 @@ void compileButtonStatesSerialData()
       UARTMessage += "|B" + String(i) + ":" + String(buttonStates[i]);
 
       stateChanged = true;
+
+      if( i == 0 && buttonStates[i] == 1)
+      {
+        change_tft_backlight( -25 );
+      }
+      else if( i == 1 && buttonStates[i] == 1)
+      {
+        change_tft_backlight( 25 );
+      }
+      else if( i == 2 && buttonStates[i] == 1)
+      {
+        calibrateJoystick();
+      }
     }
   }
 }
@@ -335,6 +390,15 @@ void sendSerialData()
   }
 }
 
+const int tft_backlight_pin = 36;
+int tft_backlight = 100;
+void change_tft_backlight( int change_value ) 
+{
+  tft_backlight += change_value;
+  tft_backlight = constrain(tft_backlight, 0, 255);
+  analogWrite(tft_backlight_pin, tft_backlight); // Set the analog value to control the LED brightness
+}
+
 void setup() 
 {
   Serial.begin(115200);
@@ -349,6 +413,8 @@ void setup()
 
   pinMode(batteryVoltagePin, INPUT);
 
+  pinMode(tft_backlight_pin, OUTPUT);
+
 
   // Initialize button pins as inputs with internal pull-up
   for (int i = 0; i < numButtons; i++) {
@@ -359,8 +425,10 @@ void setup()
   pinMode(ledBluePin, OUTPUT);
 
 
+
   // Initialize the ST7735 display
   tft.initR(INITR_144GREENTAB); // Init display with black tab
+  change_tft_backlight(0);
   tft.fillScreen(ST7735_WHITE); // Clear the screen
 
   SerialPort.print("START|BX:0|BY:0|END");
@@ -370,6 +438,7 @@ void loop()
 {
   readButtonData();
   readJoystickData();
+  updateJoystickLimits();
   readVoltageData();
   compileSerialData();
   sendSerialData();
