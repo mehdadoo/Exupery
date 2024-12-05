@@ -1,7 +1,7 @@
 #include <ESP32Servo.h>
 
 Servo servoMotor;  // Define the servo object
-const int servoPin = 16;  // Define the pin for the servo
+const int servoPin = 17;  // Define the pin for the servo
 bool servoAttached = true;  // Flag to track if the servo is attached
 
 int targetAngle = 0;
