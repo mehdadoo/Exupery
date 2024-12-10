@@ -18,6 +18,9 @@
 #define SERVO_BRAKE_2 17
 #define SERVO_STEERING 21
 
+#define DistanceSensor_trigPin 37
+#define DistanceSensor_echoPin 38
+
 // Pin definitions for LCD
 /*#define TFT_CS 3 
 #define TFT_DC 5

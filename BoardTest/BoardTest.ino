@@ -112,6 +112,9 @@ void initializePins()
   pinMode(VOLTMETER_BATTERY, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
+  pinMode(DistanceSensor_trigPin, OUTPUT);
+  pinMode(DistanceSensor_echoPin, INPUT);
+
   Serial.println("Pins initialize");
 }
 
@@ -146,8 +149,9 @@ void loop()
   handleCarKeySwitch();
   updateVoltmeters();
   //updateServos();
-  updatePotentiometers();
-  updateMPU();
+  //updatePotentiometers();
+  //updateMPU();
+  updateDistanceSensor();
 }
 
 
@@ -180,21 +184,21 @@ void updatePotentiometers()
 }
 
 // Define the necessary variables
-unsigned long lastUpdateTime = 0; // Stores the last update time
-unsigned long updateInterval = 50; // Set the interval in milliseconds (can be updated as needed)
+unsigned long MPU_LastUpdateTime = 0; // Stores the last update time
+unsigned long MPU_UpdateInterval = 50; // Set the interval in milliseconds (can be updated as needed)
 
 void updateMPU()
 {
   unsigned long currentTime = millis();
 
   // Check if the required time interval has passed
-  if (currentTime - lastUpdateTime < updateInterval)
+  if (currentTime - MPU_LastUpdateTime < MPU_UpdateInterval)
   {
     return; // Exit the method if the interval hasn't passed
   }
 
   // Update the last update time
-  lastUpdateTime = currentTime;
+  MPU_LastUpdateTime = currentTime;
 
   // Read sensor data
   IMU.readSensor();
@@ -206,6 +210,37 @@ void updateMPU()
   Serial.println("\t");
 
   setVoltmeterPWM(VOLTMETER_BATTERY, carAngle, 7);
+}
+
+unsigned long previousMillis = 0;  // Will store the last time the distance sensor was updated
+const long DistanceSensor_UpdateInterval = 1000;  // Interval between updates in milliseconds
+long duration;
+int distance;
+void updateDistanceSensor()
+{
+  unsigned long currentMillis = millis();  // Get current time in milliseconds
+
+  if (currentMillis - previousMillis >= DistanceSensor_UpdateInterval)
+   {
+    // Save the last time the sensor was updated
+    previousMillis = currentMillis;
+
+    // Trigger the sensor
+    digitalWrite(DistanceSensor_trigPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(DistanceSensor_trigPin, HIGH);
+    delayMicroseconds(20);
+    digitalWrite(DistanceSensor_trigPin, LOW);
+
+    // Measure the pulse width
+    duration = pulseIn(DistanceSensor_echoPin, HIGH);
+
+    // Calculate the distance in cm
+    distance = duration * 0.034 / 2.0;
+
+    // Print the distance (or do something with it)
+    Serial.println(distance);
+  }
 }
 
 
