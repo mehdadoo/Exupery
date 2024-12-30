@@ -17,10 +17,13 @@ class BrakeSystem
     void setup();
     void update();
 
+    int brakeLeverPosition;
+    int servoPosition;
+
   private:
     // Private properties
     Servo servo;
-    int brakeLeverPosition;
+    
     int lowerLeverThreshold;
     int upperLeverThreshold;
     RotaryEncoder rotary;     // the rotatory encoder in the brake lever, it is a ky040

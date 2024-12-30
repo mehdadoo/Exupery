@@ -7,13 +7,11 @@ SpeedSensor* SpeedSensor::instance = nullptr;
 
 // Constructor
 SpeedSensor::SpeedSensor()
-:led(BuiltInLEDController()) 
 {
     // Set the static instance to this object
     rpm = 0;
     speed = 0;
     lastSensorTriggerTime = 0;
-    lastUpdateTime = 0;
     instance = this;
 }
 
@@ -21,14 +19,7 @@ SpeedSensor::SpeedSensor()
 // Update the gearbox
 void SpeedSensor::update() 
 {
-  unsigned long currentTime = millis();
-
-  // Check if the timeout period has elapsed since the last sensor trigger
-  if (currentTime - lastSensorTriggerTime > STOP_TIMEOUT) 
-  {
-      rpm ++ ;   // Set RPM to 0
-      speed += 2 ; // Set speed to 0
-  }
+  //isCarStopped();
 }
 
 
@@ -44,54 +35,62 @@ void SpeedSensor::onTriggerSpeedSensor()
 }
 
 // Actual handler for the speed sensor
+// Actual handler for the speed sensor
 void SpeedSensor::handleSpeedSensor() 
 {
-    static unsigned long lastInterruptTime = 0;  // For debouncing
-    unsigned long currentInterruptTime = millis();
+    static int lastSensorState = HIGH; // Track the last state of the sensor
 
-    // Ignore interrupts triggered within the debounce interval
-    if (currentInterruptTime - lastInterruptTime < DEBOUNCE_INTERVAL) 
-    {
-        return;
-    }
-
-    lastInterruptTime = currentInterruptTime;
-
-    // Check the state of the sensor
+    // Read the current state of the sensor
     int sensorState = digitalRead(SPEED_SENSOR_PIN);
 
-    if (sensorState == HIGH) 
+    // Check for a HIGH to LOW transition (magnet passing the sensor)
+    if (sensorState == LOW && lastSensorState == HIGH) 
     {
-        led.off();
+        unsigned long currentTime = millis();
+        
+        // Ensure there is enough time since last calculation
+        if (currentTime - lastSensorTriggerTime >= SENSOR_INTERVAL_50KMH) 
+        {
+            // Record the time of this sensor trigger
+            lastSensorTriggerTime = currentTime;
 
-        // Record the time of this sensor trigger
-        lastSensorTriggerTime = currentInterruptTime;
+            // Calculate RPM and Speed
+            calculateRPM();
+        }
 
-        // Defer RPM calculation to avoid doing too much in the interrupt
-        calculateRPM();
-    } 
-    else 
-    {
-        led.on();
+        digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on
     }
+    else if (sensorState == HIGH && lastSensorState == LOW)
+    {
+        digitalWrite(LED_BUILTIN, LOW); // Turn the LED off
+    }
+
+    // Update the last sensor state
+    lastSensorState = sensorState;
 }
 
 void SpeedSensor::calculateRPM() 
 {
+    rpm++;
+    speed +=2;
+    return;
     unsigned long currentTime = millis();
     unsigned long timeSinceLastTrigger = currentTime - lastSensorTriggerTime;
 
     // Ensure there's a valid time difference to avoid division by zero
     if (timeSinceLastTrigger > 0) 
     {
-        // RPM is revolutions per minute (60 seconds per minute, 1000ms per second)
-        rpm = (SECONDS_PER_MINUTE * 1000) / timeSinceLastTrigger;
+        // Calculate RPM (Revolutions Per Minute)
+        rpm = (60 * 1000) / timeSinceLastTrigger;
 
-        // Calculate speed in km/h
+        // Calculate speed in km/h using the wheel circumference
         float wheelCircumference = WHEEL_DIAMETER * INCHES_TO_METERS * 3.14159; // Circumference in meters
-        speed = (rpm * wheelCircumference * SECONDS_PER_MINUTE) / (1000 * 1000); // Convert to km/h
+        speed = (rpm * wheelCircumference * 60) / 1000; // Speed in km/h
     }
 }
+
+
+
 
 bool SpeedSensor::isCarStopped() 
 {
@@ -99,19 +98,26 @@ bool SpeedSensor::isCarStopped()
     unsigned long currentTime = millis();
     if (currentTime - lastSensorTriggerTime > STOP_TIMEOUT) 
     {
-        rpm = 0;
-        speed = 0;
+        //rpm = 0;
+        //speed = 0;
         return true;
     }
     return false;
 }
 
+
+/////////////////////////////////////////////////////////////////////
+////////////////////          Setup         /////////////////////////
+/////////////////////////////////////////////////////////////////////
 void SpeedSensor::setup() 
 {
+  //setup sensor pin
   pinMode(SPEED_SENSOR_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(SPEED_SENSOR_PIN), onTriggerSpeedSensor, FALLING);
 
-  led.setup();
+  //setup led
+  pinMode(LED_BUILTIN, OUTPUT);
+	digitalWrite(LED_BUILTIN, LOW); // Start with the LED off
 
   WiFiPrinter::print(CUSTOM_MESSAGE, "SpeedSensor setup complete!");
 }

@@ -51,13 +51,11 @@ void BrakeSystem::updateServo()
       float easedPosition = pow(normalizedPosition, 1.0 / 3.0);
 
       // Map easedPosition to servo angle range
-      int servoPosition = MIN_BRAKE_ANGLE + 
+      servoPosition = MIN_BRAKE_ANGLE + 
           (int)(easedPosition * (MAX_BRAKE_ANGLE - MIN_BRAKE_ANGLE));
 
       // Move servo
       servo.write(servoPosition);
-
-      WiFiPrinter::print(BRAKE_SERVO_CONSTANT, servoPosition); 
   }
 }
 
@@ -137,8 +135,6 @@ void BrakeSystem::onBrakeLeverPositionChange()
         instance->brakeLeverPosition = std::clamp(instance->brakeLeverPosition, 0, MAX_BRAKE_LEVER_STEPS);
 
         instance->brakeSystemUpToDate = false;
-
-        WiFiPrinter::print(BRAKE_LEVER_CONSTANT, instance->brakeLeverPosition); 
     }
 }
 

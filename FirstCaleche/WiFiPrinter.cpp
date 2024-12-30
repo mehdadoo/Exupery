@@ -27,12 +27,23 @@ void WiFiPrinter::setup() {
       // Send the current message as raw JSON
       Serial.println("Request received. Sending data...");
       server.send(200, "application/json", printMessage);
+
+
+      // Remove the "message" field
+      DynamicJsonDocument doc(1024); // Allocate enough space for the document
+      deserializeJson(doc, printMessage);  // Deserialize the printMessage JSON
+      if (doc.containsKey("message")) 
+        doc.remove("message");
+      serializeJson(doc, printMessage);// Serialize the updated JSON document back into the printMessage string
     });
+
+
     server.begin();
 
     Serial.println("Connected to Wi-Fi");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
+
   } else {
     Serial.println("Failed to connect to WiFi");
   }
@@ -47,7 +58,6 @@ void WiFiPrinter::update() {
   // Handle Wi-Fi connection retry logic if disconnected (optional)
 }
 
-// Method to update the JSON string or create new key-value pairs
 void WiFiPrinter::print(int dataType, const String& value) {
   // Create a dynamic JSON document to parse and update the existing JSON
   DynamicJsonDocument doc(1024); // Allocate enough space for the document
@@ -55,7 +65,14 @@ void WiFiPrinter::print(int dataType, const String& value) {
   // Deserialize the current JSON string (printMessage) into the document
   deserializeJson(doc, printMessage);
 
-  doc["message"] = value;  // Update or add the "rpm" field
+  // Append the new message to the existing one with a newline character
+  if (doc.containsKey("message")) {
+    String currentMessage = doc["message"].as<String>();
+    currentMessage += "\n" + value;  // Add the new message with a newline
+    doc["message"] = currentMessage;  // Update the "message" field
+  } else {
+    doc["message"] = value;  // If no message field exists, create it
+  }
 
   // Serialize the updated JSON document back into the printMessage string
   serializeJson(doc, printMessage);
@@ -63,6 +80,7 @@ void WiFiPrinter::print(int dataType, const String& value) {
   // Print to Serial for testing
   Serial.println(printMessage);
 }
+
 
 // Overloaded print method to handle integer values
 void WiFiPrinter::print(int dataType, int value) {
@@ -91,4 +109,23 @@ void WiFiPrinter::print(int dataType, int value) {
 
   // Print to Serial for testing
   Serial.println(printMessage);
+}
+
+// Overloaded print method to handle integer values
+void WiFiPrinter::printAll(int rpm, int speed, int brakeLeverPosition, int brakeServoPosition)
+{
+  // Create a dynamic JSON document to parse and update the existing JSON
+  DynamicJsonDocument doc(1024); // Allocate enough space for the document
+
+  // Deserialize the current JSON string (printMessage) into the document
+  deserializeJson(doc, printMessage);
+
+  // Update the value based on the dataType
+  doc["rpm"] = rpm; 
+  doc["speed"] = speed; 
+  doc["brakeLeverPosition"] = brakeLeverPosition;
+  doc["brakeServoPosition"] = brakeServoPosition;
+
+  // Serialize the updated JSON document back into the printMessage string
+  serializeJson(doc, printMessage);
 }

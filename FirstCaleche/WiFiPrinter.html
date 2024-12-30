@@ -4,7 +4,60 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ESP32 AJAX</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    h2 {
+      font-weight: 700;
+      color: #555;
+      margin: 10px 0;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px;
+    }
+    .box {
+      flex: 1 1 calc(25% - 10px); /* Four boxes in a row */
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .full-width-box {
+      flex: 1 1 100%; /* Full width */
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: left;
+      white-space: pre-wrap; /* Maintain formatting for messages and responses */
+    }
+    pre {
+      margin: 0;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 14px;
+      color: #444;
+      overflow-x: auto;
+    }
+  </style>
+  
   <script>
+    let star = false;  // Initial state of the star flag
+
     // Function to fetch data from ESP32
     function fetchData() {
       fetch("http://192.168.1.77/getData")  // Make sure the IP matches your ESP32 IP
@@ -36,7 +89,18 @@
 
           // Update Message if present in the response
           if (data.message !== undefined) {
-            document.getElementById("messageValue").innerText = "Message: " + data.message;
+            const messageField = document.getElementById("messageValue");
+            messageField.innerText += "\n" + data.message;  // Append the new message
+          }
+
+          // Toggle Raw Response text between "Raw Response:" and "Raw Response:*"
+          const rawResponseText = document.getElementById("rawResponseText");
+          if (!star) {
+            rawResponseText.innerText = "Raw Response:*";
+            star = true;
+          } else {
+            rawResponseText.innerText = "Raw Response:";
+            star = false;
           }
         })
         .catch(error => {
@@ -44,21 +108,26 @@
         });
     }
 
-    // Polling every second (1000ms)
-    setInterval(fetchData, 1000);
+    // Polling every second (500ms)
+    setInterval(fetchData, 500);
   </script>
 </head>
 <body>
-  <h1>Real-Time ESP32 Data:</h1>
+  <div class="container">
+    <!-- Four horizontal boxes -->
+    <div class="box" id="rpmValue">RPM: Waiting for data...</div>
+    <div class="box" id="speedValue">Speed: Waiting for data...</div>
+    <div class="box" id="brakeLeverPositionValue">Brake Lever Position: Waiting for data...</div>
+    <div class="box" id="brakeServoPositionValue">Brake Servo Position: Waiting for data...</div>
 
-  <!-- Display values for each type of data -->
-  <div id="rpmValue">RPM: Waiting for data...</div>
-  <div id="speedValue">Speed: Waiting for data...</div>
-  <div id="brakeLeverPositionValue">Brake Lever Position: Waiting for data...</div>
-  <div id="brakeServoPositionValue">Brake Servo Position: Waiting for data...</div>
-  <div id="messageValue">Message: Waiting for data...</div>
+    <!-- Full-width message box -->
+    <div class="full-width-box" id="messageValue">Message:</div>
 
-  <h2>Raw Response:</h2>
-  <pre id="rawResponse">Waiting for response...</pre>
+    <!-- Full-width raw response box -->
+    <div class="full-width-box">
+      <h2><span id="rawResponseText">Raw Response:</span></h2>
+      <pre id="rawResponse">Waiting for response...</pre>
+    </div>
+  </div>
 </body>
 </html>

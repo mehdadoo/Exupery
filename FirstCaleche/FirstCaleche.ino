@@ -42,11 +42,27 @@ void setup()
 }
 
 
+void updateOverHTTP()
+{
+  static unsigned long lastUpdateTime = 0; // Tracks the last time the method was called
+  unsigned long currentTime = millis();
+
+  // Check if enough time has been passed since last print call
+  if (currentTime - lastUpdateTime >= UPDATE_OVER_HTTP_FREQUENCY) 
+  {
+      lastUpdateTime = currentTime; // Update the last update time
+      WiFiPrinter::printAll( speedSensor.getRPM(), speedSensor.getSpeed(), brakeSystem.brakeLeverPosition, brakeSystem.servoPosition );
+  }
+  WiFiPrinter::update();
+}
+
+
 void loop()
 {
-  WiFiPrinter::update();
   speedSensor.update();
   gearbox.update();
   brakeSystem.update();
   nightLights.update();
+  
+  updateOverHTTP();
 }
