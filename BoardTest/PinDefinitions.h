@@ -21,13 +21,16 @@
 #define DistanceSensor_trigPin 37
 #define DistanceSensor_echoPin 38
 
+#define DigiPot_NC 16
+#define DigiPot_UD 18
+#define DigiPot_CS1 8
+#define DigiPot_CS2 9
+
 // Pin definitions for LCD
-/*#define TFT_CS 3 
-#define TFT_DC 5
-#define TFT_RST -1
-#define GFX_BL 6
-#define TFT_SCK 7
-#define TFT_MOSI 9
-#define TFT_MISO -1*/
+#define TFT_CS 2 
+#define TFT_DC 4
+#define TFT_RST 6
+#define TFT_SCK 12
+#define TFT_MOSI 13
 
 #endif
