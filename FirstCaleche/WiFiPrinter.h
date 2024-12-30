@@ -3,6 +3,7 @@
 
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ArduinoJson.h>
 
 class WiFiPrinter 
 {

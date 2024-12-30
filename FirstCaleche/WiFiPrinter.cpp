@@ -1,122 +1,94 @@
 #include "WiFiPrinter.h"
 #include "ConstantDefinitions.h"
+#include <ArduinoJson.h>
 
 // Initialize static member
 WebServer WiFiPrinter::server(80);  // Set up the server on port 80
-unsigned long WiFiPrinter::lastRetryTime = 0; // Initialize to 0
-int WiFiPrinter::retryCount = 0;              // Initialize to 0
-String printMessage = "";  // Global variable to store the message to be printed
+String printMessage = "{}";  // Initial JSON message (empty)
 
 // Static method to begin Wi-Fi connection and start the server
-void WiFiPrinter::setup()
-{
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+void WiFiPrinter::setup() {
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.println("Connecting to WiFi...");
 
-    if (WiFi.status() == WL_CONNECTED)
-    {
-        // Initialize web server
-        server.on("/getData", HTTP_GET, []() {
-            server.send(200, "text/plain", printMessage); // Send the current message
-        });
-        server.begin();
-        retryCount = 0; // Reset retry count upon successful connection
-    }
-}
-
-
-void WiFiPrinter::update() 
-{       
-  if (WiFi.status() == WL_CONNECTED)
-  {
-      server.handleClient(); // Handle HTTP requests
-      return;
+  unsigned long startMillis = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startMillis < 5000) {
+    delay(10);
   }
 
-  // Check if retry attempts are exhausted
-  if (retryCount >= MAX_WIFI_CONNECTION_RETRIES)
-  {
-      return;
-  }
+  if (WiFi.status() == WL_CONNECTED) {
+    // Initialize web server
+    server.on("/getData", HTTP_GET, []() {
+      // Allow cross-origin requests
+      server.sendHeader("Access-Control-Allow-Origin", "*");
+      server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      server.sendHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With");
+      
+      // Send the current message as raw JSON
+      Serial.println("Request received. Sending data...");
+      server.send(200, "application/json", printMessage);
+    });
+    server.begin();
 
-  // Check if it's time to retry
-  unsigned long currentMillis = millis();
-  if (currentMillis - lastRetryTime >= RETRY_INTERVAL)
-  {
-      lastRetryTime = currentMillis;
-      retryCount++;
-      setup(); // Retry WiFi setup
+    Serial.println("Connected to Wi-Fi");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("Failed to connect to WiFi");
   }
 }
 
-// Static method to send data over Wi-Fi to connected clients
-void WiFiPrinter::print(int dataType, const String& value) 
-{
-  if (WiFi.status() != WL_CONNECTED)
+// Static method to handle Wi-Fi retry logic and keep server running
+void WiFiPrinter::update() {
+  if (WiFi.status() == WL_CONNECTED) {
+    server.handleClient(); // Handle HTTP requests
     return;
-
-  String jsonData = "{";
-
-  // Handle different data types
-  if (dataType == RPM_CONSTANT) {
-    jsonData += "\"RPM\": \"" + value + "\"";
-  } 
-  else if (dataType == SPEED_CONSTANT) {
-    jsonData += "\"speed\": \"" + value + "\"";
   }
-  else if (dataType == BRAKE_LEVER_CONSTANT) {
-    jsonData += "\"brakeLeverPosition\": \"" + value + "\"";
-  }
-  else if (dataType == BRAKE_SERVO_CONSTANT) {
-    jsonData += "\"brakeServoPosition\": \"" + value + "\"";
-  }
-  else if (dataType == CUSTOM_MESSAGE) {
-    jsonData += "\"message\": \"" + value + "\"";
-  }
+  // Handle Wi-Fi connection retry logic if disconnected (optional)
+}
 
-  // Closing the JSON object
-  jsonData += "}";
+// Method to update the JSON string or create new key-value pairs
+void WiFiPrinter::print(int dataType, const String& value) {
+  // Create a dynamic JSON document to parse and update the existing JSON
+  DynamicJsonDocument doc(1024); // Allocate enough space for the document
 
-  // Send the JSON data over Wi-Fi to the client
-  WiFiClient client = server.client();  // Get the connected client
-  if (client && client.connected()) 
-  {
-    client.println(jsonData);  // Send the JSON data to the client
-  }
+  // Deserialize the current JSON string (printMessage) into the document
+  deserializeJson(doc, printMessage);
 
+  doc["message"] = value;  // Update or add the "rpm" field
+
+  // Serialize the updated JSON document back into the printMessage string
+  serializeJson(doc, printMessage);
+
+  // Print to Serial for testing
+  Serial.println(printMessage);
 }
 
 // Overloaded print method to handle integer values
-void WiFiPrinter::print(int dataType, int value)
-{
-  if (WiFi.status() != WL_CONNECTED)
-    return;
-    
-  String jsonData = "{";
+void WiFiPrinter::print(int dataType, int value) {
+  // Create a dynamic JSON document to parse and update the existing JSON
+  DynamicJsonDocument doc(1024); // Allocate enough space for the document
 
-  // Handle different data types
+  // Deserialize the current JSON string (printMessage) into the document
+  deserializeJson(doc, printMessage);
+
+  // Update the value based on the dataType
   if (dataType == RPM_CONSTANT) {
-    jsonData += "\"RPM\": " + String(value);
+    doc["rpm"] = value;  // Update or add the "rpm" field
   } 
   else if (dataType == SPEED_CONSTANT) {
-    jsonData += "\"speed\": " + String(value);
+    doc["speed"] = value;  // Update or add the "speed" field
   }
   else if (dataType == BRAKE_LEVER_CONSTANT) {
-    jsonData += "\"brakeLeverPosition\": " + String(value);
+    doc["brakeLeverPosition"] = value;  // Update or add the "speed" field
   }
   else if (dataType == BRAKE_SERVO_CONSTANT) {
-    jsonData += "\"brakeServoPosition\": \"" + String(value);
-  }
-  else if (dataType == CUSTOM_MESSAGE) {
-    jsonData += "\"message\": \"" + String(value) + "\"";
+    doc["brakeServoPosition"] = value;  // Update or add the "speed" field
   }
 
-  // Closing the JSON object
-  jsonData += "}";
+  // Serialize the updated JSON document back into the printMessage string
+  serializeJson(doc, printMessage);
 
-  // Send the JSON data over Wi-Fi to the client
-  WiFiClient client = server.client();  // Get the connected client
-  if (client && client.connected()) 
-  {
-    client.println(jsonData);  // Send the JSON data to the client
-  }
+  // Print to Serial for testing
+  Serial.println(printMessage);
 }

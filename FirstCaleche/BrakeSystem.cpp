@@ -153,7 +153,6 @@ void BrakeSystem::setup()
   rotary.setup();
   setupServo();
   
-  Serial.println("BrakeSystem setup complete!");
   WiFiPrinter::print(CUSTOM_MESSAGE, "BrakeSystem setup complete!");
 }
 

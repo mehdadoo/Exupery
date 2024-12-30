@@ -21,6 +21,8 @@
 #define INCHES_TO_METERS      0.0254
 #define SECONDS_PER_MINUTE    60
 #define STOP_TIMEOUT          2300 // at 3k/h this time is needed for each reading of the speed sensor. so basically we consider speeds lower than this as stopped!
+#define DEBOUNCE_INTERVAL     50         // Debounce interval in milliseconds
+#define SPEED_UPDATE_FREQUENCY 1000
 
 //WiFiPrinter
 #define WIFI_PASSWORD                 "cScrT9vJRTHCf3vzh2"

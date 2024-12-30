@@ -14,9 +14,24 @@ NightLights nightLights; // Pass speedSensor to the  onstructor
 
 void setup()
 {
-  WiFiPrinter::setup();
+  Serial.begin(9600);
 
+  // Check if the serial port is available
+  unsigned long startMillis = millis();
+  while (!Serial && millis() - startMillis < 2000) 
+  {
+    // Wait up to 5 seconds for the serial connection
+    delay(10);
+  }
+
+
+  Serial.println( "Serial startup: " + String ( millis() - startMillis ) );
+  
+
+  WiFiPrinter::setup();
   WiFiPrinter::print(CUSTOM_MESSAGE, "First Caleche, Bonjour!");
+
+  
 
   speedSensor.setup();
   gearbox.setup();

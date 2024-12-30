@@ -7,50 +7,58 @@
   <script>
     // Function to fetch data from ESP32
     function fetchData() {
-      fetch("http://192.168.1.77/getData")  // Get the data from ESP32
+      fetch("http://192.168.1.77/getData")  // Make sure the IP matches your ESP32 IP
         .then(response => response.json())
         .then(data => {
-          // Update RPM value
-          if (data.RPM) {
-            document.getElementById("RPMValue").innerText = "RPM: " + data.RPM;
+          // Update the page with the raw JSON response
+          const rawData = JSON.stringify(data, null, 2); // Pretty-print JSON
+          document.getElementById("rawResponse").innerText = rawData;
+
+          // Update RPM value if present in the response
+          if (data.rpm !== undefined) {
+            document.getElementById("rpmValue").innerText = "RPM: " + data.rpm;
           }
           
-          // Update Speed value
-          if (data.speed) {
+          // Update Speed value if present in the response
+          if (data.speed !== undefined) {
             document.getElementById("speedValue").innerText = "Speed: " + data.speed;
           }
 
-          // Update Brake Lever Position value
-          if (data.brakeLeverPosition) {
+          // Update Brake Lever Position if present in the response
+          if (data.brakeLeverPosition !== undefined) {
             document.getElementById("brakeLeverPositionValue").innerText = "Brake Lever Position: " + data.brakeLeverPosition;
           }
 
-          // Update Brake Servo Position value
-          if (data.brakeServoPosition) {
+          // Update Brake Servo Position if present in the response
+          if (data.brakeServoPosition !== undefined) {
             document.getElementById("brakeServoPositionValue").innerText = "Brake Servo Position: " + data.brakeServoPosition;
           }
 
-          // Update Custom Messages (append to the previous ones)
-          if (data.message) {
-            document.getElementById("customMessage").innerText += "\n" + data.message;
+          // Update Message if present in the response
+          if (data.message !== undefined) {
+            document.getElementById("messageValue").innerText = "Message: " + data.message;
           }
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
         });
     }
 
-    // Polling every second
-    setInterval(fetchData, 100);
+    // Polling every second (1000ms)
+    setInterval(fetchData, 1000);
   </script>
 </head>
 <body>
   <h1>Real-Time ESP32 Data:</h1>
 
   <!-- Display values for each type of data -->
-  <div id="RPMValue">RPM: Waiting for data...</div>
+  <div id="rpmValue">RPM: Waiting for data...</div>
   <div id="speedValue">Speed: Waiting for data...</div>
   <div id="brakeLeverPositionValue">Brake Lever Position: Waiting for data...</div>
   <div id="brakeServoPositionValue">Brake Servo Position: Waiting for data...</div>
-  
-  <!-- Display custom messages, appending new messages -->
-  <div id="customMessage">Custom Messages:</div>
+  <div id="messageValue">Message: Waiting for data...</div>
+
+  <h2>Raw Response:</h2>
+  <pre id="rawResponse">Waiting for response...</pre>
 </body>
 </html>

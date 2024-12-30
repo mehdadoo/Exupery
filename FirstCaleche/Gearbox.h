@@ -3,8 +3,6 @@
 
 #include <ESP32Servo.h>
 #include "SpeedSensor.h"
-#include "PinDefinitions.h"
-#include "ConstantDefinitions.h"
 
 class Gearbox 
 {
