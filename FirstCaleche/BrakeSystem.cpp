@@ -71,17 +71,12 @@ void BrakeSystem::updateBrakeLights()
     if (brakeLeverPosition <= lowerLeverThreshold) 
     {
         digitalWrite(LIGHT_BRAKE_PIN, LOW); // Brake light off
-        positionInRangeStartTime = 0; // Reset the timer since it's out of range
+        lightState = false; // Ensure state is consistent
     } 
     else if (brakeLeverPosition <= upperLeverThreshold) 
     {
-        // Check if the lever has been in the range for DELAY_BEFORE_FULL_BRAKE_BRIGHTNESS
-        if (positionInRangeStartTime == 0) 
-        {
-            positionInRangeStartTime = currentTime; // Start timing
-        }
 
-        if (currentTime - positionInRangeStartTime > DELAY_BEFORE_FULL_BRAKE_BRIGHTNESS) 
+        if ( speedSensor.isCarStopped() ) 
         {
             // Full brightness: Keep the light on
             digitalWrite(LIGHT_BRAKE_PIN, HIGH);
@@ -104,11 +99,6 @@ void BrakeSystem::updateBrakeLights()
             }
         }
     } 
-    else 
-    {
-        // Reset the timer if the lever position leaves the range
-        positionInRangeStartTime = 0;
-    }
 }
 
 
