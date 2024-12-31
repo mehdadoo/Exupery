@@ -50,15 +50,17 @@ void WiFiPrinter::setup() {
 }
 
 // Static method to handle Wi-Fi retry logic and keep server running
-void WiFiPrinter::update() {
-  if (WiFi.status() == WL_CONNECTED) {
+void WiFiPrinter::update()
+{
+  if (WiFi.status() == WL_CONNECTED) 
+  {
     server.handleClient(); // Handle HTTP requests
     return;
   }
   // Handle Wi-Fi connection retry logic if disconnected (optional)
 }
 
-void WiFiPrinter::print(int dataType, const String& value) {
+void WiFiPrinter::print(const String& value) {
   // Create a dynamic JSON document to parse and update the existing JSON
   DynamicJsonDocument doc(1024); // Allocate enough space for the document
 
@@ -81,38 +83,8 @@ void WiFiPrinter::print(int dataType, const String& value) {
   Serial.println(printMessage);
 }
 
-
 // Overloaded print method to handle integer values
-void WiFiPrinter::print(int dataType, int value) {
-  // Create a dynamic JSON document to parse and update the existing JSON
-  DynamicJsonDocument doc(1024); // Allocate enough space for the document
-
-  // Deserialize the current JSON string (printMessage) into the document
-  deserializeJson(doc, printMessage);
-
-  // Update the value based on the dataType
-  if (dataType == RPM_CONSTANT) {
-    doc["rpm"] = value;  // Update or add the "rpm" field
-  } 
-  else if (dataType == SPEED_CONSTANT) {
-    doc["speed"] = value;  // Update or add the "speed" field
-  }
-  else if (dataType == BRAKE_LEVER_CONSTANT) {
-    doc["brakeLeverPosition"] = value;  // Update or add the "speed" field
-  }
-  else if (dataType == BRAKE_SERVO_CONSTANT) {
-    doc["brakeServoPosition"] = value;  // Update or add the "speed" field
-  }
-
-  // Serialize the updated JSON document back into the printMessage string
-  serializeJson(doc, printMessage);
-
-  // Print to Serial for testing
-  Serial.println(printMessage);
-}
-
-// Overloaded print method to handle integer values
-void WiFiPrinter::printAll(int rpm, int speed, int brakeLeverPosition, int brakeServoPosition)
+void WiFiPrinter::printAll(int rpm, float speed, int brakeLeverPosition, int brakeServoPosition)
 {
   // Create a dynamic JSON document to parse and update the existing JSON
   DynamicJsonDocument doc(1024); // Allocate enough space for the document

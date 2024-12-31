@@ -10,7 +10,7 @@ SpeedSensor::SpeedSensor()
 {
     // Set the static instance to this object
     rpm = 0;
-    speed = 0;
+    speed = 0.0;
     lastSensorTriggerTime = 0;
     instance = this;
 }
@@ -19,7 +19,13 @@ SpeedSensor::SpeedSensor()
 // Update the gearbox
 void SpeedSensor::update() 
 {
-  //isCarStopped();
+  // If enough time has passed since the last trigger, consider the car stopped
+    unsigned long currentTime = millis();
+    if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_3KMH) 
+    {
+        rpm = 0;
+        speed = 0.0;
+    }
 }
 
 
@@ -51,9 +57,6 @@ void SpeedSensor::handleSpeedSensor()
         // Ensure there is enough time since last calculation
         if (currentTime - lastSensorTriggerTime >= SENSOR_INTERVAL_50KMH) 
         {
-            // Record the time of this sensor trigger
-            lastSensorTriggerTime = currentTime;
-
             // Calculate RPM and Speed
             calculateRPM();
         }
@@ -71,22 +74,18 @@ void SpeedSensor::handleSpeedSensor()
 
 void SpeedSensor::calculateRPM() 
 {
-    rpm++;
-    speed +=2;
-    return;
     unsigned long currentTime = millis();
     unsigned long timeSinceLastTrigger = currentTime - lastSensorTriggerTime;
 
-    // Ensure there's a valid time difference to avoid division by zero
-    if (timeSinceLastTrigger > 0) 
-    {
-        // Calculate RPM (Revolutions Per Minute)
-        rpm = (60 * 1000) / timeSinceLastTrigger;
+    // Calculate RPM (Revolutions Per Minute)
+    rpm = (60 * 1000) / timeSinceLastTrigger;
 
-        // Calculate speed in km/h using the wheel circumference
-        float wheelCircumference = WHEEL_DIAMETER * INCHES_TO_METERS * 3.14159; // Circumference in meters
-        speed = (rpm * wheelCircumference * 60) / 1000; // Speed in km/h
-    }
+    // Calculate speed in km/h using the wheel circumference
+    float wheelCircumference = WHEEL_DIAMETER * INCHES_TO_METERS * 3.14159; // Circumference in meters
+    speed = (rpm * wheelCircumference * 60) / 1000; // Speed in km/h
+
+    // Record the time of this sensor trigger
+    lastSensorTriggerTime = currentTime;
 }
 
 
@@ -96,10 +95,10 @@ bool SpeedSensor::isCarStopped()
 {
     // If enough time has passed since the last trigger, consider the car stopped
     unsigned long currentTime = millis();
-    if (currentTime - lastSensorTriggerTime > STOP_TIMEOUT) 
+    if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_3KMH) 
     {
-        //rpm = 0;
-        //speed = 0;
+        rpm = 0;
+        speed = 0.0;
         return true;
     }
     return false;
@@ -119,6 +118,6 @@ void SpeedSensor::setup()
   pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, LOW); // Start with the LED off
 
-  WiFiPrinter::print(CUSTOM_MESSAGE, "SpeedSensor setup complete!");
+  WiFiPrinter::print("SpeedSensor setup complete!");
 }
 

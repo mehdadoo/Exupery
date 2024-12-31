@@ -29,5 +29,5 @@ void Gearbox::setup()
   delay(300);
 
   servoGearbox.write( MIN_GEARBOX_ANGLE );
-  WiFiPrinter::print(CUSTOM_MESSAGE, "Gearbox setup complete!"); 
+  WiFiPrinter::print("Gearbox setup complete!"); 
 }

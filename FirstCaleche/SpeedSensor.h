@@ -15,11 +15,11 @@ class SpeedSensor
     void update();
     bool isCarStopped(); // Check if RPM is 0
     int getRPM() const { return rpm; }
-    int getSpeed() const { return speed; }
+    float getSpeed() const { return speed; }
 
   private:
     int rpm;       // Revolutions per minute
-    int speed;     // Speed in km/h
+    float speed;     // Speed in km/h
     unsigned long lastSensorTriggerTime; // Last time the sensor detected the magnet
 
     // Private methods

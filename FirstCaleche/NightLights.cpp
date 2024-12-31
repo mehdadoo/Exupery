@@ -23,13 +23,13 @@ void NightLights::update()
     if (currentState == LOW && previousState == HIGH) 
     {
         digitalWrite(LIGHT_NIGHT_PIN, HIGH);
-        WiFiPrinter::print(CUSTOM_MESSAGE, "Night lights ON");
+        WiFiPrinter::print("Night lights ON");
 
     } 
     else if (currentState == HIGH && previousState == LOW) 
     {
         digitalWrite(LIGHT_NIGHT_PIN, LOW);
-        WiFiPrinter::print(CUSTOM_MESSAGE, "Night lights OFF");
+        WiFiPrinter::print("Night lights OFF");
     }
 
     // Update the previous state for the next comparison

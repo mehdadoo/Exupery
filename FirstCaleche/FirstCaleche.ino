@@ -29,7 +29,7 @@ void setup()
   
 
   WiFiPrinter::setup();
-  WiFiPrinter::print(CUSTOM_MESSAGE, "First Caleche, Bonjour!");
+  WiFiPrinter::print("First Caleche, Bonjour!");
 
   
 
@@ -38,7 +38,7 @@ void setup()
   brakeSystem.setup();
   nightLights.setup();
 
-  WiFiPrinter::print(CUSTOM_MESSAGE, "Setup Complete!");
+  WiFiPrinter::print("Setup Complete!");
 }
 
 
@@ -63,6 +63,6 @@ void loop()
   gearbox.update();
   brakeSystem.update();
   nightLights.update();
-  
+
   updateOverHTTP();
 }

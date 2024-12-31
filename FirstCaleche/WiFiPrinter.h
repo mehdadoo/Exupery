@@ -10,9 +10,8 @@ class WiFiPrinter
   public:
       static void setup();
       static void update();
-      static void print(int dataType, const String& value);
-      static void print(int dataType, int value);  // Overloaded function for integers
-      static void printAll(int rpm, int speed, int brakeLeverPosition, int brakeServoPosition);
+      static void print(const String& value);
+      static void printAll(int rpm, float speed, int brakeLeverPosition, int brakeServoPosition);
 
   private:
       static WebServer server;
