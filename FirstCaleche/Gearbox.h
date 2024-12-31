@@ -10,6 +10,9 @@ class Gearbox
     // Constructor
     Gearbox(SpeedSensor& sensorInstance); // Constructor with SpeedSensor parameter
 
+    int servoPosition;
+    int gear;
+
     // Public methods
     void setup();
     void update();

@@ -5,6 +5,8 @@
 #include "WiFiPrinter.h"
 #include <ESP32Servo.h>
 
+#define DEBUG_MODE
+
 
 SpeedSensor speedSensor;              // Create the SpeedSensor instance
 BrakeSystem brakeSystem(speedSensor); // Pass speedSensor to the constructor
@@ -14,6 +16,22 @@ NightLights nightLights; // Pass speedSensor to the  onstructor
 
 void setup()
 {
+  setupSerial();
+  speedSensor.setup();
+  gearbox.setup();
+  brakeSystem.setup();
+  nightLights.setup();
+
+  WiFiPrinter::print("Setup Complete!");
+}
+
+void setupSerial()
+{
+  #ifndef DEBUG_MODE
+    return;
+  #endif
+
+
   Serial.begin(9600);
 
   // Check if the serial port is available
@@ -23,22 +41,11 @@ void setup()
     // Wait up to 5 seconds for the serial connection
     delay(10);
   }
-
-
   Serial.println( "Serial startup: " + String ( millis() - startMillis ) );
   
 
   WiFiPrinter::setup();
-  WiFiPrinter::print("First Caleche, Bonjour!");
-
-  
-
-  speedSensor.setup();
-  gearbox.setup();
-  brakeSystem.setup();
-  nightLights.setup();
-
-  WiFiPrinter::print("Setup Complete!");
+  WiFiPrinter::print("First Calèche, Bonjour!");
 }
 
 
@@ -51,8 +58,9 @@ void updateOverHTTP()
   if (currentTime - lastUpdateTime >= UPDATE_OVER_HTTP_FREQUENCY) 
   {
       lastUpdateTime = currentTime; // Update the last update time
-      WiFiPrinter::printAll( speedSensor.getRPM(), speedSensor.getSpeed(), brakeSystem.brakeLeverPosition, brakeSystem.servoPosition );
+      WiFiPrinter::printAll( speedSensor.getRPM(), speedSensor.getSpeed(), brakeSystem.brakeLeverPosition, brakeSystem.servoPosition, gearbox.gear, gearbox.servoPosition );
   }
+
   WiFiPrinter::update();
 }
 

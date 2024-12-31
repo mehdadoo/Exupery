@@ -2,19 +2,21 @@
 #define CONSTANT_DEFINITIONS_H
 
 // GearBox
-#define MIN_GEARBOX_ANGLE               170
-#define MAX_GEARBOX_ANGLE               0
-#define SPEED_SENSOR_LED_BLINK_DURATION 100
+#define MIN_GEARBOX_ANGLE       170
+#define MAX_GEARBOX_ANGLE       10
+#define FIRST_GEAR_SPEED        3.0 //kmh
+#define LAST_GEAR_SPEED         15.0 //kmh
+#define TOTAL_GEARS             8
+#define MIN_TIME_BETWEEN_SHIFTS 1000 //ms
 
 //BrakeSystem
 #define MIN_BRAKE_ANGLE           55
 #define DEFAULT_BRAKE_ANGLE       85
 #define MAX_BRAKE_ANGLE           95
-#define MAX_BRAKE_LEVER_STEPS     15
-#define MIN_BRAKE_LEVER_THRESHOLD 2
-#define BRAKE_BLINK_RATE          45
+#define MAX_BRAKE_LEVER_STEPS     15 //steps
+#define MIN_BRAKE_LEVER_THRESHOLD 2  //steps
+#define BRAKE_BLINK_RATE          45 //ms
 #define BRAKE_BLINK_MULTIPLIER    4
-#define DELAY_BEFORE_FULL_BRAKE_BRIGHTNESS 2000
 
 //SpeedSensor
 #define WHEEL_DIAMETER        24
@@ -24,9 +26,6 @@
 #define SENSOR_INTERVAL_25KMH 276 // Time in milliseconds for one magnet read at 30 km/h (24-inch wheel)
 #define SENSOR_INTERVAL_30KMH 230 // Time in milliseconds for one magnet read at 30 km/h (24-inch wheel)
 #define SENSOR_INTERVAL_50KMH 138 // Time in milliseconds for one magnet read at 50 km/h (24-inch wheel)
-
-
-
 
 //WiFiPrinter
 #define WIFI_PASSWORD                 "cScrT9vJRTHCf3vzh2"

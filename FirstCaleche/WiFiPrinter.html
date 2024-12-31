@@ -53,6 +53,14 @@
       color: #444;
       overflow-x: auto;
     }
+	.red-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+  visibility: hidden; /* Initially hidden */
+}
   </style>
   
   <script>
@@ -65,7 +73,7 @@
         .then(data => {
           // Update the page with the raw JSON response
           const rawData = JSON.stringify(data, null, 2); // Pretty-print JSON
-          document.getElementById("rawResponse").innerText = rawData;
+          console.log( rawData );
 
           // Update RPM value if present in the response
           if (data.rpm !== undefined) {
@@ -86,6 +94,16 @@
           if (data.brakeServoPosition !== undefined) {
             document.getElementById("brakeServoPositionValue").innerText = "Brake Servo Position: " + data.brakeServoPosition;
           }
+		  
+		  // Update Gear if present in the response
+          if (data.brakeServoPosition !== undefined) {
+            document.getElementById("gearValue").innerText = "Gear: " + data.gear;
+          }
+		  
+		  // Update Gearbox Servo Position if present in the response
+          if (data.gearboxServoPosition !== undefined) {
+            document.getElementById("gearboxServoPositionValue").innerText = "Gearbox Servo Position: " + data.gearboxServoPosition;
+          }
 
           // Update Message if present in the response
           if (data.message !== undefined) {
@@ -93,15 +111,14 @@
             messageField.innerText += "\n" + data.message;  // Append the new message
           }
 
-          // Toggle Raw Response text between "Raw Response:" and "Raw Response:*"
-          const rawResponseText = document.getElementById("rawResponseText");
-          if (!star) {
-            rawResponseText.innerText = "Raw Response:*";
-            star = true;
-          } else {
-            rawResponseText.innerText = "Raw Response:";
-            star = false;
-          }
+			const rawResponseText = document.getElementById("rawResponseText");
+			if (!star) {
+			  rawResponseText.style.visibility = "visible"; // Show the red dot
+			  star = true;
+			} else {
+			  rawResponseText.style.visibility = "hidden"; // Hide the red dot
+			  star = false;
+			}
         })
         .catch(error => {
           console.error('Error fetching data:', error);
@@ -119,15 +136,14 @@
     <div class="box" id="speedValue">Speed: Waiting for data...</div>
     <div class="box" id="brakeLeverPositionValue">Brake Lever Position: Waiting for data...</div>
     <div class="box" id="brakeServoPositionValue">Brake Servo Position: Waiting for data...</div>
+	<div class="box" id="gearValue">Gear: Waiting for data...</div>
+    <div class="box" id="gearboxServoPositionValue">Gearbox Servo Position: Waiting for data...</div>
 
     <!-- Full-width message box -->
-    <div class="full-width-box" id="messageValue">Message:</div>
+    <div class="full-width-box" id="messageValue"></div>
 
     <!-- Full-width raw response box -->
-    <div class="full-width-box">
-      <h2><span id="rawResponseText">Raw Response:</span></h2>
-      <pre id="rawResponse">Waiting for response...</pre>
-    </div>
+     <h2><span id="rawResponseText" class="red-dot"></span></h2>
   </div>
 </body>
 </html>

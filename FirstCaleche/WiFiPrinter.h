@@ -11,7 +11,7 @@ class WiFiPrinter
       static void setup();
       static void update();
       static void print(const String& value);
-      static void printAll(int rpm, float speed, int brakeLeverPosition, int brakeServoPosition);
+      static void printAll(int rpm, float speed, int brakeLeverPosition, int brakeServoPosition, int gear, int gearboxServoPosition);
 
   private:
       static WebServer server;

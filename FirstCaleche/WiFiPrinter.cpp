@@ -7,7 +7,12 @@ WebServer WiFiPrinter::server(80);  // Set up the server on port 80
 String printMessage = "{}";  // Initial JSON message (empty)
 
 // Static method to begin Wi-Fi connection and start the server
-void WiFiPrinter::setup() {
+void WiFiPrinter::setup() 
+{
+  #ifndef DEBUG_MODE
+    return;
+  #endif
+
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.println("Connecting to WiFi...");
 
@@ -84,7 +89,7 @@ void WiFiPrinter::print(const String& value) {
 }
 
 // Overloaded print method to handle integer values
-void WiFiPrinter::printAll(int rpm, float speed, int brakeLeverPosition, int brakeServoPosition)
+void WiFiPrinter::printAll(int rpm, float speed, int brakeLeverPosition, int brakeServoPosition, int gear, int gearboxServoPosition)
 {
   // Create a dynamic JSON document to parse and update the existing JSON
   DynamicJsonDocument doc(1024); // Allocate enough space for the document
@@ -97,6 +102,8 @@ void WiFiPrinter::printAll(int rpm, float speed, int brakeLeverPosition, int bra
   doc["speed"] = speed; 
   doc["brakeLeverPosition"] = brakeLeverPosition;
   doc["brakeServoPosition"] = brakeServoPosition;
+  doc["gear"] = gear;
+  doc["gearboxServoPosition"] = gearboxServoPosition;
 
   // Serialize the updated JSON document back into the printMessage string
   serializeJson(doc, printMessage);
