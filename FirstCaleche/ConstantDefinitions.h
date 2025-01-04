@@ -22,7 +22,7 @@
 #define BRAKE_EASE_OUT_MULTIPLIER 2.0
 
 //SpeedSensor
-#define WHEEL_DIAMETER        30
+#define WHEEL_DIAMETER        24
 #define INCHES_TO_METERS      0.0254
 #define SECONDS_PER_MINUTE    60
 #define SENSOR_INTERVAL_3KMH  2300  // at 3k/h this time is needed for each reading of the speed sensor. so basically we consider speeds lower than this as stopped!
