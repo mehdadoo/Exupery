@@ -5,21 +5,24 @@
 #define MIN_GEARBOX_ANGLE       170
 #define MAX_GEARBOX_ANGLE       10
 #define FIRST_GEAR_SPEED        3.0 //kmh
-#define LAST_GEAR_SPEED         15.0 //kmh
+#define LAST_GEAR_SPEED         12.0 //kmh
 #define TOTAL_GEARS             8
-#define MIN_TIME_BETWEEN_SHIFTS 1000 //ms
+#define SHIFT_COOLDOWN_TIME     1500 //ms
+#define DOWNSHIFT               true
+#define UPSHIFT                 false
 
 //BrakeSystem
 #define MIN_BRAKE_ANGLE           55
 #define DEFAULT_BRAKE_ANGLE       85
 #define MAX_BRAKE_ANGLE           95
-#define MAX_BRAKE_LEVER_STEPS     15 //steps
-#define MIN_BRAKE_LEVER_THRESHOLD 2  //steps
+#define MAX_BRAKE_LEVER_STEPS     13 //steps
+#define MIN_BRAKE_LEVER_THRESHOLD 1  //steps
 #define BRAKE_BLINK_RATE          45 //ms
 #define BRAKE_BLINK_MULTIPLIER    4
+#define BRAKE_EASE_OUT_MULTIPLIER 2.0
 
 //SpeedSensor
-#define WHEEL_DIAMETER        24
+#define WHEEL_DIAMETER        30
 #define INCHES_TO_METERS      0.0254
 #define SECONDS_PER_MINUTE    60
 #define SENSOR_INTERVAL_3KMH  2300  // at 3k/h this time is needed for each reading of the speed sensor. so basically we consider speeds lower than this as stopped!

@@ -12,6 +12,9 @@ void NightLights::setup()
 {
     pinMode(LIGHT_NIGHT_PIN, OUTPUT);
     pinMode(LIGHT_NIGHT_SWITCH_PIN, INPUT_PULLUP);
+
+    bool currentState = digitalRead(LIGHT_NIGHT_SWITCH_PIN);
+    digitalWrite(LIGHT_NIGHT_PIN, !currentState);
 }
 
 // Update method

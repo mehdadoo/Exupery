@@ -21,9 +21,15 @@ class Gearbox
     // Private properties
     Servo servoGearbox;      // Servo object for the gearbox
     SpeedSensor& speedSensor; // an instance of the speed sensor passed in to the constructor
+    unsigned long lastShiftTime;
+    bool lastGearChangeDirection;
+    float oneGearPortion;    // Precomputed portion for each gear
 
     // Private methods
+    bool isShiftCooldownComplete();
+    int  calculateGearRatio();
     void updateServo();
+    bool updateGear();
 };
 
 #endif

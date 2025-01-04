@@ -47,8 +47,8 @@ void BrakeSystem::updateServo()
       float normalizedPosition = 
           (float)(brakeLeverPosition - lowerLeverThreshold) / (upperLeverThreshold - lowerLeverThreshold);
 
-      // Apply 3x ease-out (cubic root)
-      float easedPosition = pow(normalizedPosition, 1.0 / 3.0);
+      // Apply a ease-out (cubic root)
+      float easedPosition = pow(normalizedPosition, 1.0 / BRAKE_EASE_OUT_MULTIPLIER);
 
       // Map easedPosition to servo angle range
       servoPosition = MIN_BRAKE_ANGLE + 

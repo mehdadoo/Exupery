@@ -5,7 +5,7 @@
 #include "WiFiPrinter.h"
 #include <ESP32Servo.h>
 
-#define DEBUG_MODE
+//#define DEBUG_MODE
 
 
 SpeedSensor speedSensor;              // Create the SpeedSensor instance
