@@ -17,6 +17,7 @@
 
 #include <DigiPotX9Cxxx.h>
 #include "MPU9250.h"
+#include <Adafruit_MCP23X17.h>
 
 
 // Create an ADS1115 object
@@ -24,6 +25,10 @@ Adafruit_ADS1115 ads_joystick;
 bool is_initialized_ADS1115_joystick = false;
 bool is_initialized_lcd = false;
 bool is_initialized_MPU = false;
+bool is_initialized_portExpander = false;
+
+Adafruit_ADS1115 ads_currentSensor;
+bool is_initialized_ADS1115_currentSensor = false;
 
 Servo servoBrake1; 
 Servo servoBrake2; 
@@ -56,6 +61,9 @@ static int16_t *last_cached_point;
 
 
 
+Adafruit_MCP23X17 portExpander;
+
+
 // Function to set voltmeter voltage using PWM
 void setVoltmeterPWM(int pin, int pwmValue, int channel, int freq = 5000, int resolution = 8) 
 {
@@ -75,13 +83,14 @@ void setVoltmeterPWM(int pin, int pwmValue, int channel, int freq = 5000, int re
 void setup()
 {
   Serial.begin(9600);
+  Serial.println("Blue Caleche App");
 
   initializePins();
-  initializeServos();
-  initializePotentiometers();
+  //initializeServos();
+  //initializePotentiometers();
   initializeMPU();
 
-  Serial.println("Board Test App");
+  //setupLCD();
 }
 
 void initializeServos() 
@@ -129,13 +138,45 @@ void initializePins()
   pinMode(VOLTMETER_SPEED, OUTPUT);
   pinMode(VOLTMETER_CHARGING, OUTPUT);
   pinMode(VOLTMETER_BATTERY, OUTPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
 
-  pinMode(DistanceSensor_trigPin, OUTPUT);
-  pinMode(DistanceSensor_echoPin, INPUT);
-
-  Serial.println("Pins initialize");
+  Serial.println("Pins initialized");
 }
+
+void initializePortExpander() 
+{
+  //is called from turnOn
+
+}
+
+bool previousButtonState = HIGH; // Initialize to HIGH (not pressed)
+
+void updatePortExpander() 
+{
+  if( !is_initialized_portExpander )
+    return;
+
+  // Read the current button state
+  bool currentButtonState = portExpander.digitalRead(8);
+
+  // Check if the button state has changed
+  if (currentButtonState != previousButtonState) 
+  {
+    // Button state has changed; print the new state
+    if (currentButtonState == LOW) 
+    {
+      Serial.println("Button Pressed!");
+    } 
+    else 
+    {
+      Serial.println("Button Released!");
+    }
+
+    // Update the previous button state
+    previousButtonState = currentButtonState;
+  }
+}
+
+
 
 void readSerialInput() 
 {
@@ -153,9 +194,9 @@ void readSerialInput()
     servoSteering.write(targetPMW);  // Move the servo to the target angle
 
 
-    setVoltmeterPWM(VOLTMETER_SPEED,    targetPMW,  5);
-    setVoltmeterPWM(VOLTMETER_CHARGING, targetPMW,  6);
-    setVoltmeterPWM(VOLTMETER_BATTERY,  targetPMW,  7);
+    setVoltmeterPWM(VOLTMETER_SPEED,    targetPMW,  VOLTMETER_SPEED_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_CHARGING, targetPMW,  VOLTMETER_CHARGING_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_BATTERY,  targetPMW,  VOLTMETER_BATTERY_CHANNEL);
 
     int potValue = map(targetPMW, 0, 255, 0, 100);
     potentiometer1.set(potValue);
@@ -167,11 +208,12 @@ void loop()
 {
   handleCarKeySwitch();
   //updateVoltmeters();
-  updateServos();
-  updatePotentiometers();
-  updateMPU();
-  updateDistanceSensor();
-  updateLCD();
+  //updateServos();
+  //updatePotentiometers();
+  //updateMPU();
+  //updateLCD();
+  updateCurrentSensor();
+  //updatePortExpander();
 }
 
 
@@ -208,6 +250,9 @@ unsigned long MPU_LastUpdateTime = 0; // Stores the last update time
 
 void updateMPU()
 {
+  if( !is_initialized_MPU )
+    return;
+
   unsigned long currentTime = millis();
 
   // Check if the required time interval has passed
@@ -222,50 +267,51 @@ void updateMPU()
   // Read sensor data
   IMU.readSensor();
 
-  int carAngle =  map(IMU.getAccelZ_mss() * 1000, -10000, 10000, 0, 255);
+  float accelX = IMU.getAccelX_mss();  // Read X-axis acceleration
+  float accelZ = IMU.getAccelZ_mss();  // Read Z-axis acceleration
 
-  // Display the data
-  Serial.print("MPU:");
-  Serial.print(carAngle, 6);
-  Serial.println("\t");
+  // Calculate the angle in degrees
+  float carAngle = atan2(accelX, accelZ) * 180.0 / PI;
 
+  // Print the angle with 1 decimal place
+  Serial.println(carAngle, 1);  
+  //Serial.println(accelX, 1);  // Also print accelerometer value for reference
 }
 
+
 // Define the necessary variables
-unsigned long DistanceSensor_LastUpdateTime = 0; // Stores the last update time
-long duration;
-int distance;
-void updateDistanceSensor()
+unsigned long CurrentSensor_LastUpdateTime = 0; // Stores the last update time
+
+void updateCurrentSensor()
 {
+  if( !is_initialized_ADS1115_currentSensor )
+    return;
+
   unsigned long currentTime = millis();
 
   // Check if the required time interval has passed
-  if (currentTime - DistanceSensor_LastUpdateTime < MPU_UPDATE_INTERVAL)
+  if (currentTime - CurrentSensor_LastUpdateTime < MPU_UPDATE_INTERVAL)
   {
     return; // Exit the method if the interval hasn't passed
   }
 
   // Update the last update time
-  DistanceSensor_LastUpdateTime = currentTime;
+  CurrentSensor_LastUpdateTime = currentTime;
+
+  Serial.println( readBatteryVoltage()  );
+}
+
+float readBatteryVoltage() 
+{
+    int16_t adcReading = readCurrentSensor(0); // Get ADC reading
 
 
-  // Trigger the sensor
-  digitalWrite(DistanceSensor_trigPin, LOW);
-  delayMicroseconds(1);
-  digitalWrite(DistanceSensor_trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(DistanceSensor_trigPin, LOW);
+    // Calculate and print battery voltage
 
-  // Measure the pulse width
-  duration = pulseIn(DistanceSensor_echoPin, HIGH);
-
-  // Calculate the distance in cm
-  distance = duration * 0.034 / 2.0;
-
-  // Print the distance (or do something with it)
-  Serial.print("Distance:");
-  Serial.print(distance);
-  Serial.println("\t");
+    float resolutionPerBit = 0.000125; // 0.125 mV/bit for ADS1115 with GAIN_ONE
+    float slope = 0.01604;
+    float dividerFactor = 0.0642; // Calculate the divider factor
+    return adcReading * slope / dividerFactor;// * (resolutionPerBit / dividerFactor); // Calculate battery voltage
 }
 
 
@@ -274,16 +320,32 @@ void updateVoltmeters()
   if( !is_initialized_ADS1115_joystick )
     return;
 
-  setVoltmeterPWM(VOLTMETER_SPEED,    readJoystick( 2 ),  5);
-  setVoltmeterPWM(VOLTMETER_CHARGING, readJoystick( 1 ),  6);
-  setVoltmeterPWM(VOLTMETER_BATTERY,  readJoystick( 0 ),  7);
+  int joystick2 = readJoystick(2);
+  int joystick1 = readJoystick(1);
+  int joystick0 = readJoystick(0);
+
+
+  setVoltmeterPWM(VOLTMETER_SPEED,    joystick0,  VOLTMETER_SPEED_CHANNEL);
+  setVoltmeterPWM(VOLTMETER_CHARGING, joystick1,  VOLTMETER_CHARGING_CHANNEL);
+  setVoltmeterPWM(VOLTMETER_BATTERY,  joystick2,  VOLTMETER_BATTERY_CHANNEL);
+
+  /*
+  // Print all values on the same line separated by spaces
+  Serial.print(joystick2);
+  Serial.print(" ");
+  Serial.print(joystick1);
+  Serial.print(" ");
+  Serial.println(joystick0); // End the line with joystick0 value
+
+  delay(100); // Adjust the delay for smoother plotting
+  */
 }
   
 // Function to handle carKeySwitch 
 void handleCarKeySwitch()
 {
   // Declare a static variable to store the previous state of the car key switch
-  static int previousCarKeySwitchState = LOW;
+  static int previousCarKeySwitchState = HIGH;
 
   // Read the current state of the car key switch
   int carKeySwitchState = digitalRead(CAR_KEY_SWITCH);
@@ -293,9 +355,13 @@ void handleCarKeySwitch()
   if (carKeySwitchState != previousCarKeySwitchState) 
   {
     if (carKeySwitchState == LOW) 
+    {
       turnOnCar();
+    }
     else 
+    {
       turnOffCar();
+    }
 
     // Update the previous state
     previousCarKeySwitchState = carKeySwitchState;
@@ -312,31 +378,58 @@ void turnOnCar()
 
   digitalWrite(MOSFET_48V, HIGH); 
  
-  unsigned long ADS1115_connection_time_Start = millis(); // Record the time when the connection attempt starts
+  unsigned long module_connection_time_Start = millis(); // Record the time when the connection attempt starts
 
-  while (millis() - ADS1115_connection_time_Start < ADS1115_CONNECTION_TIMEOUT)
+  while (millis() - module_connection_time_Start < MODULE_CONNECTION_TIMEOUT)
   {
     if (ads_joystick.begin(0x4A)) 
     {
         is_initialized_ADS1115_joystick = true;
         ads_joystick.setGain(GAIN_ONE);
 
-         Serial.println("ADS1115 inilialized");
+         Serial.println("ADS1115 joystick inilialized");
 
         break; // Exit the loop if initialization is successful
     }
     delay(10); // Wait 100 ms before retrying
   }
 
+  module_connection_time_Start = millis();
+  while (millis() - module_connection_time_Start < MODULE_CONNECTION_TIMEOUT)
+  {
+    if (ads_currentSensor.begin()) 
+    {
+        is_initialized_ADS1115_currentSensor = true;
+        ads_currentSensor.setGain(GAIN_ONE);
+
+        Serial.println("ADS1115 currentSensor inilialized");
+
+        break; // Exit the loop if initialization is successful
+    }
+    delay(10); // Wait 100 ms before retrying
+  }
+
+
+  initializeMPU();
+
+
+
   // If initialization failed after the timeout, call the error handling method
   if (!is_initialized_ADS1115_joystick) 
   {
     registerError( "Could not inilialize ADS1115 for joystick" );
   }
+
+  // If initialization failed after the timeout, call the error handling method
+  if (!is_initialized_ADS1115_currentSensor) 
+  {
+    registerError( "Could not inilialize ADS1115 for currentSensor" );
+  }
+
   
-  setupLCD();
-  
-  digitalWrite(LED_BUILTIN, LOW);
+  //setupLCD();
+
+  neopixelWrite(RGB_BUILTIN,0,24,0); // Green
 
   Serial.println("Car Turned On");
 }
@@ -350,16 +443,21 @@ void turnOffCar()
   if(is_initialized_lcd)
     gfx->fillScreen(BACKGROUND);
 
-  setVoltmeterPWM(VOLTMETER_SPEED,     0,  5);
-  setVoltmeterPWM(VOLTMETER_CHARGING, 0,  6);
-  setVoltmeterPWM(VOLTMETER_BATTERY,  0,  7);
+  if( is_initialized_ADS1115_joystick)
+  {
+    setVoltmeterPWM(VOLTMETER_SPEED,    0,  VOLTMETER_SPEED_CHANNEL   );
+    setVoltmeterPWM(VOLTMETER_CHARGING, 0,  VOLTMETER_CHARGING_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_BATTERY,  0,  VOLTMETER_BATTERY_CHANNEL );
+  }
   
 
-  digitalWrite(LED_BUILTIN, HIGH);
-  digitalWrite(MOSFET_48V, LOW); 
+  neopixelWrite(RGB_BUILTIN,  64,  0,  0); // redish
+  digitalWrite( MOSFET_48V, LOW); 
 
   is_initialized_ADS1115_joystick = false;
+  is_initialized_ADS1115_currentSensor = false;
   is_initialized_lcd = false;
+  is_initialized_portExpander = false;
 
   Serial.println("Car Turned Off");
 }
@@ -369,6 +467,22 @@ int readJoystick( int adcPin )
 {
   // Read ADC value (16-bit signed integer, -32768 to 32767)
   int16_t rawValue = ads_joystick.readADC_SingleEnded( adcPin );
+
+  // Convert raw ADC value to PWM range (0-255)
+  // ADS1115 range: 0-32767 maps to 0-3.3V
+  int pwmValue = map(rawValue, 0, 32767, 0, PWM_RESOLUTION);
+
+  // Ensure PWM value is within the valid range
+  pwmValue = constrain(pwmValue, 0, PWM_RESOLUTION);
+
+  return pwmValue;
+}
+
+// Function to read joystick value from ADS1115 A2 pin and map to PWM
+int readCurrentSensor( int adcPin ) 
+{
+  // Read ADC value (16-bit signed integer, -32768 to 32767)
+  int16_t rawValue = ads_currentSensor.readADC_SingleEnded( adcPin );
 
   // Convert raw ADC value to PWM range (0-255)
   // ADS1115 range: 0-32767 maps to 0-3.3V
