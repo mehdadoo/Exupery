@@ -1,6 +1,8 @@
 #include <SPI.h>
+#include <Arduino.h>
 
 #define MOSFET_48V      34   // Output for 48V MOSFET
+#define CAR_KEY_SWITCH  15   // Input for car key switch
 
 // Pin Definitions for SPI Communication
 #define SCK_PIN 12   // Clock
@@ -35,26 +37,69 @@ bool mosfetStates[] = {LOW, LOW, LOW, LOW, LOW};
 
 void setup() {
   // Initialize Serial Monitor
-  Serial.begin(115200);
+  Serial.begin(9600);
 
+  // Initialize pins
+  pinMode(CAR_KEY_SWITCH, INPUT_PULLUP);
+  pinMode(MOSFET_48V, OUTPUT);
+
+  
+}
+
+// Variables to store previous states of the buttons
+uint8_t previousButtonState[4] = {HIGH, HIGH, HIGH, HIGH};
+
+// Variables to store previous states of the sensors
+uint8_t previousSensorState[3] = {LOW, LOW, LOW};
+
+bool initilized = false;
+
+
+ 
+// Function to handle carKeySwitch 
+void handleCarKeySwitch()
+{
+  // Declare a static variable to store the previous state of the car key switch
+  static int previousCarKeySwitchState = HIGH;
+
+  // Read the current state of the car key switch
+  int carKeySwitchState = digitalRead(CAR_KEY_SWITCH);
+
+
+  // Check if the state has changed
+  if (carKeySwitchState != previousCarKeySwitchState) 
+  {
+    if (carKeySwitchState == LOW) 
+    {
+      turnOnCar();
+    }
+    else 
+    {
+      turnOffCar();
+    }
+
+    // Update the previous state
+    previousCarKeySwitchState = carKeySwitchState;
+  }
+}
+
+void turnOnCar()
+{
   digitalWrite(MOSFET_48V, HIGH); 
-  delay(200);
+
+  delay(250);
 
   // Initialize SPI Communication
   SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, CS_PIN);
   pinMode(CS_PIN, OUTPUT);
   digitalWrite(CS_PIN, HIGH);  // Keep CS pin high initially
 
-  Serial.println("SPI Communication with MCP23S17 Initialized");
-
   // Set GPIO B0 to B3 as input with pull-up enabled
   pinModeMCP23S17('B', BUTTON_0_PIN, INPUT);
   pinModeMCP23S17('B', BUTTON_1_PIN, INPUT);
   pinModeMCP23S17('B', BUTTON_2_PIN, INPUT);
   pinModeMCP23S17('B', BUTTON_3_PIN, INPUT);
-
   pinModeMCP23S17('A', SENSOR_PEDAL_TRIGGER_PIN, INPUT);
-
   pinModeMCP23S17('A', SENSOR_WHEEL_SPEED_PIN, INPUT);
 
 
@@ -66,23 +111,41 @@ void setup() {
     digitalWriteMCP23S17('A', mosfetPins[i], LOW); // Default to LOW
   }
 
+  Serial.println( readMCP23S17(0x00) );
+
   // Check if the module is initialized (simple check)
-  if (readMCP23S17(0x00) != 0xFF) {  // Check IODIR register
+  if (readMCP23S17(0x00) == 0x00) {  // Check IODIR register
     Serial.println("MCP23S17 Initialization Failed!");
   } else {
     Serial.println("MCP23S17 Initialized Successfully!");
+    initilized = true;
   }
+
+
+
+
+  neopixelWrite(RGB_BUILTIN,0,24,0); // Green
+
+  Serial.println("Car Turned On");
 }
 
-// Variables to store previous states of the buttons
-uint8_t previousButtonState[4] = {HIGH, HIGH, HIGH, HIGH};
+void turnOffCar()
+{
+  neopixelWrite(RGB_BUILTIN,  64,  0,  0); // redish
+  digitalWrite( MOSFET_48V, LOW); 
+  Serial.println("Car Turned Off");
+  initilized = false;
+}
 
-// Variables to store previous states of the sensors
-uint8_t previousSensorState[3] = {LOW, LOW, LOW};
 
-uint r = 0;
 
 void loop() {
+
+  handleCarKeySwitch();
+
+  if(!initilized)
+    return;
+
   // Check the state of each button (GPB0 to GPB3)
   for (uint8_t i = 0; i < 4; i++) {
     uint8_t currentButtonState = digitalReadMCP23S17('B', i);  // Read current state of button

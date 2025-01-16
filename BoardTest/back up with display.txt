@@ -1,23 +1,35 @@
+
 #include "PinDefinitions.h"
 #include "ConstantDefinitions.h"
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <math.h> // For sine function
 #include <Adafruit_ADS1X15.h>
-#include <SPI.h>
 #include <ESP32Servo.h>
+
+//Arduino_GFX setting
+#include "Arduino_DataBus.h"
+#include "databus/Arduino_ESP32SPI.h"
+#include "databus/Arduino_Wire.h"
+#include "Arduino_GFX.h"
+#include "display/Arduino_GC9A01.h"
+
 #include <DigiPotX9Cxxx.h>
 #include "MPU9250.h"
+#include <Adafruit_MCP23X17.h>
 
-//ADS1115 joysticks
+
+// Create an ADS1115 object
 Adafruit_ADS1115 ads_joystick;
 bool is_initialized_ADS1115_joystick = false;
+bool is_initialized_lcd = false;
+bool is_initialized_MPU = false;
+bool is_initialized_portExpander = false;
 
-//ADS1115 current and voltage reader
 Adafruit_ADS1115 ads_currentSensor;
 bool is_initialized_ADS1115_currentSensor = false;
 
-//servos
 Servo servoBrake1; 
 Servo servoBrake2; 
 Servo servoSteering; 
@@ -26,25 +38,30 @@ Servo servoSteering;
 DigiPot potentiometer1(DigiPot_NC, DigiPot_UD , DigiPot_CS1);  
 DigiPot potentiometer2(DigiPot_NC, DigiPot_UD , DigiPot_CS2);
 
-//MPU
+
 MPU9250 IMU(Wire,0x68); 
-bool is_initialized_MPU = false;
+
+//Arduino_GFX setting
+Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, GFX_NOT_DEFINED, HSPI /* spi_num */);
+Arduino_GFX *gfx = new Arduino_GC9A01(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
+
+//display variables
+static int16_t w, h, center;
+static int16_t hHandLen, mHandLen, sHandLen, markLen;
+static float sdeg, mdeg, hdeg;
+static int16_t osx = 0, osy = 0, omx = 0, omy = 0, ohx = 0, ohy = 0; // Saved H, M, S x & y coords
+static int16_t nsx, nsy, nmx, nmy, nhx, nhy;                         // H, M, S x & y coords
+static int16_t xMin, yMin, xMax, yMax;                               // redraw range
+static int16_t hh, mm, ss;
+static unsigned long targetTime; // next action time
+
+static int16_t *cached_points;
+static uint16_t cached_points_idx = 0;
+static int16_t *last_cached_point;
 
 
-//MPC23S17 port expander
 
-// Array to map command indices to pin numbers
-const uint8_t mosfetPins[] = {MOSFET_1_PIN, MOSFET_2_PIN, MOSFET_3_PIN, MOSFET_4_PIN, MOSFET_5_PIN};
-// Array to store the current states of the MOSFETs
-bool mosfetStates[] = {LOW, LOW, LOW, LOW, LOW};
-
-// Variables to store previous states of the buttons
-uint8_t previousButtonState[4] = {HIGH, HIGH, HIGH, HIGH};
-
-// Variables to store previous states of the sensors
-uint8_t previousSensorState[3] = {LOW, LOW, LOW};
-
-bool is_initialized_port_expander = false;
+Adafruit_MCP23X17 portExpander;
 
 
 // Function to set voltmeter voltage using PWM
@@ -71,18 +88,9 @@ void setup()
   initializePins();
   //initializeServos();
   //initializePotentiometers();
-}
+  initializeMPU();
 
-void loop()
-{
-  handleCarKeySwitch();
-  //updateVoltmeters();
-  //updateServos();
-  //updatePotentiometers();
-  //updateMPU();
-  //updateLCD();
-  //updateCurrentSensor();
-  updatePortExpander();
+  //setupLCD();
 }
 
 void initializeServos() 
@@ -107,28 +115,17 @@ void initializePotentiometers()
 
 void initializeMPU() 
 {
-  if( is_initialized_MPU )
-    return;
-
-  unsigned long module_connection_time_Start = millis(); // Record the time when the connection attempt starts
-
   int status = IMU.begin();
 
   if (status < 0) 
   {
-    Serial.println("MPU initialization UNsuccessful!!!!!!!!");
+    Serial.println("MPU initialization unsuccessful!!!!!!!!");
     Serial.print("Status: ");
     Serial.println(status);
   }
   else
   {
-    unsigned long initialization_time = millis() - module_connection_time_Start;
-        
-    // Print the initialization time
-    Serial.print("MPU initialized in ");
-    Serial.print(initialization_time); // Print the time in milliseconds
-    Serial.println(" ms");
-
+     Serial.println("MPU initializatied successfully");
      is_initialized_MPU = true;
   }
 }
@@ -144,6 +141,42 @@ void initializePins()
 
   Serial.println("Pins initialized");
 }
+
+void initializePortExpander() 
+{
+  //is called from turnOn
+
+}
+
+bool previousButtonState = HIGH; // Initialize to HIGH (not pressed)
+
+void updatePortExpander() 
+{
+  if( !is_initialized_portExpander )
+    return;
+
+  // Read the current button state
+  bool currentButtonState = portExpander.digitalRead(8);
+
+  // Check if the button state has changed
+  if (currentButtonState != previousButtonState) 
+  {
+    // Button state has changed; print the new state
+    if (currentButtonState == LOW) 
+    {
+      Serial.println("Button Pressed!");
+    } 
+    else 
+    {
+      Serial.println("Button Released!");
+    }
+
+    // Update the previous button state
+    previousButtonState = currentButtonState;
+  }
+}
+
+
 
 void readSerialInput() 
 {
@@ -171,7 +204,17 @@ void readSerialInput()
   }
 }
 
-
+void loop()
+{
+  handleCarKeySwitch();
+  //updateVoltmeters();
+  //updateServos();
+  //updatePotentiometers();
+  //updateMPU();
+  //updateLCD();
+  updateCurrentSensor();
+  //updatePortExpander();
+}
 
 
 
@@ -232,6 +275,7 @@ void updateMPU()
 
   // Print the angle with 1 decimal place
   Serial.println(carAngle, 1);  
+  //Serial.println(accelX, 1);  // Also print accelerometer value for reference
 }
 
 
@@ -343,13 +387,7 @@ void turnOnCar()
         is_initialized_ADS1115_joystick = true;
         ads_joystick.setGain(GAIN_ONE);
 
-        // Calculate how long it took to initialize in ms
-        unsigned long initialization_time = millis() - module_connection_time_Start;
-
-        // Print the initialization time
-        Serial.print("ADS1115 joystick initialized in ");
-        Serial.print(initialization_time); // Print the time in milliseconds
-        Serial.println(" ms");
+         Serial.println("ADS1115 joystick inilialized");
 
         break; // Exit the loop if initialization is successful
     }
@@ -364,12 +402,7 @@ void turnOnCar()
         is_initialized_ADS1115_currentSensor = true;
         ads_currentSensor.setGain(GAIN_ONE);
 
-        unsigned long initialization_time = millis() - module_connection_time_Start;
-        
-        // Print the initialization time
-        Serial.print("ADS1115 currentSensor initialized in ");
-        Serial.print(initialization_time); // Print the time in milliseconds
-        Serial.println(" ms");
+        Serial.println("ADS1115 currentSensor inilialized");
 
         break; // Exit the loop if initialization is successful
     }
@@ -377,52 +410,7 @@ void turnOnCar()
   }
 
 
-  
   initializeMPU();
-
-
-  //MCP23S17
-  // Initialize SPI Communication for display and port expander
-  module_connection_time_Start = millis();
-
-  SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, CS_PIN);
-  pinMode(CS_PIN, OUTPUT);
-  digitalWrite(CS_PIN, HIGH);  // Keep CS pin high initially
-
-  // Set GPIO B0 to B3 as input with pull-up enabled
-  pinModeMCP23S17('B', BUTTON_0_PIN, INPUT);
-  pinModeMCP23S17('B', BUTTON_1_PIN, INPUT);
-  pinModeMCP23S17('B', BUTTON_2_PIN, INPUT);
-  pinModeMCP23S17('B', BUTTON_3_PIN, INPUT);
-  pinModeMCP23S17('A', SENSOR_PEDAL_TRIGGER_PIN, INPUT);
-  pinModeMCP23S17('A', SENSOR_WHEEL_SPEED_PIN, INPUT);
-
-  // Initialize MOSFET pins as outputs
-  for (uint8_t i = 0; i < 5; i++) 
-  {
-    pinModeMCP23S17('A', mosfetPins[i], OUTPUT);
-    digitalWriteMCP23S17('A', mosfetPins[i], LOW); // Default to LOW
-  }
-
-  // Check if the module is initialized (simple check), Check IODIR register
-  if (readMCP23S17(0x00) == 0x00) 
-  {  
-    Serial.println("MCP23S17 Initialization Failed!");
-  } 
-  else 
-  {
-    unsigned long initialization_time = millis() - module_connection_time_Start;
-        
-    // Print the initialization time
-    Serial.print("MCP23S17 initialized in ");
-    Serial.print(initialization_time); // Print the time in milliseconds
-    Serial.println(" ms");
-
-
-    is_initialized_port_expander = true;
-  }
-  
-
 
 
 
@@ -438,6 +426,8 @@ void turnOnCar()
     registerError( "Could not inilialize ADS1115 for currentSensor" );
   }
 
+  
+  //setupLCD();
 
   neopixelWrite(RGB_BUILTIN,0,24,0); // Green
 
@@ -449,6 +439,9 @@ void turnOnCar()
 void turnOffCar()
 {
   Serial.println("Turning Car Off");
+
+  if(is_initialized_lcd)
+    gfx->fillScreen(BACKGROUND);
 
   if( is_initialized_ADS1115_joystick)
   {
@@ -463,7 +456,8 @@ void turnOffCar()
 
   is_initialized_ADS1115_joystick = false;
   is_initialized_ADS1115_currentSensor = false;
-  is_initialized_port_expander = false;
+  is_initialized_lcd = false;
+  is_initialized_portExpander = false;
 
   Serial.println("Car Turned Off");
 }
@@ -500,6 +494,9 @@ int readCurrentSensor( int adcPin )
   return pwmValue;
 }
 
+
+
+
 void registerError(const char* errorMessage)
 {
     Serial.println(errorMessage); // Print the error message to the Serial Monitor
@@ -507,143 +504,332 @@ void registerError(const char* errorMessage)
 
 
 
-void updatePortExpander() 
+
+void setupLCD()
 {
-  if( !is_initialized_port_expander)
+  Serial.println("setting up LCD");
+
+  #ifdef GFX_EXTRA_PRE_INIT
+    GFX_EXTRA_PRE_INIT();
+  #endif
+  
+  // Init Display
+  if (!gfx->begin())
+  {
+    Serial.println("gfx->begin() failed!");
+    is_initialized_lcd = false;
+    return;
+  }
+  
+
+
+  is_initialized_lcd = true;
+
+  
+  gfx->fillScreen(BACKGROUND);
+
+
+  // init LCD constant
+  w = gfx->width();
+  h = gfx->height();
+  if (w < h)
+  {
+    center = w / 2;
+  }
+  else
+  {
+    center = h / 2;
+  }
+  hHandLen = center * 3 / 8;
+  mHandLen = center * 2 / 3;
+  sHandLen = center * 5 / 6;
+  markLen = sHandLen / 6;
+  cached_points = (int16_t *)malloc((hHandLen + 1 + mHandLen + 1 + sHandLen + 1) * 2 * 2);
+
+  // Draw 60 clock marks
+  draw_round_clock_mark(
+      // draw_square_clock_mark(
+      center - markLen, center,
+      center - (markLen * 2 / 3), center,
+      center - (markLen / 2), center);
+
+  hh = conv2d(__TIME__);
+  mm = conv2d(__TIME__ + 3);
+  ss = conv2d(__TIME__ + 6);
+
+  targetTime = ((millis() / 1000) + 1) * 1000;
+}
+
+void updateLCD()
+{
+  if( !is_initialized_lcd )
     return;
 
-  // Check the state of each button (GPB0 to GPB3)
-  for (uint8_t i = 0; i < 4; i++) {
-    uint8_t currentButtonState = digitalReadMCP23S17('B', i);  // Read current state of button
 
-    // If the button state has changed, print the new state
-    if (currentButtonState != previousButtonState[i]) {
-      if (currentButtonState == HIGH) {
-        Serial.print("Button ");
-        Serial.print(i);
-        Serial.println(" HIGH");
-        digitalWriteMCP23S17('A', mosfetPins[i], LOW);
-      } else {
-        Serial.print("Button ");
-        Serial.print(i);
-        Serial.println(" low");
-        digitalWriteMCP23S17('A', mosfetPins[i], HIGH);
+  unsigned long cur_millis = millis();
+  if (cur_millis >= targetTime)
+  {
+    targetTime += 1000;
+    ss++; // Advance second
+    if (ss == 60)
+    {
+      ss = 0;
+      mm++; // Advance minute
+      if (mm > 59)
+      {
+        mm = 0;
+        hh++; // Advance hour
+        if (hh > 23)
+        {
+          hh = 0;
+        }
       }
-      // Update the previous state
-      previousButtonState[i] = currentButtonState;
     }
   }
 
-  /*
-  uint8_t currentSensorState = digitalReadMCP23S17('A', SENSOR_WHEEL_SPEED_PIN);  // Read current state of sensor
-
-  // If the button state has changed, print the new state
-  if (currentSensorState != previousSensorState[1]) 
+  // Pre-compute hand degrees, x & y coords for a fast screen update
+  sdeg = SIXTIETH_RADIAN * ((0.001 * (cur_millis % 1000)) + ss); // 0-59 (includes millis)
+  nsx = cos(sdeg - RIGHT_ANGLE_RADIAN) * sHandLen + center;
+  nsy = sin(sdeg - RIGHT_ANGLE_RADIAN) * sHandLen + center;
+  if ((nsx != osx) || (nsy != osy))
   {
-    if (currentSensorState == HIGH) 
-    {
-      Serial.print("SENSOR_WHEEL_SPEED: ");
-      Serial.println(" HIGH");
-    } 
-    else 
-    {
-      Serial.print("SENSOR_WHEEL_SPEED: ");
-      Serial.println(" LOW");
-    }
-    // Update the previous state
-    previousSensorState[1] = currentSensorState;
-  }
-  
-  currentSensorState = digitalReadMCP23S17('A', SENSOR_PEDAL_TRIGGER_PIN);  // Read current state of sensor
+    mdeg = (SIXTIETH * sdeg) + (SIXTIETH_RADIAN * mm); // 0-59 (includes seconds)
+    hdeg = (TWELFTH * mdeg) + (TWELFTH_RADIAN * hh);   // 0-11 (includes minutes)
+    mdeg -= RIGHT_ANGLE_RADIAN;
+    hdeg -= RIGHT_ANGLE_RADIAN;
+    nmx = cos(mdeg) * mHandLen + center;
+    nmy = sin(mdeg) * mHandLen + center;
+    nhx = cos(hdeg) * hHandLen + center;
+    nhy = sin(hdeg) * hHandLen + center;
 
-  // If the button state has changed, print the new state
-  if (currentSensorState != previousSensorState[2]) 
+    // redraw hands
+    redraw_hands_cached_draw_and_erase();
+
+    ohx = nhx;
+    ohy = nhy;
+    omx = nmx;
+    omy = nmy;
+    osx = nsx;
+    osy = nsy;
+
+  }
+}
+
+static uint8_t conv2d(const char *p)
+{
+  uint8_t v = 0;
+  return (10 * (*p - '0')) + (*++p - '0');
+}
+
+void draw_round_clock_mark(int16_t innerR1, int16_t outerR1, int16_t innerR2, int16_t outerR2, int16_t innerR3, int16_t outerR3)
+{
+  float x, y;
+  int16_t x0, x1, y0, y1, innerR, outerR;
+  uint16_t c;
+
+  for (uint8_t i = 0; i < 60; i++)
   {
-    if (currentSensorState == HIGH) 
+    if ((i % 15) == 0)
     {
-      //Serial.print("SENSOR_WHEEL_SPEED: ");
-      Serial.println(r++);
-    } 
-    else 
-    {
-      //Serial.print("SENSOR_WHEEL_SPEED: ");
-      //Serial.println(" LOW");
+      innerR = innerR1;
+      outerR = outerR1;
+      c = MARK_COLOR;
     }
-    // Update the previous state
-    previousSensorState[2] = currentSensorState;
+    else if ((i % 5) == 0)
+    {
+      innerR = innerR2;
+      outerR = outerR2;
+      c = MARK_COLOR;
+    }
+    else
+    {
+      innerR = innerR3;
+      outerR = outerR3;
+      c = SUBMARK_COLOR;
+    }
+
+    mdeg = (SIXTIETH_RADIAN * i) - RIGHT_ANGLE_RADIAN;
+    x = cos(mdeg);
+    y = sin(mdeg);
+    x0 = x * outerR + center;
+    y0 = y * outerR + center;
+    x1 = x * innerR + center;
+    y1 = y * innerR + center;
+
+    gfx->drawLine(x0, y0, x1, y1, c);
   }
-  */
-  
-
-  delay(50);  // Polling delay
 }
 
+void draw_square_clock_mark(int16_t innerR1, int16_t outerR1, int16_t innerR2, int16_t outerR2, int16_t innerR3, int16_t outerR3)
+{
+  float x, y;
+  int16_t x0, x1, y0, y1, innerR, outerR;
+  uint16_t c;
 
+  for (uint8_t i = 0; i < 60; i++)
+  {
+    if ((i % 15) == 0)
+    {
+      innerR = innerR1;
+      outerR = outerR1;
+      c = MARK_COLOR;
+    }
+    else if ((i % 5) == 0)
+    {
+      innerR = innerR2;
+      outerR = outerR2;
+      c = MARK_COLOR;
+    }
+    else
+    {
+      innerR = innerR3;
+      outerR = outerR3;
+      c = SUBMARK_COLOR;
+    }
 
-// Function to write to MCP23S17
-void writeMCP23S17(uint8_t registerAddress, uint8_t data) {
-  digitalWrite(CS_PIN, LOW);  // Select the MCP23S17
-  SPI.transfer(0x40);          // Write command (0x40 for MCP23S17)
-  SPI.transfer(registerAddress); // Register address
-  SPI.transfer(data);          // Data to write
-  digitalWrite(CS_PIN, HIGH);  // Deselect the MCP23S17
+    if ((i >= 53) || (i < 8))
+    {
+      x = tan(SIXTIETH_RADIAN * i);
+      x0 = center + (x * outerR);
+      y0 = center + (1 - outerR);
+      x1 = center + (x * innerR);
+      y1 = center + (1 - innerR);
+    }
+    else if (i < 23)
+    {
+      y = tan((SIXTIETH_RADIAN * i) - RIGHT_ANGLE_RADIAN);
+      x0 = center + (outerR);
+      y0 = center + (y * outerR);
+      x1 = center + (innerR);
+      y1 = center + (y * innerR);
+    }
+    else if (i < 38)
+    {
+      x = tan(SIXTIETH_RADIAN * i);
+      x0 = center - (x * outerR);
+      y0 = center + (outerR);
+      x1 = center - (x * innerR);
+      y1 = center + (innerR);
+    }
+    else if (i < 53)
+    {
+      y = tan((SIXTIETH_RADIAN * i) - RIGHT_ANGLE_RADIAN);
+      x0 = center + (1 - outerR);
+      y0 = center - (y * outerR);
+      x1 = center + (1 - innerR);
+      y1 = center - (y * innerR);
+    }
+    gfx->drawLine(x0, y0, x1, y1, c);
+  }
 }
 
-// Function to read from MCP23S17
-uint8_t readMCP23S17(uint8_t registerAddress) {
-  digitalWrite(CS_PIN, LOW);  // Select the MCP23S17
-  SPI.transfer(0x41);          // Read command (0x41 for MCP23S17)
-  SPI.transfer(registerAddress); // Register address
-  uint8_t data = SPI.transfer(0x00); // Read data
-  digitalWrite(CS_PIN, HIGH);  // Deselect the MCP23S17
-  return data;
+void redraw_hands_cached_draw_and_erase()
+{
+  gfx->startWrite();
+  draw_and_erase_cached_line(center, center, nsx, nsy, SECOND_COLOR, cached_points, sHandLen + 1, false, false);
+  draw_and_erase_cached_line(center, center, nhx, nhy, HOUR_COLOR, cached_points + ((sHandLen + 1) * 2), hHandLen + 1, true, false);
+  draw_and_erase_cached_line(center, center, nmx, nmy, MINUTE_COLOR, cached_points + ((sHandLen + 1 + hHandLen + 1) * 2), mHandLen + 1, true, true);
+  gfx->endWrite();
 }
 
-// Function to configure pin mode on MCP23S17
-void pinModeMCP23S17(uint8_t port, uint8_t pin, uint8_t mode) {
-  uint8_t registerAddress = (port == 'A') ? 0x00 : 0x01;  // IODIRA or IODIRB
-  uint8_t currentIODIR = readMCP23S17(registerAddress);   // Read the current IODIR register for the specified port
-
-  if (mode == INPUT) {
-    currentIODIR |= (1 << pin);  // Set pin as input (1 = input)
-  } else {
-    currentIODIR &= ~(1 << pin); // Set pin as output (0 = output)
+void draw_and_erase_cached_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t color, int16_t *cache, int16_t cache_len, bool cross_check_second, bool cross_check_hour)
+{
+#if defined(ESP8266)
+  yield();
+#endif
+  bool steep = _diff(y1, y0) > _diff(x1, x0);
+  if (steep)
+  {
+    _swap_int16_t(x0, y0);
+    _swap_int16_t(x1, y1);
   }
 
-  writeMCP23S17(registerAddress, currentIODIR);          // Write back to the IODIR register
-}
+  int16_t dx, dy;
+  dx = _diff(x1, x0);
+  dy = _diff(y1, y0);
 
-
-// Function to enable pull-up resistors on MCP23S17
-void pullUpMCP23S17(uint8_t port, uint8_t pin, bool enable) {
-  uint8_t registerAddress = (port == 'A') ? 0x0C : 0x0D;  // GPPUA or GPPUB
-  uint8_t currentGPPU = readMCP23S17(registerAddress);    // Read the current GPPU register for the specified port
-
-  if (enable) {
-    currentGPPU |= (1 << pin);  // Enable pull-up resistor
-  } else {
-    currentGPPU &= ~(1 << pin); // Disable pull-up resistor
+  int16_t err = dx / 2;
+  int8_t xstep = (x0 < x1) ? 1 : -1;
+  int8_t ystep = (y0 < y1) ? 1 : -1;
+  x1 += xstep;
+  int16_t x, y, ox, oy;
+  for (uint16_t i = 0; i <= dx; i++)
+  {
+    if (steep)
+    {
+      x = y0;
+      y = x0;
+    }
+    else
+    {
+      x = x0;
+      y = y0;
+    }
+    ox = *(cache + (i * 2));
+    oy = *(cache + (i * 2) + 1);
+    if ((x == ox) && (y == oy))
+    {
+      if (cross_check_second || cross_check_hour)
+      {
+        write_cache_pixel(x, y, color, cross_check_second, cross_check_hour);
+      }
+    }
+    else
+    {
+      write_cache_pixel(x, y, color, cross_check_second, cross_check_hour);
+      if ((ox > 0) || (oy > 0))
+      {
+        write_cache_pixel(ox, oy, BACKGROUND, cross_check_second, cross_check_hour);
+      }
+      *(cache + (i * 2)) = x;
+      *(cache + (i * 2) + 1) = y;
+    }
+    if (err < dy)
+    {
+      y0 += ystep;
+      err += dx;
+    }
+    err -= dy;
+    x0 += xstep;
   }
-
-  writeMCP23S17(registerAddress, currentGPPU);           // Write back to the GPPU register
-}
-
-
-// Function to read a pin on MCP23S17 (digital read)
-uint8_t digitalReadMCP23S17(uint8_t port, uint8_t pin) {
-  uint8_t registerAddress = (port == 'A') ? 0x12 : 0x13;  // GPIOA or GPIOB
-  uint8_t currentGPIO = readMCP23S17(registerAddress);    // Read the current GPIO register for the specified port
-  return (currentGPIO & (1 << pin)) ? HIGH : LOW;         // Return HIGH or LOW based on the pin state
-}
-
-
-void digitalWriteMCP23S17(uint8_t port, uint8_t pin, uint8_t value) {
-  uint8_t registerAddress = (port == 'A') ? 0x12 : 0x13;  // GPIOA or GPIOB
-  uint8_t currentGPIO = readMCP23S17(registerAddress);    // Read the current GPIO register for the specified port
-  if (value == HIGH) {
-    currentGPIO |= (1 << pin);  // Set the bit to HIGH
-  } else {
-    currentGPIO &= ~(1 << pin); // Clear the bit to LOW
+  for (uint16_t i = dx + 1; i < cache_len; i++)
+  {
+    ox = *(cache + (i * 2));
+    oy = *(cache + (i * 2) + 1);
+    if ((ox > 0) || (oy > 0))
+    {
+      write_cache_pixel(ox, oy, BACKGROUND, cross_check_second, cross_check_hour);
+    }
+    *(cache + (i * 2)) = 0;
+    *(cache + (i * 2) + 1) = 0;
   }
-  writeMCP23S17(registerAddress, currentGPIO);           // Write back to the GPIO register
+}
+
+void write_cache_pixel(int16_t x, int16_t y, int16_t color, bool cross_check_second, bool cross_check_hour)
+{
+  int16_t *cache = cached_points;
+  if (cross_check_second)
+  {
+    for (uint16_t i = 0; i <= sHandLen; i++)
+    {
+      if ((x == *(cache++)) && (y == *(cache)))
+      {
+        return;
+      }
+      cache++;
+    }
+  }
+  if (cross_check_hour)
+  {
+    cache = cached_points + ((sHandLen + 1) * 2);
+    for (uint16_t i = 0; i <= hHandLen; i++)
+    {
+      if ((x == *(cache++)) && (y == *(cache)))
+      {
+        return;
+      }
+      cache++;
+    }
+  }
+  gfx->writePixel(x, y, color);
 }
