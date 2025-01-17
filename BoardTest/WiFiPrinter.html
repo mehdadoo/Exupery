@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Dashboard</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    h2 {
+      font-weight: 700;
+      color: #555;
+      margin: 10px 0;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px;
+    }
+    .box {
+      flex: 1 1 calc(25% - 10px);
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .box.boolean {
+      color: #333;
+      text-transform: capitalize;
+    }
+    .box.joystick {
+      position: relative;
+      background-color: #eaeaea;
+      border: 1px solid #bbb;
+      overflow: hidden;
+    }
+    .box.joystick .fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: rgba(255, 0, 0, 0.6);
+      z-index: -1;
+      transition: width 0.3s ease;
+    }
+    .full-width-box {
+      flex: 1 1 100%;
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: left;
+      white-space: pre-wrap;
+    }
+    pre {
+      margin: 0;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 14px;
+      color: #444;
+      overflow-x: auto;
+    }
+  </style>
+  
+  <script>
+    // Function to fetch data from ESP32
+    function fetchData() {
+      fetch("http://192.168.1.181/getData") // Update the IP to the correct one
+        .then(response => response.json())
+        .then(data => {
+          console.log(data); // Log for debugging
+
+          // Update boolean boxes
+          ["powerSwitch", "button1", "button2", "button3", "button4", "speedSensor", "pedalSensor"].forEach(key => {
+            const element = document.getElementById(key + "Value");
+            if (element && data[key] !== undefined) {
+              element.style.backgroundColor = data[key] 
+                ?  "#ffffff"// Beautiful desaturated red for true
+                : "rgba(255, 80, 80, 0.6)"; // White for false
+            }
+          });
+
+          // Update joystick boxes
+         ["joystick1", "joystick2"].forEach(key => {
+		  const element = document.getElementById(key + "Value");
+		  if (element && data[key] !== undefined) {
+			let percentage;
+
+			if (key === "joystick2") {
+			  // Normalize joystick2 value to a 0–100 percentage based on the range 7–194
+			  percentage = ((data[key] - 17) / (194 - 17)) * 100;
+			  percentage = Math.max(0, Math.min(percentage, 100)); // Clamp percentage to 0–100
+			} else {
+			  // Default range for joystick1 (0–256)
+			  percentage = (data[key] / 207) * 100;
+			}
+
+			element.style.background = `linear-gradient(to right, #eeeeee ${percentage}%, white ${percentage}%)`;
+			element.innerText = `${key}: ${data[key]}`; // Display the value
+		  }
+		});
+
+
+
+          // Update other values
+          ["current"].forEach(key => {
+			  const element = document.getElementById(key + "Value");
+			  if (element && data[key] !== undefined) {
+				element.innerText = `${key}: ${data[key]}`;
+			  }
+			});
+
+			["voltage", "inclinationAngle"].forEach(key => {
+			  const element = document.getElementById(key + "Value");
+			  if (element && data[key] !== undefined) {
+				element.innerText = `${key}: ${data[key].toFixed(1)}`;
+			  }
+			});
+
+          // Update the raw response
+          const rawData = JSON.stringify(data, null, 2); // Pretty-print JSON
+          document.getElementById("messageValue").innerText = rawData;
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
+    }
+
+    // Polling every 500ms
+    setInterval(fetchData, 500);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <!-- Boolean values -->
+    <div class="box boolean" id="powerSwitchValue">powerSwitch</div>
+    <div class="box boolean" id="button1Value">button1</div>
+    <div class="box boolean" id="button2Value">button2</div>
+    <div class="box boolean" id="button3Value">button3</div>
+    <div class="box boolean" id="button4Value">button4</div>
+
+    <!-- Joystick values -->
+    <div class="box joystick" id="joystick1Value">
+      joystick throttle
+      <div class="fill"></div>
+      <div class="value-text" style="position: relative; z-index: 1; margin-top: 5px; font-size: 14px; font-weight: bold;">0</div>
+    </div>
+    <div class="box joystick" id="joystick2Value">
+      joystick knob
+      <div class="fill"></div>
+      <div class="value-text" style="position: relative; z-index: 1; margin-top: 5px; font-size: 14px; font-weight: bold;">0</div>
+    </div>
+
+    <!-- Other values -->
+    <div class="box" id="speedSensorValue">speedSensor: Waiting for data...</div>
+    <div class="box" id="pedalSensorValue">pedalSensor: Waiting for data...</div>
+    <div class="box" id="voltageValue">voltage: Waiting for data...</div>
+    <div class="box" id="currentValue">current: Waiting for data...</div>
+    <div class="box" id="inclinationAngleValue">inclinationAngle: Waiting for data...</div>
+
+    <!-- Full-width raw JSON response -->
+    <div class="full-width-box" id="messageValue"></div>
+  </div>
+</body>
+</html>

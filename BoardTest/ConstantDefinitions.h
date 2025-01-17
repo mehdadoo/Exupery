@@ -1,26 +1,18 @@
 #ifndef CONSTANT_DEFINITIONS_H
 #define CONSTANT_DEFINITIONS_H
 
-// Sine wave parameters
-#define PI 3.14159265359
+
 #define PWM_RESOLUTION 255 // PWM resolution (0-255 for analogWrite)
 
-//LCD
-#define BACKGROUND BLACK
-#define MARK_COLOR WHITE
-#define SUBMARK_COLOR DARKGREY // LIGHTGREY
-#define HOUR_COLOR WHITE
-#define MINUTE_COLOR BLUE // LIGHTGREY
-#define SECOND_COLOR RED
-
-#define SIXTIETH 0.016666667
-#define TWELFTH 0.08333333
-#define SIXTIETH_RADIAN 0.10471976
-#define TWELFTH_RADIAN 0.52359878
-#define RIGHT_ANGLE_RADIAN 1.5707963
-
-#define MPU_UPDATE_INTERVAL 1000
-
+#define MPU_UPDATE_INTERVAL 200
 #define MODULE_CONNECTION_TIMEOUT 2000
+
+
+//WiFiPrinter
+#define WIFI_PASSWORD                 "cScrT9vJRTHCf3vzh2"
+#define WIFI_SSID                     "Bbox-B3A9B36F"
+#define MAX_WIFI_CONNECTION_RETRIES   5
+#define RETRY_INTERVAL                1000  //ms
+#define UPDATE_OVER_HTTP_FREQUENCY    200   //ms
 
 #endif

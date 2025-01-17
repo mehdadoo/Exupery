@@ -8,6 +8,9 @@
 #include <ESP32Servo.h>
 #include <DigiPotX9Cxxx.h>
 #include "MPU9250.h"
+#include "WiFiPrinter.h"
+
+#define DEBUG_MODE
 
 //ADS1115 joysticks
 Adafruit_ADS1115 ads_joystick;
@@ -39,12 +42,15 @@ const uint8_t mosfetPins[] = {MOSFET_1_PIN, MOSFET_2_PIN, MOSFET_3_PIN, MOSFET_4
 bool mosfetStates[] = {LOW, LOW, LOW, LOW, LOW};
 
 // Variables to store previous states of the buttons
-uint8_t previousButtonState[4] = {HIGH, HIGH, HIGH, HIGH};
+bool previousButtonState[4] = {HIGH, HIGH, HIGH, HIGH};
 
 // Variables to store previous states of the sensors
-uint8_t previousSensorState[3] = {LOW, LOW, LOW};
+bool previousSensorState[3] = {LOW, LOW, LOW};
 
 bool is_initialized_port_expander = false;
+
+// Declare a variable to store the previous state of the car key switch
+bool previousCarKeySwitchState = HIGH;
 
 
 // Function to set voltmeter voltage using PWM
@@ -65,24 +71,77 @@ void setVoltmeterPWM(int pin, int pwmValue, int channel, int freq = 5000, int re
 
 void setup()
 {
-  Serial.begin(9600);
-  Serial.println("Blue Caleche App");
-
   initializePins();
+  neopixelWrite(RGB_BUILTIN,  0,  0,  64);
+  initializeSerial();
+
   //initializeServos();
-  //initializePotentiometers();
+  initializePotentiometers();
 }
 
 void loop()
 {
   handleCarKeySwitch();
+  updateJoysticks();
+  updateMPU();
+  updateCurrentSensor();
+  updatePortExpander();
+  updateOverHTTP();
+
   //updateVoltmeters();
   //updateServos();
-  //updatePotentiometers();
-  //updateMPU();
-  //updateLCD();
-  //updateCurrentSensor();
-  updatePortExpander();
+  updatePotentiometers();
+}
+
+
+int joystick_throttle = 0;
+int joystick_steering = 0;
+int joystick_knob = 0;
+float voltage = 0.0;
+float current = 0.0;
+float inclination_angle = 0.0;
+
+void updateOverHTTP()
+{
+  static unsigned long lastUpdateTime = 0; // Tracks the last time the method was called
+  unsigned long currentTime = millis();
+
+  // Check if enough time has been passed since last print call
+  if (currentTime - lastUpdateTime >= UPDATE_OVER_HTTP_FREQUENCY) 
+  {
+      lastUpdateTime = currentTime; // Update the last update time
+      WiFiPrinter::printAll(previousCarKeySwitchState,
+                          previousButtonState[0], previousButtonState[1], previousButtonState[2], previousButtonState[3], 
+                          previousSensorState[1], previousSensorState[2],
+                          joystick_throttle, joystick_knob,
+                          voltage,
+                          current,
+                          inclination_angle);
+  }
+
+  WiFiPrinter::update();
+}
+
+void initializeSerial()
+{
+  #ifndef DEBUG_MODE
+    return;
+  #endif
+
+  Serial.begin(9600);
+
+  // Check if the serial port is available
+  unsigned long startMillis = millis();
+  while (!Serial && millis() - startMillis < 2000) 
+  {
+    // Wait up to 2 seconds for the serial connection
+    delay(10);
+  }
+  Serial.println( "Serial startup: " + String ( millis() - startMillis ) );
+  
+
+  WiFiPrinter::setup();
+  WiFiPrinter::print("Blue Calèche, Bonjour!");
 }
 
 void initializeServos() 
@@ -180,9 +239,9 @@ void updateServos()
 {
   if(is_initialized_ADS1115_joystick)
   {
-    servoBrake1.write( readJoystick( 0 ) );
-    servoBrake2.write( readJoystick( 1 ) );
-    servoSteering.write( readJoystick( 2 ) );
+    servoBrake1.write( joystick_throttle );
+    servoBrake2.write( joystick_steering );
+    servoSteering.write( joystick_knob );
   }
   else
   {
@@ -195,8 +254,8 @@ void updatePotentiometers()
   if( !is_initialized_ADS1115_joystick )
     return;
 
-  int potValue1 = map(readJoystick( 0 ), 0, 255, 0, 100);
-  int potValue2 = map(readJoystick( 1 ), 0, 255, 0, 100);
+  int potValue1 = map(joystick_knob, 0, 255, 0, 90);
+  int potValue2 = map(joystick_throttle, 0, 255, 0, 90);
 
   potentiometer1.set(potValue1);
   potentiometer2.set(potValue2);
@@ -228,10 +287,10 @@ void updateMPU()
   float accelZ = IMU.getAccelZ_mss();  // Read Z-axis acceleration
 
   // Calculate the angle in degrees
-  float carAngle = atan2(accelX, accelZ) * 180.0 / PI;
+  inclination_angle = atan2(accelX, accelZ) * 180.0 / PI;
 
   // Print the angle with 1 decimal place
-  Serial.println(carAngle, 1);  
+  //Serial.println(inclination_angle, 1);  
 }
 
 
@@ -254,7 +313,8 @@ void updateCurrentSensor()
   // Update the last update time
   CurrentSensor_LastUpdateTime = currentTime;
 
-  Serial.println( readBatteryVoltage()  );
+  voltage = readBatteryVoltage();
+  current = readCurrentSensor(3);
 }
 
 float readBatteryVoltage() 
@@ -276,32 +336,36 @@ void updateVoltmeters()
   if( !is_initialized_ADS1115_joystick )
     return;
 
-  int joystick2 = readJoystick(2);
-  int joystick1 = readJoystick(1);
-  int joystick0 = readJoystick(0);
-
-
-  setVoltmeterPWM(VOLTMETER_SPEED,    joystick0,  VOLTMETER_SPEED_CHANNEL);
-  setVoltmeterPWM(VOLTMETER_CHARGING, joystick1,  VOLTMETER_CHARGING_CHANNEL);
-  setVoltmeterPWM(VOLTMETER_BATTERY,  joystick2,  VOLTMETER_BATTERY_CHANNEL);
-
-  /*
-  // Print all values on the same line separated by spaces
-  Serial.print(joystick2);
-  Serial.print(" ");
-  Serial.print(joystick1);
-  Serial.print(" ");
-  Serial.println(joystick0); // End the line with joystick0 value
+  setVoltmeterPWM(VOLTMETER_SPEED,    joystick_steering,  VOLTMETER_SPEED_CHANNEL);
+  setVoltmeterPWM(VOLTMETER_CHARGING, joystick_throttle,  VOLTMETER_CHARGING_CHANNEL);
+  setVoltmeterPWM(VOLTMETER_BATTERY,  joystick_knob,  VOLTMETER_BATTERY_CHANNEL);
 
   delay(100); // Adjust the delay for smoother plotting
-  */
+}
+
+unsigned long joystickLastUpdateTime = 0;  // Variable to store the last update time
+
+void updateJoysticks()
+{
+  if( !is_initialized_ADS1115_joystick )
+    return;
+
+
+  unsigned long currentTime = millis();  // Get the current time
+
+  if (currentTime - joystickLastUpdateTime >= MPU_UPDATE_INTERVAL) {  // Check if enough time has passed
+    joystick_steering = readJoystick(2);
+    joystick_throttle = readJoystick(1);
+    joystick_knob = readJoystick(0);
+    
+    joystickLastUpdateTime = currentTime;  // Update the last update time
+  }
 }
   
 // Function to handle carKeySwitch 
 void handleCarKeySwitch()
 {
-  // Declare a static variable to store the previous state of the car key switch
-  static int previousCarKeySwitchState = HIGH;
+  
 
   // Read the current state of the car key switch
   int carKeySwitchState = digitalRead(CAR_KEY_SWITCH);
@@ -464,6 +528,7 @@ void turnOffCar()
   is_initialized_ADS1115_joystick = false;
   is_initialized_ADS1115_currentSensor = false;
   is_initialized_port_expander = false;
+  is_initialized_MPU = false;
 
   Serial.println("Car Turned Off");
 }
@@ -534,22 +599,12 @@ void updatePortExpander()
     }
   }
 
-  /*
+  
   uint8_t currentSensorState = digitalReadMCP23S17('A', SENSOR_WHEEL_SPEED_PIN);  // Read current state of sensor
 
   // If the button state has changed, print the new state
   if (currentSensorState != previousSensorState[1]) 
   {
-    if (currentSensorState == HIGH) 
-    {
-      Serial.print("SENSOR_WHEEL_SPEED: ");
-      Serial.println(" HIGH");
-    } 
-    else 
-    {
-      Serial.print("SENSOR_WHEEL_SPEED: ");
-      Serial.println(" LOW");
-    }
     // Update the previous state
     previousSensorState[1] = currentSensorState;
   }
@@ -559,20 +614,10 @@ void updatePortExpander()
   // If the button state has changed, print the new state
   if (currentSensorState != previousSensorState[2]) 
   {
-    if (currentSensorState == HIGH) 
-    {
-      //Serial.print("SENSOR_WHEEL_SPEED: ");
-      Serial.println(r++);
-    } 
-    else 
-    {
-      //Serial.print("SENSOR_WHEEL_SPEED: ");
-      //Serial.println(" LOW");
-    }
     // Update the previous state
     previousSensorState[2] = currentSensorState;
   }
-  */
+  
   
 
   delay(50);  // Polling delay
