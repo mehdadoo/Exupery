@@ -53,6 +53,7 @@ bool is_initialized_port_expander = false;
 bool previousCarKeySwitchState = HIGH;
 
 
+
 // Function to set voltmeter voltage using PWM
 void setVoltmeterPWM(int pin, int pwmValue, int channel, int freq = 5000, int resolution = 8) 
 {
@@ -75,7 +76,7 @@ void setup()
   neopixelWrite(RGB_BUILTIN,  0,  0,  64);
   initializeSerial();
 
-  //initializeServos();
+  initializeServos();
   initializePotentiometers();
 }
 
@@ -88,8 +89,8 @@ void loop()
   updatePortExpander();
   updateOverHTTP();
 
-  //updateVoltmeters();
-  //updateServos();
+  updateVoltmeters();
+  updateServos();
   updatePotentiometers();
 }
 
@@ -100,6 +101,12 @@ int joystick_knob = 0;
 float voltage = 0.0;
 float current = 0.0;
 float inclination_angle = 0.0;
+
+
+int potValue1 = 0;
+int potValue2 = 0;
+
+int servoSteeringValue = 0;
 
 void updateOverHTTP()
 {
@@ -113,7 +120,7 @@ void updateOverHTTP()
       WiFiPrinter::printAll(previousCarKeySwitchState,
                           previousButtonState[0], previousButtonState[1], previousButtonState[2], previousButtonState[3], 
                           previousSensorState[1], previousSensorState[2],
-                          joystick_throttle, joystick_knob,
+                          joystick_throttle, joystick_knob, joystick_steering,
                           voltage,
                           current,
                           inclination_angle);
@@ -146,22 +153,23 @@ void initializeSerial()
 
 void initializeServos() 
 {
-  int servoChannel = servoBrake1.attach(SERVO_BRAKE_1);  // Reattach the servo if it was detached
-  Serial.println("servoBrake1 Channel:" + String(servoChannel));
+  //int servoChannel = servoBrake1.attach(SERVO_BRAKE_1);  // Reattach the servo if it was detached
+  //Serial.println("servoBrake1 Channel:" + String(servoChannel));
 
-  servoChannel = servoBrake2.attach(SERVO_BRAKE_2);  // Reattach the servo if it was detached
-  Serial.println("servoBrake2 Channel:" + String(servoChannel));
+  //servoChannel = servoBrake2.attach(SERVO_BRAKE_2);  // Reattach the servo if it was detached
+  //Serial.println("servoBrake2 Channel:" + String(servoChannel));
 
-  servoChannel = servoSteering.attach(SERVO_STEERING);  // Reattach the servo if it was detached
-  Serial.println("servoSteering Channel:" + String(servoChannel));
+  int servoChannel = servoSteering.attach(SERVO_STEERING);  // Reattach the servo if it was detached
+  //Serial.println("servoSteering Channel:" + String(servoChannel));
+  WiFiPrinter::print("servoSteering Channel:" + String(servoChannel));
 
   delay(50);
 }
 
 void initializePotentiometers() 
 {
-  potentiometer1.set(10);
-  potentiometer2.set(90);
+  potentiometer1.set(0);
+  potentiometer2.set(0);
 }
 
 void initializeMPU() 
@@ -175,18 +183,14 @@ void initializeMPU()
 
   if (status < 0) 
   {
-    Serial.println("MPU initialization UNsuccessful!!!!!!!!");
-    Serial.print("Status: ");
-    Serial.println(status);
+    WiFiPrinter::print("MPU initialization UNsuccessful!!!!!!!!");
   }
   else
   {
     unsigned long initialization_time = millis() - module_connection_time_Start;
         
     // Print the initialization time
-    Serial.print("MPU initialized in ");
-    Serial.print(initialization_time); // Print the time in milliseconds
-    Serial.println(" ms");
+    WiFiPrinter::print("MPU initialized in " + String( initialization_time ) + " ms");
 
      is_initialized_MPU = true;
   }
@@ -201,34 +205,9 @@ void initializePins()
   pinMode(VOLTMETER_CHARGING, OUTPUT);
   pinMode(VOLTMETER_BATTERY, OUTPUT);
 
-  Serial.println("Pins initialized");
+  WiFiPrinter::print("Pins initialized");
 }
 
-void readSerialInput() 
-{
-  if (Serial.available() > 0) 
-  {
-    String input = Serial.readStringUntil('\n');  // Read the input from serial monitor
-    int targetPMW = input.toInt();  // Get the target angle
-
-    if (targetPMW < 0) targetPMW = 0;
-    if (targetPMW > 255) targetPMW = 255; // Maximum PWM value for 8-bit resolution
-
-    Serial.println("servo:"+ input);
-    servoBrake1.write(targetPMW);  // Move the servo to the target angle
-    servoBrake2.write(targetPMW);  // Move the servo to the target angle
-    servoSteering.write(targetPMW);  // Move the servo to the target angle
-
-
-    setVoltmeterPWM(VOLTMETER_SPEED,    targetPMW,  VOLTMETER_SPEED_CHANNEL);
-    setVoltmeterPWM(VOLTMETER_CHARGING, targetPMW,  VOLTMETER_CHARGING_CHANNEL);
-    setVoltmeterPWM(VOLTMETER_BATTERY,  targetPMW,  VOLTMETER_BATTERY_CHANNEL);
-
-    int potValue = map(targetPMW, 0, 255, 0, 100);
-    potentiometer1.set(potValue);
-    potentiometer2.set(potValue);
-  }
-}
 
 
 
@@ -239,26 +218,51 @@ void updateServos()
 {
   if(is_initialized_ADS1115_joystick)
   {
-    servoBrake1.write( joystick_throttle );
-    servoBrake2.write( joystick_steering );
-    servoSteering.write( joystick_knob );
-  }
-  else
-  {
-    readSerialInput();  // Call the method to read serial input
+    //servoBrake1.write( joystick_throttle );
+    //servoBrake2.write( joystick_knob );
+
+    servoSteeringValue = map(joystick_steering, 22, 164, 0, 136);
+    servoSteeringValue = constrain(servoSteeringValue, 0, 136); // Ensure it's within 0-180
+    servoSteering.write(servoSteeringValue);
   }
 }
+
+int joystickMaxValue = 200;
+int joystickMiddleValue = 100;
+int potMinValue = 30;
+int potMaxValue = 63; //75% of the max throttle of the motors. it will translate roughly to 2.85v (.84v the throttle full range is 3.6v)
 
 void updatePotentiometers()
 {
   if( !is_initialized_ADS1115_joystick )
     return;
 
-  int potValue1 = map(joystick_knob, 0, 255, 0, 90);
-  int potValue2 = map(joystick_throttle, 0, 255, 0, 90);
+  joystick_knob = constrain(joystick_knob, 0, joystickMaxValue);
+  joystick_throttle = constrain(joystick_throttle, 0, joystickMaxValue);
 
-  potentiometer1.set(potValue1);
-  potentiometer2.set(potValue2);
+
+  potValue1 = map(joystick_knob, 0, joystickMaxValue, potMinValue, potMaxValue);
+  potValue2 = 0; // Initialize potValue2
+
+  if (joystick_throttle < joystickMiddleValue) 
+      potValue2 = 0; // Set potValue2 to 0 if below 100
+  else
+      // Map joystick_throttle from 100 to 200 to potValue2 from 0 to 75
+      potValue2 = map(joystick_throttle, joystickMiddleValue, joystickMaxValue, potMinValue, potMaxValue);
+
+
+
+
+
+
+
+  // Ensure potValue2 never exceeds 75
+  potValue1 = min(potValue1, potMaxValue);
+  potValue2 = min(potValue2, potMaxValue);
+
+ // Apply the value to the potentiometers
+  potentiometer1.set(potValue2);
+  potentiometer2.set(potValue1);
 }
 
 // Define the necessary variables
@@ -305,7 +309,7 @@ void updateCurrentSensor()
   unsigned long currentTime = millis();
 
   // Check if the required time interval has passed
-  if (currentTime - CurrentSensor_LastUpdateTime < MPU_UPDATE_INTERVAL)
+  if (currentTime - CurrentSensor_LastUpdateTime < CURRENTSENSOR_UPDATE_INTERVAL)
   {
     return; // Exit the method if the interval hasn't passed
   }
@@ -314,7 +318,7 @@ void updateCurrentSensor()
   CurrentSensor_LastUpdateTime = currentTime;
 
   voltage = readBatteryVoltage();
-  current = readCurrentSensor(3);
+  current = readCurrentSensor(2);
 }
 
 float readBatteryVoltage() 
@@ -330,17 +334,35 @@ float readBatteryVoltage()
     return adcReading * slope / dividerFactor;// * (resolutionPerBit / dividerFactor); // Calculate battery voltage
 }
 
-
+unsigned long voltMetersLastUpdateTime = 0;  // Variable to store the last update time
 void updateVoltmeters()
 {
   if( !is_initialized_ADS1115_joystick )
     return;
 
-  setVoltmeterPWM(VOLTMETER_SPEED,    joystick_steering,  VOLTMETER_SPEED_CHANNEL);
-  setVoltmeterPWM(VOLTMETER_CHARGING, joystick_throttle,  VOLTMETER_CHARGING_CHANNEL);
-  setVoltmeterPWM(VOLTMETER_BATTERY,  joystick_knob,  VOLTMETER_BATTERY_CHANNEL);
+  unsigned long currentTime = millis();  // Get the current time
 
-  delay(100); // Adjust the delay for smoother plotting
+  if (currentTime - voltMetersLastUpdateTime >= MPU_UPDATE_INTERVAL) 
+  {  // Check if enough time has passed
+    setVoltmeterPWM(VOLTMETER_SPEED,    joystick_steering,  VOLTMETER_SPEED_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_CHARGING,  joystick_knob,  VOLTMETER_BATTERY_CHANNEL);
+
+    // Define the min and max voltage of the lithium battery pack
+    const float minVoltage = 42.0;   // Cutoff voltage (0% charge)
+    const float maxVoltage = 54.6;  // Fully charged voltage (100% charge)
+    // Constrain voltage to the valid range
+    voltage = constrain(voltage, minVoltage, maxVoltage);
+    // Map voltage to percentage (0-100)
+    int batteryPercentage = map(voltage * 100, minVoltage * 100, maxVoltage * 100, 0, 100);
+
+    // Map percentage to PWM range (0-255)
+    int pwmVoltagePercentageValue = map(batteryPercentage, 0, 100, 0, 255);
+
+    setVoltmeterPWM(VOLTMETER_BATTERY, pwmVoltagePercentageValue,  VOLTMETER_CHARGING_CHANNEL);
+    
+    voltMetersLastUpdateTime = currentTime;  // Update the last update time
+  }
+
 }
 
 unsigned long joystickLastUpdateTime = 0;  // Variable to store the last update time
@@ -353,10 +375,11 @@ void updateJoysticks()
 
   unsigned long currentTime = millis();  // Get the current time
 
-  if (currentTime - joystickLastUpdateTime >= MPU_UPDATE_INTERVAL) {  // Check if enough time has passed
-    joystick_steering = readJoystick(2);
-    joystick_throttle = readJoystick(1);
-    joystick_knob = readJoystick(0);
+  if (currentTime - joystickLastUpdateTime >= MPU_UPDATE_INTERVAL) 
+  {  // Check if enough time has passed
+    joystick_steering = readJoystick(3);
+    joystick_throttle = readJoystick(0);
+    joystick_knob = readJoystick(1);
     
     joystickLastUpdateTime = currentTime;  // Update the last update time
   }
@@ -394,7 +417,7 @@ void handleCarKeySwitch()
 
 void turnOnCar()
 {
-  Serial.println("Turning Car On");
+  WiFiPrinter::print("Turning Car On");
 
   digitalWrite(MOSFET_48V, HIGH); 
  
@@ -411,9 +434,7 @@ void turnOnCar()
         unsigned long initialization_time = millis() - module_connection_time_Start;
 
         // Print the initialization time
-        Serial.print("ADS1115 joystick initialized in ");
-        Serial.print(initialization_time); // Print the time in milliseconds
-        Serial.println(" ms");
+        WiFiPrinter::print("ADS1115 joystick initialized in " + String( initialization_time ) + "ms");
 
         break; // Exit the loop if initialization is successful
     }
@@ -431,9 +452,7 @@ void turnOnCar()
         unsigned long initialization_time = millis() - module_connection_time_Start;
         
         // Print the initialization time
-        Serial.print("ADS1115 currentSensor initialized in ");
-        Serial.print(initialization_time); // Print the time in milliseconds
-        Serial.println(" ms");
+        WiFiPrinter::print("ADS1115 currentSensor initialized in " + String( initialization_time ) + "ms");
 
         break; // Exit the loop if initialization is successful
     }
@@ -460,6 +479,7 @@ void turnOnCar()
   pinModeMCP23S17('B', BUTTON_3_PIN, INPUT);
   pinModeMCP23S17('A', SENSOR_PEDAL_TRIGGER_PIN, INPUT);
   pinModeMCP23S17('A', SENSOR_WHEEL_SPEED_PIN, INPUT);
+  pinModeMCP23S17('A', SENSOR_5V_EMPTY_PIN, INPUT);
 
   // Initialize MOSFET pins as outputs
   for (uint8_t i = 0; i < 5; i++) 
@@ -468,20 +488,29 @@ void turnOnCar()
     digitalWriteMCP23S17('A', mosfetPins[i], LOW); // Default to LOW
   }
 
+
+  //set empty pins as output low
+  pinModeMCP23S17('B', 4, OUTPUT);
+  digitalWriteMCP23S17('B', 4, LOW); // Default to LOW
+  pinModeMCP23S17('B', 5, OUTPUT);
+  digitalWriteMCP23S17('B', 5, LOW); // Default to LOW
+  pinModeMCP23S17('B', 6, OUTPUT);
+  digitalWriteMCP23S17('B', 6, LOW); // Default to LOW
+  pinModeMCP23S17('B', 7, OUTPUT);
+  digitalWriteMCP23S17('B', 7, LOW); // Default to LOW
+
   // Check if the module is initialized (simple check), Check IODIR register
   if (readMCP23S17(0x00) == 0x00) 
   {  
-    Serial.println("MCP23S17 Initialization Failed!");
+    WiFiPrinter::print("MCP23S17 Initialization Failed!");
+
   } 
   else 
   {
     unsigned long initialization_time = millis() - module_connection_time_Start;
         
     // Print the initialization time
-    Serial.print("MCP23S17 initialized in ");
-    Serial.print(initialization_time); // Print the time in milliseconds
-    Serial.println(" ms");
-
+    WiFiPrinter::print("MCP23S17 initialized in " + String( initialization_time ) + "ms");
 
     is_initialized_port_expander = true;
   }
@@ -505,14 +534,17 @@ void turnOnCar()
 
   neopixelWrite(RGB_BUILTIN,0,24,0); // Green
 
-  Serial.println("Car Turned On");
+  WiFiPrinter::print("Car Turned On");
 }
 
 
 
 void turnOffCar()
 {
-  Serial.println("Turning Car Off");
+  WiFiPrinter::print("Turning Car Off");
+
+  potentiometer1.set(0);
+  potentiometer2.set(0);
 
   if( is_initialized_ADS1115_joystick)
   {
@@ -530,7 +562,7 @@ void turnOffCar()
   is_initialized_port_expander = false;
   is_initialized_MPU = false;
 
-  Serial.println("Car Turned Off");
+  WiFiPrinter::print("Car Turned Off");
 }
 
 // Function to read joystick value from ADS1115 A2 pin and map to PWM
@@ -567,7 +599,7 @@ int readCurrentSensor( int adcPin )
 
 void registerError(const char* errorMessage)
 {
-    Serial.println(errorMessage); // Print the error message to the Serial Monitor
+    WiFiPrinter::print(errorMessage);
 }
 
 
@@ -577,50 +609,52 @@ void updatePortExpander()
   if( !is_initialized_port_expander)
     return;
 
-  // Check the state of each button (GPB0 to GPB3)
-  for (uint8_t i = 0; i < 4; i++) {
-    uint8_t currentButtonState = digitalReadMCP23S17('B', i);  // Read current state of button
+  updateButtons();
+  updateSensors();
+}
 
-    // If the button state has changed, print the new state
-    if (currentButtonState != previousButtonState[i]) {
-      if (currentButtonState == HIGH) {
-        Serial.print("Button ");
-        Serial.print(i);
-        Serial.println(" HIGH");
-        digitalWriteMCP23S17('A', mosfetPins[i], LOW);
-      } else {
-        Serial.print("Button ");
-        Serial.print(i);
-        Serial.println(" low");
-        digitalWriteMCP23S17('A', mosfetPins[i], HIGH);
-      }
-      // Update the previous state
-      previousButtonState[i] = currentButtonState;
-    }
-  }
-
-  
-  uint8_t currentSensorState = digitalReadMCP23S17('A', SENSOR_WHEEL_SPEED_PIN);  // Read current state of sensor
-
-  // If the button state has changed, print the new state
-  if (currentSensorState != previousSensorState[1]) 
+unsigned long lastDebounceTime = 0;
+const unsigned long debounceDelay = 200;  // milliseconds
+void updateButtons()
+{
+  if (millis() - lastDebounceTime > debounceDelay) 
   {
-    // Update the previous state
-    previousSensorState[1] = currentSensorState;
+    for (uint8_t i = 0; i < 4; i++)
+    {
+      uint8_t currentButtonState = digitalReadMCP23S17('B', i);  // Read current state of button
+
+      // If the button state has changed, print the new state
+      if (currentButtonState != previousButtonState[i]) 
+      {
+        if (currentButtonState == HIGH) 
+        {
+          Serial.println("Button " + String( i ) + " HIGH");
+          previousButtonState[i] = HIGH;
+          digitalWriteMCP23S17('A', mosfetPins[i], LOW);
+        }
+        else 
+        {
+          Serial.println("Button " + String( i ) + " LOW");
+          previousButtonState[i] = LOW;
+          digitalWriteMCP23S17('A', mosfetPins[i], HIGH);
+        }
+
+      }
+    }
+
+    lastDebounceTime = millis();
   }
+}
+
+void updateSensors()
+{
+  uint8_t currentSensorState = digitalReadMCP23S17('A', SENSOR_WHEEL_SPEED_PIN);  // Read current state of sensor
+  if (currentSensorState != previousSensorState[1]) 
+    previousSensorState[1] = currentSensorState;
   
   currentSensorState = digitalReadMCP23S17('A', SENSOR_PEDAL_TRIGGER_PIN);  // Read current state of sensor
-
-  // If the button state has changed, print the new state
   if (currentSensorState != previousSensorState[2]) 
-  {
-    // Update the previous state
     previousSensorState[2] = currentSensorState;
-  }
-  
-  
-
-  delay(50);  // Polling delay
 }
 
 

@@ -74,15 +74,24 @@
       color: #444;
       overflow-x: auto;
     }
+	.red-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+  visibility: hidden; /* Initially hidden */
+}
   </style>
   
   <script>
+	let star = false;  // Initial state of the star flag
     // Function to fetch data from ESP32
     function fetchData() {
       fetch("http://192.168.1.181/getData") // Update the IP to the correct one
         .then(response => response.json())
         .then(data => {
-          console.log(data); // Log for debugging
+          //console.log(data); // Log for debugging
 
           // Update boolean boxes
           ["powerSwitch", "button1", "button2", "button3", "button4", "speedSensor", "pedalSensor"].forEach(key => {
@@ -95,18 +104,22 @@
           });
 
           // Update joystick boxes
-         ["joystick1", "joystick2"].forEach(key => {
+         ["joystick_throttle", "joystick_knob", "joystick_steering"].forEach(key => {
 		  const element = document.getElementById(key + "Value");
 		  if (element && data[key] !== undefined) {
 			let percentage;
 
-			if (key === "joystick2") {
-			  // Normalize joystick2 value to a 0–100 percentage based on the range 7–194
+			if (key === "joystick_knob") {
+			  // Normalize joystick_knob value to a 0–100 percentage based on the range 7–194
 			  percentage = ((data[key] - 17) / (194 - 17)) * 100;
 			  percentage = Math.max(0, Math.min(percentage, 100)); // Clamp percentage to 0–100
-			} else {
-			  // Default range for joystick1 (0–256)
+			} else if (key === "joystick_throttle") {
+			  // Default range for joystick_throttle (0–256)
 			  percentage = (data[key] / 207) * 100;
+			}
+			else {
+			  // Default range for joystick_throttle (0–256)
+			  percentage = (data[key] / 256) * 100;
 			}
 
 			element.style.background = `linear-gradient(to right, #eeeeee ${percentage}%, white ${percentage}%)`;
@@ -131,9 +144,23 @@
 			  }
 			});
 
-          // Update the raw response
-          const rawData = JSON.stringify(data, null, 2); // Pretty-print JSON
-          document.getElementById("messageValue").innerText = rawData;
+          // Update Message if present in the response
+          if (data.message !== undefined) {
+            const messageField = document.getElementById("messageValue");
+            messageField.innerText += "\n" + data.message;  // Append the new message
+          }
+
+			const rawResponseText = document.getElementById("rawResponseText");
+			if (!star) {
+			  rawResponseText.style.visibility = "visible"; // Show the red dot
+			  star = true;
+			} else {
+			  rawResponseText.style.visibility = "hidden"; // Hide the red dot
+			  star = false;
+			}
+		  
+		  
+		  
         })
         .catch(error => {
           console.error('Error fetching data:', error);
@@ -154,26 +181,37 @@
     <div class="box boolean" id="button4Value">button4</div>
 
     <!-- Joystick values -->
-    <div class="box joystick" id="joystick1Value">
+    <div class="box joystick" id="joystick_throttleValue">
       joystick throttle
       <div class="fill"></div>
       <div class="value-text" style="position: relative; z-index: 1; margin-top: 5px; font-size: 14px; font-weight: bold;">0</div>
     </div>
-    <div class="box joystick" id="joystick2Value">
+    <div class="box joystick" id="joystick_knobValue">
       joystick knob
+      <div class="fill"></div>
+      <div class="value-text" style="position: relative; z-index: 1; margin-top: 5px; font-size: 14px; font-weight: bold;">0</div>
+    </div>
+	<div class="box joystick" id="joystick_steeringValue">
+      joystick steering
       <div class="fill"></div>
       <div class="value-text" style="position: relative; z-index: 1; margin-top: 5px; font-size: 14px; font-weight: bold;">0</div>
     </div>
 
     <!-- Other values -->
-    <div class="box" id="speedSensorValue">speedSensor: Waiting for data...</div>
-    <div class="box" id="pedalSensorValue">pedalSensor: Waiting for data...</div>
+    <div class="box" id="speedSensorValue">Speed Sensor:</div>
+    <div class="box" id="pedalSensorValue">Pedal Sensor</div>
     <div class="box" id="voltageValue">voltage: Waiting for data...</div>
     <div class="box" id="currentValue">current: Waiting for data...</div>
     <div class="box" id="inclinationAngleValue">inclinationAngle: Waiting for data...</div>
 
     <!-- Full-width raw JSON response -->
+    <!-- Full-width message box -->
     <div class="full-width-box" id="messageValue"></div>
+
+    <!-- Full-width raw response box -->
+     <h2><span id="rawResponseText" class="red-dot"></span></h2>
+	 
+	 
   </div>
 </body>
 </html>

@@ -28,7 +28,7 @@ void WiFiPrinter::setup()
       server.sendHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With");
       
       // Send the current message as raw JSON
-      Serial.println("Request received. Sending data...");
+      //Serial.println("Request received. Sending data...");
       server.send(200, "application/json", printMessage);
 
 
@@ -58,6 +58,7 @@ void WiFiPrinter::setup()
 
 void WiFiPrinter::setupOTA() 
 {
+  
     // OTA setup
     ArduinoOTA.onStart([]() {
         String type;
@@ -89,6 +90,7 @@ void WiFiPrinter::setupOTA()
         }
     });
     ArduinoOTA.begin();
+    
 }
 
 // Static method to handle Wi-Fi retry logic and keep server running
@@ -123,14 +125,14 @@ void WiFiPrinter::print(const String& value) {
   serializeJson(doc, printMessage);
 
   // Print to Serial for testing
-  Serial.println(printMessage);
+  //Serial.println(printMessage);
 }
 
 // Overloaded print method to handle integer values
 void WiFiPrinter::printAll(bool powerSwitch,
                           bool button1, bool button2, bool button3, bool button4, 
                           bool speedSensor, bool pedalSensor,
-                          int joystick1, int joystick2,
+                          int joystick_throttle, int joystick_knob, int joystick_steering,
                           float voltage,
                           float current,
                           float inclinationAngle
@@ -150,8 +152,9 @@ void WiFiPrinter::printAll(bool powerSwitch,
   doc["button4"] = button4; 
   doc["speedSensor"] = speedSensor;
   doc["pedalSensor"] = pedalSensor;
-  doc["joystick1"] = joystick1;
-  doc["joystick2"] = joystick2;
+  doc["joystick_throttle"] = joystick_throttle;
+  doc["joystick_knob"] = joystick_knob;
+  doc["joystick_steering"] = joystick_steering;
   doc["voltage"] = voltage;
   doc["current"] = current;
   doc["inclinationAngle"] = inclinationAngle;

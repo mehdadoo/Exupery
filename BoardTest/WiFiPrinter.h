@@ -14,7 +14,7 @@ class WiFiPrinter
       static void printAll(bool powerSwitch,
                           bool button1, bool button2, bool button3, bool button4, 
                           bool speedSensor, bool pedalSensor,
-                          int joystick1, int joystick2,
+                          int joystick_throttle, int joystick_knob, int joystick_steering,
                           float voltage,
                           float current,
                           float inclinationAngle);

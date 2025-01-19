@@ -10,13 +10,23 @@
 #define MOSFET_48V      34   // Output for 48V MOSFET
 
 
+
+/*
+Servo 1: ledc 0, Channel: 0, Timer: 0
+Servo 2: ledc 1, Channel: 1, Timer: 0
+Servo 3: ledc 2, Channel: 2, Timer: 1
+Voltmeter 1: ledc 5, Channel: 5, Timer: 2
+Voltmeter 2: ledc 5, Channel: 6, Timer: 2
+Voltmeter 3: ledc 5, Channel: 7, Timer: 3
+*/
+
 // voltmeter
 #define VOLTMETER_SPEED            1       
-#define VOLTMETER_CHARGING         3   
-#define VOLTMETER_BATTERY          5   
+#define VOLTMETER_CHARGING         5   
+#define VOLTMETER_BATTERY          3   
 #define VOLTMETER_SPEED_CHANNEL    5
-#define VOLTMETER_CHARGING_CHANNEL 6
-#define VOLTMETER_BATTERY_CHANNEL  7
+#define VOLTMETER_CHARGING_CHANNEL 7
+#define VOLTMETER_BATTERY_CHANNEL  6
 
 
 #define SERVO_BRAKE_1   7
@@ -61,6 +71,8 @@
 #define SENSOR_PEDAL_TRIGGER_PIN 5  //GPIO A5 (Pin 5 on Bank A)
 #define SENSOR_5V_EMPTY_PIN 4    //GPIO A4 (Pin 4 on Bank A)
 #define SENSOR_WHEEL_SPEED_PIN 3    //GPIO A3 (Pin 3 on Bank A)
+
+
 
 
 #endif
