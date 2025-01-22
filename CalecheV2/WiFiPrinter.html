@@ -94,7 +94,7 @@
           //console.log(data); // Log for debugging
 
           // Update boolean boxes
-          ["powerSwitch", "button1", "button2", "button3", "button4", "speedSensor", "pedalSensor"].forEach(key => {
+          ["powerSwitch", "button1", "button2", "button3", "button4",].forEach(key => {
             const element = document.getElementById(key + "Value");
             if (element && data[key] !== undefined) {
               element.style.backgroundColor = data[key] 
@@ -137,7 +137,7 @@
 			  }
 			});
 
-			["voltage", "inclinationAngle"].forEach(key => {
+			["voltage", "inclinationAngle", "speedSensor", "pedalSensor"].forEach(key => {
 			  const element = document.getElementById(key + "Value");
 			  if (element && data[key] !== undefined) {
 				element.innerText = `${key}: ${data[key].toFixed(1)}`;

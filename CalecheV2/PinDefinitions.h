@@ -6,8 +6,8 @@
 #define I2C_SCL 36
 
 // Pin definitions for existing functionality
-#define CAR_KEY_SWITCH  15   // Input for car key switch
-#define MOSFET_48V      34   // Output for 48V MOSFET
+#define POWER_SWITCH_PIN  15   // Input for car key switch
+#define MOSFET_48V_PIN      34   // Output for 48V MOSFET
 
 
 
@@ -52,6 +52,8 @@ Voltmeter 3: ledc 5, Channel: 7, Timer: 3
 #define SCK_PIN 12   // Clock
 #define MOSI_PIN 13  // Master Out Slave In
 #define MISO_PIN 37  // Master In Slave Out
+
+//port expander cs pin
 #define CS_PIN 38    // Chip Select
 
 // GPIO Pin Definitions for Buttons (GPB0 to GPB3)

@@ -58,7 +58,6 @@ void WiFiPrinter::setup()
 
 void WiFiPrinter::setupOTA() 
 {
-  
     // OTA setup
     ArduinoOTA.onStart([]() {
         String type;
@@ -131,7 +130,7 @@ void WiFiPrinter::print(const String& value) {
 // Overloaded print method to handle integer values
 void WiFiPrinter::printAll(bool powerSwitch,
                           bool button1, bool button2, bool button3, bool button4, 
-                          bool speedSensor, bool pedalSensor,
+                          int speedSensor, int pedalSensor,
                           int joystick_throttle, int joystick_knob, int joystick_steering,
                           float voltage,
                           float current,
