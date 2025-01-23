@@ -35,6 +35,7 @@ void setup()
   initializeSerial();
 
   inclinationSensor.start();
+  initializeServos();
 
   // Set event listeners
   ignitionSwitch.setOnTurnedOnListener([]() {
@@ -121,6 +122,7 @@ int potValue2 = 0;
 int servoSteeringValue = 0;
 
 int brake1Value = 0;
+int brake2Value = 0;
 
 void updateOverHTTP()
 {
@@ -150,17 +152,23 @@ void updateServos()
   {
     int joystick_throttle = dashboard.joystick_throttle;
 
-    if (joystick_throttle >= JOYSTICK_THROTTLE_MIDDLE_VALUE) 
-        brake1Value = BRAKE_SERVO_MAX_VALUE; // Set brake1Value to 0 if above 100
+    if (joystick_throttle >= JOYSTICK_THROTTLE_MIDDLE_VALUE)
+    {
+        brake1Value = BRAKE_SERVO_MIN_VALUE; // Set brake1Value to max if above 100
+        brake2Value = BRAKE_SERVO_MAX_VALUE; // Set brake1Value to 0 if above 100, this servo is in reverse!
+    }
     else
+    {
         // Map joystick_throttle from 100 to 200 to brake from 0 to 270
-        brake1Value = map(joystick_throttle, JOYSTICK_THROTTLE_MIN_VALUE, JOYSTICK_THROTTLE_MIDDLE_VALUE, BRAKE_SERVO_MIN_VALUE, BRAKE_SERVO_MAX_VALUE);
+        brake1Value = map(joystick_throttle, JOYSTICK_THROTTLE_MIN_VALUE, JOYSTICK_THROTTLE_MIDDLE_VALUE, BRAKE_SERVO_MAX_VALUE, BRAKE_SERVO_MIN_VALUE);
+        brake2Value = map(joystick_throttle, JOYSTICK_THROTTLE_MIN_VALUE, JOYSTICK_THROTTLE_MIDDLE_VALUE, BRAKE_SERVO_MIN_VALUE, BRAKE_SERVO_MAX_VALUE);
+    }
 
     servoBrake1.write( brake1Value );
-    servoBrake2.write( brake1Value );
+    servoBrake2.write( brake2Value );
 
-    servoSteeringValue = map(dashboard.joystick_steering, JOYSTICK_STEERING_MIN_VALUE, JOYSTICK_STEERING_MAX_VALUE, 0, 136);
-    servoSteeringValue = constrain(servoSteeringValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE); // Ensure it's within 0-180
+    servoSteeringValue = map(dashboard.joystick_steering, 22, 164, 0, 136);
+    servoSteeringValue = constrain(servoSteeringValue, 0, 136); // Ensure it's within 0-180
     servoSteering.write(servoSteeringValue);
   }
 }
