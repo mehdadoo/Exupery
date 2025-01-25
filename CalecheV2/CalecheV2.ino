@@ -1,36 +1,35 @@
-#include "PinDefinitions.h"
-#include "ConstantDefinitions.h"
 #include <Arduino.h>
 #include <Wire.h>
 #include <ESP32Servo.h>
 #include <DigiPotX9Cxxx.h>
+
+#include "PinDefinitions.h"
+#include "ConstantDefinitions.h"
 #include "WiFiPrinter.h"
 #include "PortExpander.h"
-#include "Dashboard.h"
-#include "VoltageSensor.h"
 #include "IgnitionSwitch.h"
+#include "VoltageSensor.h"
 #include "InclinationSensor.h"
 #include "SpeedSensor.h"
-#include "BrakeSystem.h"
 #include "PedalSensor.h"
+#include "BrakeSystem.h"
+#include "ThrottleSystem.h"
+#include "Dashboard.h"
 
 
 
 PortExpander& portExpander = PortExpander::getInstance();//MPC23S17 port expander
-Dashboard dashboard;
 VoltageSensor voltageSensor;//ADS1115 current and voltage reader
 IgnitionSwitch ignitionSwitch;
+Dashboard dashboard;
 InclinationSensor inclinationSensor;
 SpeedSensor speedSensor;
 PedalSensor pedalSensor;
 BrakeSystem brakeSystem(speedSensor); // Pass speedSensor to the constructor
+ThrottleSystem throttleSystem(dashboard, pedalSensor);
 
 //servos
 Servo servoSteering; 
-
-// Define the digital potentiometer with specified multiplexer channels
-DigiPot potentiometer1(DigiPot_NC, DigiPot_UD , DigiPot_CS1);  
-DigiPot potentiometer2(DigiPot_NC, DigiPot_UD , DigiPot_CS2);
 
 
 void setup()
@@ -39,7 +38,6 @@ void setup()
 
   inclinationSensor.start();
   initializeServos();
-  brakeSystem.start();
 
   // Set event listeners
   ignitionSwitch.setOnTurnedOnListener([]() {
@@ -66,10 +64,8 @@ void loop()
     dashboard.batteryPercentage = voltageSensor.batteryPercentage;
     dashboard.update();
     updateServos();
-    brakeSystem.isStopped = speedSensor.isStopped();
-    brakeSystem.brakeLeverPosition = dashboard.joystick_throttle;
     brakeSystem.update();
-    updatePotentiometers();
+    throttleSystem.update();
   }
   
   updateOverHTTP();
@@ -77,29 +73,27 @@ void loop()
 
 void start()
 {
-  // Initialize SPI Communication for display and port expander
   SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN);
   portExpander.start();
   voltageSensor.start();
   dashboard.start();
+  brakeSystem.start();
+  throttleSystem.start();
 }
 
 void shutdown()
 {
-  potentiometer1.set(0);
-  potentiometer2.set(0);
-
+  throttleSystem.shutdown();
+  brakeSystem.shutdown();
   dashboard.shutdown();
   voltageSensor.shutdown();
   portExpander.shutdown();
-
   SPI.end();
 }
 
 void initializeSerial()
 {
   Serial.begin(9600);
-  
   WiFiPrinter::setup();
   WiFiPrinter::print("Blue Calèche, Bonjour!");
 }
@@ -112,16 +106,6 @@ void initializeServos()
 
   delay(50);
 }
-
-void initializePotentiometers() 
-{
-  potentiometer1.set(0);
-  potentiometer2.set(0);
-}
-
-
-int potValue1 = 0;
-int potValue2 = 0;
 
 int servoSteeringValue = 0;
 
@@ -146,15 +130,6 @@ void updateOverHTTP()
   WiFiPrinter::update();
 }
 
-/*
-void updateServos()
-{
-  servoSteeringValue = map(dashboard.joystick_steering, JOYSTICK_STEERING_MIN_VALUE, JOYSTICK_STEERING_MAX_VALUE, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE);
-  servoSteeringValue = constrain(servoSteeringValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE); // Ensure it's within 0-180
-  servoSteering.write(servoSteeringValue);
-
-  
-}*/
 
 void updateServos()
 {
@@ -190,39 +165,4 @@ void updateServos()
 
   // Write the value to the servo
   servoSteering.write(servoSteeringValue);
-}
-
-
-
-void updatePotentiometers()
-{
-  if( !dashboard.initialized )
-    return;
-
-
-  if( pedalSensor.isStopped() )
-  {
-    potValue1 = 0;
-    potValue2 = 0;
-  }
-  else
-  {
-    int joystick_knob = dashboard.joystick_knob;
-    int joystick_throttle = dashboard.joystick_throttle;
-
-    potValue1 = map(joystick_knob, 0, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
-    potValue2 = 0; // Initialize potValue2
-
-    if (joystick_throttle < JOYSTICK_THROTTLE_REST_MAX) 
-        potValue2 = 0; // Set potValue2 to 0 if below 100
-    else
-      potValue2 = map(joystick_throttle, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);// Map joystick_throttle from 100 to 200 to potValue2 from 0 to 75
-  }
-
-  // Apply the value to the potentiometers
-  // Ensure potValue never exceeds 75
-  potValue1 = min(potValue1, POTENTIOMETER_MAX_VALUE);
-  potValue2 = min(potValue2, POTENTIOMETER_MAX_VALUE); 
-  potentiometer1.set(potValue2);
-  potentiometer2.set(potValue1);
 }

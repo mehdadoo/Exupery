@@ -13,8 +13,11 @@ BrakeSystem::BrakeSystem(SpeedSensor& sensorInstance): speedSensor(sensorInstanc
 
 void BrakeSystem::update() 
 {
-  updateBrakeLights();
-  updateServo();
+  if( initialized  )
+  {
+    updateBrakeLights();
+    updateServo();
+  }
 }
 
 //Update using a ease method, so that at lower positions of the lever, the servo reacts 3 times more compared to the highest lever position
@@ -72,7 +75,7 @@ void BrakeSystem::updateBrakeLights()
   } 
   else
   {
-    if ( isStopped ) 
+    if ( speedSensor.isStopped() ) 
     {
       // Full brightness: Keep the light on
       portExpander.digitalWrite(MOSFET_BRAKE_LIGHT_PIN, HIGH);
@@ -104,6 +107,19 @@ void BrakeSystem::start()
   servoBrake2.attach(SERVO_BRAKE_2);
 
   delay(50);
+
+  initialized = true;
   
   WiFiPrinter::print("BrakeSystem setup complete!");
+}
+
+void BrakeSystem::shutdown() 
+{
+  if( initialized)
+  {
+    servoBrake1.detach();
+    servoBrake2.detach();
+  }
+
+  initialized = false;
 }

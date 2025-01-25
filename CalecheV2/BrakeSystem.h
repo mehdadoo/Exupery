@@ -14,9 +14,9 @@ class BrakeSystem
 
     void start();
     void update();
+    void shutdown();
 
     int brakeLeverPosition;
-    bool isStopped;
 
     int servoPosition1 = 0;
     int servoPosition2 = 0;
@@ -28,6 +28,7 @@ class BrakeSystem
     
     SpeedSensor& speedSensor; // an instance of the speed sensor passed in to the constructor
 
+    bool initialized = false;
     // Private methods
     void updateBrakeLights();
     void updateServo();
