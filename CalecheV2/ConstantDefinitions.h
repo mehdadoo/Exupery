@@ -10,12 +10,15 @@
 #define VOLTMETER_UPDATE_INTERVAL     200
 
 
-#define JOYSTICK_THROTTLE_MAX_VALUE     200
-#define JOYSTICK_THROTTLE_MIDDLE_VALUE  100
-#define JOYSTICK_THROTTLE_MIN_VALUE     17
+#define JOYSTICK_THROTTLE_SERVO_BRAKE_MAX     10
+#define JOYSTICK_THROTTLE_SERVO_BRAKE_MIN     70
+#define JOYSTICK_THROTTLE_REST_MIN  90
+#define JOYSTICK_THROTTLE_REST_MAX  120
+#define JOYSTICK_THROTTLE_MAX_VALUE 200
 
 #define JOYSTICK_STEERING_MAX_VALUE     164
 #define JOYSTICK_STEERING_MIN_VALUE     22
+#define JOYSTICK_STEERING_REST_GAP      20
 
 #define STERING_SERVO_MAX_VALUE     136
 #define STERING_SERVO_MIN_VALUE     0
@@ -23,6 +26,8 @@
 
 #define BRAKE_SERVO_MIN_VALUE 0
 #define BRAKE_SERVO_MAX_VALUE 180
+#define BRAKE_BLINK_RATE          45 //ms
+#define BRAKE_BLINK_MULTIPLIER    4
 
 #define POTENTIOMETER_MIN_VALUE 30 //.84v is the motor throttle min voltage
 #define POTENTIOMETER_MAX_VALUE 63 //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
@@ -36,6 +41,11 @@
 #define SENSOR_INTERVAL_25KMH 276 // Time in milliseconds for one magnet read at 30 km/h (24-inch wheel)
 #define SENSOR_INTERVAL_30KMH 230 // Time in milliseconds for one magnet read at 30 km/h (24-inch wheel)
 #define SENSOR_INTERVAL_50KMH 138 // Time in milliseconds for one magnet read at 50 km/h (24-inch wheel)
+
+#define SENSOR_TRANSITIONS_PER_REV 32 // Number of sensor transitions per revolution
+#define PEDAL_SENSOR_INTERVAL_40RPM 1500 // Time in ms for 40 RPM (1.5 seconds per revolution)
+#define SENSOR_TRANSITION_INTERVAL_40RPM (PEDAL_SENSOR_INTERVAL_40RPM / SENSOR_TRANSITIONS_PER_REV)
+
 
 //WiFiPrinter
 #define WIFI_PASSWORD                 "cScrT9vJRTHCf3vzh2"

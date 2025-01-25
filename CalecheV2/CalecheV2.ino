@@ -11,6 +11,9 @@
 #include "IgnitionSwitch.h"
 #include "InclinationSensor.h"
 #include "SpeedSensor.h"
+#include "BrakeSystem.h"
+#include "PedalSensor.h"
+
 
 
 PortExpander& portExpander = PortExpander::getInstance();//MPC23S17 port expander
@@ -19,10 +22,10 @@ VoltageSensor voltageSensor;//ADS1115 current and voltage reader
 IgnitionSwitch ignitionSwitch;
 InclinationSensor inclinationSensor;
 SpeedSensor speedSensor;
+PedalSensor pedalSensor;
+BrakeSystem brakeSystem(speedSensor); // Pass speedSensor to the constructor
 
 //servos
-Servo servoBrake1; 
-Servo servoBrake2; 
 Servo servoSteering; 
 
 // Define the digital potentiometer with specified multiplexer channels
@@ -36,6 +39,7 @@ void setup()
 
   inclinationSensor.start();
   initializeServos();
+  brakeSystem.start();
 
   // Set event listeners
   ignitionSwitch.setOnTurnedOnListener([]() {
@@ -54,12 +58,20 @@ void loop()
   ignitionSwitch.update();
   inclinationSensor.update();
   speedSensor.update();
+  pedalSensor.update();
   voltageSensor.update();
-  dashboard.batteryPercentage = voltageSensor.batteryPercentage;
-  dashboard.update();
   
-  updateServos();
-  updatePotentiometers();
+  if( dashboard.initialized )
+  {
+    dashboard.batteryPercentage = voltageSensor.batteryPercentage;
+    dashboard.update();
+    updateServos();
+    brakeSystem.isStopped = speedSensor.isStopped();
+    brakeSystem.brakeLeverPosition = dashboard.joystick_throttle;
+    brakeSystem.update();
+    updatePotentiometers();
+  }
+  
   updateOverHTTP();
 }
 
@@ -71,7 +83,6 @@ void start()
   voltageSensor.start();
   dashboard.start();
 }
-
 
 void shutdown()
 {
@@ -96,14 +107,7 @@ void initializeSerial()
 
 void initializeServos() 
 {
-  int servoChannel = servoBrake1.attach(SERVO_BRAKE_1);  // Reattach the servo if it was detached
-  Serial.println("servoBrake1 Channel:" + String(servoChannel));
-
-  servoChannel = servoBrake2.attach(SERVO_BRAKE_2);  // Reattach the servo if it was detached
-  Serial.println("servoBrake2 Channel:" + String(servoChannel));
-
-  servoChannel = servoSteering.attach(SERVO_STEERING);  // Reattach the servo if it was detached
-  Serial.println("servoSteering Channel:" + String(servoChannel));
+  int servoChannel = servoSteering.attach(SERVO_STEERING);  // Reattach the servo if it was detached
   WiFiPrinter::print("servoSteering Channel:" + String(servoChannel));
 
   delay(50);
@@ -121,9 +125,6 @@ int potValue2 = 0;
 
 int servoSteeringValue = 0;
 
-int brake1Value = 0;
-int brake2Value = 0;
-
 void updateOverHTTP()
 {
   static unsigned long lastUpdateTime = 0; // Tracks the last time the method was called
@@ -134,9 +135,9 @@ void updateOverHTTP()
   {
       lastUpdateTime = currentTime; // Update the last update time
       WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
-                          dashboard.buttonState[0], dashboard.buttonState[1], dashboard.buttonState[2], dashboard.buttonState[3], 
+                          dashboard.toggleState[0], pedalSensor.isStopped(), dashboard.buttonState[2], dashboard.buttonState[3], 
                           speedSensor.getRPM(), speedSensor.getSpeed(),
-                          dashboard.joystick_throttle, brake1Value /*dashboard.joystick_knob*/, servoSteeringValue /*dashboard.joystick_steering*/,
+                          dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
                           voltageSensor.current,
                           inclinationSensor.getInclinationAngle() );
@@ -145,33 +146,52 @@ void updateOverHTTP()
   WiFiPrinter::update();
 }
 
+/*
+void updateServos()
+{
+  servoSteeringValue = map(dashboard.joystick_steering, JOYSTICK_STEERING_MIN_VALUE, JOYSTICK_STEERING_MAX_VALUE, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE);
+  servoSteeringValue = constrain(servoSteeringValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE); // Ensure it's within 0-180
+  servoSteering.write(servoSteeringValue);
+
+  
+}*/
 
 void updateServos()
 {
-  if( dashboard.initialized )
+  int joystickMidpoint = (JOYSTICK_STEERING_MIN_VALUE + JOYSTICK_STEERING_MAX_VALUE) / 2; // Middle point of the joystick
+  int servoMidpoint = (STERING_SERVO_MIN_VALUE + STERING_SERVO_MAX_VALUE) / 2;           // Middle point of the servo range
+  
+  if (abs(dashboard.joystick_steering - joystickMidpoint) <= JOYSTICK_STEERING_REST_GAP) 
   {
-    int joystick_throttle = dashboard.joystick_throttle;
-
-    if (joystick_throttle >= JOYSTICK_THROTTLE_MIDDLE_VALUE)
-    {
-        brake1Value = BRAKE_SERVO_MIN_VALUE; // Set brake1Value to max if above 100
-        brake2Value = BRAKE_SERVO_MAX_VALUE; // Set brake1Value to 0 if above 100, this servo is in reverse!
-    }
-    else
-    {
-        // Map joystick_throttle from 100 to 200 to brake from 0 to 270
-        brake1Value = map(joystick_throttle, JOYSTICK_THROTTLE_MIN_VALUE, JOYSTICK_THROTTLE_MIDDLE_VALUE, BRAKE_SERVO_MAX_VALUE, BRAKE_SERVO_MIN_VALUE);
-        brake2Value = map(joystick_throttle, JOYSTICK_THROTTLE_MIN_VALUE, JOYSTICK_THROTTLE_MIDDLE_VALUE, BRAKE_SERVO_MIN_VALUE, BRAKE_SERVO_MAX_VALUE);
-    }
-
-    servoBrake1.write( brake1Value );
-    servoBrake2.write( brake2Value );
-
-    servoSteeringValue = map(dashboard.joystick_steering, 22, 164, 0, 136);
-    servoSteeringValue = constrain(servoSteeringValue, 0, 136); // Ensure it's within 0-180
-    servoSteering.write(servoSteeringValue);
+    // Within the rest gap: set servo to the midpoint
+    servoSteeringValue = servoMidpoint;
+  } 
+  else if (dashboard.joystick_steering < joystickMidpoint - JOYSTICK_STEERING_REST_GAP) 
+  {
+    // Left portion of the joystick: map to the left servo range
+    servoSteeringValue = map(dashboard.joystick_steering, 
+                             JOYSTICK_STEERING_MIN_VALUE, 
+                             joystickMidpoint - JOYSTICK_STEERING_REST_GAP, 
+                             STERING_SERVO_MIN_VALUE, 
+                             servoMidpoint);
+  } 
+  else 
+  {
+    // Right portion of the joystick: map to the right servo range
+    servoSteeringValue = map(dashboard.joystick_steering, 
+                             joystickMidpoint + JOYSTICK_STEERING_REST_GAP, 
+                             JOYSTICK_STEERING_MAX_VALUE, 
+                             servoMidpoint, 
+                             STERING_SERVO_MAX_VALUE);
   }
+
+  // Ensure the calculated servo value is within the allowed range
+  servoSteeringValue = constrain(servoSteeringValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE);
+
+  // Write the value to the servo
+  servoSteering.write(servoSteeringValue);
 }
+
 
 
 void updatePotentiometers()
@@ -186,11 +206,11 @@ void updatePotentiometers()
   potValue1 = map(joystick_knob, 0, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
   potValue2 = 0; // Initialize potValue2
 
-  if (joystick_throttle < JOYSTICK_THROTTLE_MIDDLE_VALUE) 
+  if (joystick_throttle < JOYSTICK_THROTTLE_REST_MAX) 
       potValue2 = 0; // Set potValue2 to 0 if below 100
   else
       // Map joystick_throttle from 100 to 200 to potValue2 from 0 to 75
-      potValue2 = map(joystick_throttle, JOYSTICK_THROTTLE_MIDDLE_VALUE, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
+      potValue2 = map(joystick_throttle, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
 
 
   // Ensure potValue2 never exceeds 75
@@ -200,10 +220,4 @@ void updatePotentiometers()
  // Apply the value to the potentiometers
   potentiometer1.set(potValue2);
   potentiometer2.set(potValue1);
-}
-
-
-void registerError(const char* errorMessage)
-{
-    WiFiPrinter::print(errorMessage);
 }

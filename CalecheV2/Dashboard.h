@@ -10,6 +10,7 @@ public:
     int joystick_steering = 0;
     int joystick_knob = 0;
     bool buttonState[4] = {HIGH, HIGH, HIGH, HIGH}; // Button states
+    bool toggleState[4] = {HIGH, HIGH, HIGH, HIGH};
     bool initialized = false;
     int batteryPercentage = 100;
 

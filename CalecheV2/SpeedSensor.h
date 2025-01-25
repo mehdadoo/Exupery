@@ -12,7 +12,7 @@ class SpeedSensor
 
     // Public methods
     void update();
-    bool isCarStopped(); // Check if RPM is 0
+    bool isStopped(); // Check if RPM is 0
     int getRPM() const { return rpm; }
     float getSpeed() const { return speed; }
 

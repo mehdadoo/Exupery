@@ -73,7 +73,7 @@ void SpeedSensor::calculateRPM()
 
 
 
-bool SpeedSensor::isCarStopped() 
+bool SpeedSensor::isStopped() 
 {
     // If enough time has passed since the last trigger, consider the car stopped
     unsigned long currentTime = millis();

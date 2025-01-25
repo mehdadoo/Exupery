@@ -63,11 +63,11 @@ Voltmeter 3: ledc 5, Channel: 7, Timer: 3
 #define BUTTON_3_PIN 3   // GPB3 (Pin 3 on Bank B)
 
 // GPIO Pin Definitions for MOSFET Control
-#define MOSFET_1_PIN 0  // GPIO A0 (Pin 0 on Bank A)
-#define MOSFET_2_PIN 1  // GPIO A1 (Pin 1 on Bank A)
-#define MOSFET_3_PIN 2  // GPIO A2 (Pin 2 on Bank A)
-#define MOSFET_4_PIN 6  // GPIO A6 (Pin 6 on Bank A)
-#define MOSFET_5_PIN 7  // GPIO A7 (Pin 7 on Bank A)
+#define MOSFET_NIGH_LIGHT_PIN 0  // GPIO A0 (Pin 0 on Bank A)
+#define MOSFET_BRAKE_LIGHT_PIN 1  // GPIO A1 (Pin 1 on Bank A)
+#define MOSFET_HORN_PIN 2  // GPIO A2 (Pin 2 on Bank A)
+#define MOSFET_REVERSE_PIN 6  // GPIO A6 (Pin 6 on Bank A)
+#define MOSFET_BRAKE_PIN 7  // GPIO A7 (Pin 7 on Bank A)
 
 // GPIO Pin Definitions for Sensors
 #define SENSOR_PEDAL_TRIGGER_PIN 5  //GPIO A5 (Pin 5 on Bank A)

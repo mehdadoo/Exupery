@@ -69,12 +69,49 @@ void Dashboard::updateButtons()
   if( !portExpander.initialized )
     return;
 
+ 
+  //static const uint8_t mosfetPins[] = {MOSFET_1_PIN, MOSFET_2_PIN, MOSFET_3_PIN, MOSFET_REVERSE_PIN, MOSFET_BRAKE_PIN};
+
   static unsigned long lastLOWTime[4] = {0, 0, 0, 0};
-  static const uint8_t mosfetPins[] = {MOSFET_1_PIN, MOSFET_2_PIN, MOSFET_3_PIN, MOSFET_4_PIN, MOSFET_5_PIN};
   static unsigned long provisionalButtonState[4] = {HIGH, HIGH, HIGH, HIGH};
 
+  uint8_t currentButtonState = portExpander.digitalRead( BUTTON_1_PIN );
+
+  static bool  updateToggleState[4] = {false, false, false, false};
   
-    
+
+  if (currentButtonState != provisionalButtonState[0]) 
+  {
+    if (currentButtonState == HIGH) 
+    {
+      buttonState[0] = HIGH;
+      provisionalButtonState[0] = HIGH;
+    }
+    else 
+    {
+      lastLOWTime[0] = millis();
+      provisionalButtonState[0] = LOW;
+    }
+
+  }
+
+  if (currentButtonState == LOW && provisionalButtonState[0] == LOW &&  buttonState[0] == HIGH) 
+  {
+    if( millis() - lastLOWTime[0] > 20 )
+    {
+      buttonState[0] = LOW;
+      toggleState[0] = !toggleState[0];
+      updateToggleState[0] = true;
+    }
+  }
+
+  if( updateToggleState[0] )
+  {
+    portExpander.digitalWrite(MOSFET_NIGH_LIGHT_PIN, toggleState[0]);
+    updateToggleState[0]= false;
+  }
+
+  /*  
 
   for (uint8_t i = 0; i < 4; i++)
   {
@@ -107,13 +144,7 @@ void Dashboard::updateButtons()
     }
   }
 
-
-  lastDebounceTime = millis();
-  if (millis() - lastDebounceTime > debounceDelay) 
-  {
-  }
-
-
+  */
 
 }
 
