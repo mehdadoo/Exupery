@@ -10,6 +10,7 @@ class PedalSensor
     // Public methods
     void update();
     bool isStopped() { return stoppedState; }
+    int sensorTriggers = 0;
 
   private:
     bool stoppedState; 

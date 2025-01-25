@@ -136,7 +136,7 @@ void updateOverHTTP()
       lastUpdateTime = currentTime; // Update the last update time
       WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
                           dashboard.toggleState[0], pedalSensor.isStopped(), dashboard.buttonState[2], dashboard.buttonState[3], 
-                          speedSensor.getRPM(), speedSensor.getSpeed(),
+                          speedSensor.getSpeed(), speedSensor.getRPM(),
                           dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
                           voltageSensor.current,
@@ -199,25 +199,30 @@ void updatePotentiometers()
   if( !dashboard.initialized )
     return;
 
-  int joystick_knob = dashboard.joystick_knob;
-  int joystick_throttle = dashboard.joystick_throttle;
 
-
-  potValue1 = map(joystick_knob, 0, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
-  potValue2 = 0; // Initialize potValue2
-
-  if (joystick_throttle < JOYSTICK_THROTTLE_REST_MAX) 
-      potValue2 = 0; // Set potValue2 to 0 if below 100
+  if( pedalSensor.isStopped() )
+  {
+    potValue1 = 0;
+    potValue2 = 0;
+  }
   else
-      // Map joystick_throttle from 100 to 200 to potValue2 from 0 to 75
-      potValue2 = map(joystick_throttle, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
+  {
+    int joystick_knob = dashboard.joystick_knob;
+    int joystick_throttle = dashboard.joystick_throttle;
 
+    potValue1 = map(joystick_knob, 0, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
+    potValue2 = 0; // Initialize potValue2
 
-  // Ensure potValue2 never exceeds 75
+    if (joystick_throttle < JOYSTICK_THROTTLE_REST_MAX) 
+        potValue2 = 0; // Set potValue2 to 0 if below 100
+    else
+      potValue2 = map(joystick_throttle, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);// Map joystick_throttle from 100 to 200 to potValue2 from 0 to 75
+  }
+
+  // Apply the value to the potentiometers
+  // Ensure potValue never exceeds 75
   potValue1 = min(potValue1, POTENTIOMETER_MAX_VALUE);
-  potValue2 = min(potValue2, POTENTIOMETER_MAX_VALUE);
-
- // Apply the value to the potentiometers
+  potValue2 = min(potValue2, POTENTIOMETER_MAX_VALUE); 
   potentiometer1.set(potValue2);
   potentiometer2.set(potValue1);
 }
