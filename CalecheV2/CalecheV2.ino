@@ -1,7 +1,4 @@
 #include <Arduino.h>
-#include <Wire.h>
-#include <ESP32Servo.h>
-#include <DigiPotX9Cxxx.h>
 
 #include "PinDefinitions.h"
 #include "ConstantDefinitions.h"
@@ -15,8 +12,7 @@
 #include "BrakeSystem.h"
 #include "ThrottleSystem.h"
 #include "Dashboard.h"
-
-
+#include "SteeringSystem.h"
 
 PortExpander& portExpander = PortExpander::getInstance();//MPC23S17 port expander
 VoltageSensor voltageSensor;//ADS1115 current and voltage reader
@@ -25,19 +21,15 @@ Dashboard dashboard;
 InclinationSensor inclinationSensor;
 SpeedSensor speedSensor;
 PedalSensor pedalSensor;
-BrakeSystem brakeSystem(speedSensor); // Pass speedSensor to the constructor
+BrakeSystem brakeSystem(dashboard, speedSensor); // Pass speedSensor to the constructor
 ThrottleSystem throttleSystem(dashboard, pedalSensor);
-
-//servos
-Servo servoSteering; 
-
+SteeringSystem steeringSystem(dashboard);
 
 void setup()
 {
   initializeSerial();
 
   inclinationSensor.start();
-  initializeServos();
 
   // Set event listeners
   ignitionSwitch.setOnTurnedOnListener([]() {
@@ -63,9 +55,9 @@ void loop()
   {
     dashboard.batteryPercentage = voltageSensor.batteryPercentage;
     dashboard.update();
-    updateServos();
     brakeSystem.update();
     throttleSystem.update();
+    steeringSystem.update();
   }
   
   updateOverHTTP();
@@ -79,10 +71,12 @@ void start()
   dashboard.start();
   brakeSystem.start();
   throttleSystem.start();
+  steeringSystem.start();
 }
 
 void shutdown()
 {
+  steeringSystem.shutdown();
   throttleSystem.shutdown();
   brakeSystem.shutdown();
   dashboard.shutdown();
@@ -97,17 +91,6 @@ void initializeSerial()
   WiFiPrinter::setup();
   WiFiPrinter::print("Blue Calèche, Bonjour!");
 }
-
-
-void initializeServos() 
-{
-  int servoChannel = servoSteering.attach(SERVO_STEERING);  // Reattach the servo if it was detached
-  WiFiPrinter::print("servoSteering Channel:" + String(servoChannel));
-
-  delay(50);
-}
-
-int servoSteeringValue = 0;
 
 void updateOverHTTP()
 {
@@ -128,41 +111,4 @@ void updateOverHTTP()
   }
 
   WiFiPrinter::update();
-}
-
-
-void updateServos()
-{
-  int joystickMidpoint = (JOYSTICK_STEERING_MIN_VALUE + JOYSTICK_STEERING_MAX_VALUE) / 2; // Middle point of the joystick
-  int servoMidpoint = (STERING_SERVO_MIN_VALUE + STERING_SERVO_MAX_VALUE) / 2;           // Middle point of the servo range
-  
-  if (abs(dashboard.joystick_steering - joystickMidpoint) <= JOYSTICK_STEERING_REST_GAP) 
-  {
-    // Within the rest gap: set servo to the midpoint
-    servoSteeringValue = servoMidpoint;
-  } 
-  else if (dashboard.joystick_steering < joystickMidpoint - JOYSTICK_STEERING_REST_GAP) 
-  {
-    // Left portion of the joystick: map to the left servo range
-    servoSteeringValue = map(dashboard.joystick_steering, 
-                             JOYSTICK_STEERING_MIN_VALUE, 
-                             joystickMidpoint - JOYSTICK_STEERING_REST_GAP, 
-                             STERING_SERVO_MIN_VALUE, 
-                             servoMidpoint);
-  } 
-  else 
-  {
-    // Right portion of the joystick: map to the right servo range
-    servoSteeringValue = map(dashboard.joystick_steering, 
-                             joystickMidpoint + JOYSTICK_STEERING_REST_GAP, 
-                             JOYSTICK_STEERING_MAX_VALUE, 
-                             servoMidpoint, 
-                             STERING_SERVO_MAX_VALUE);
-  }
-
-  // Ensure the calculated servo value is within the allowed range
-  servoSteeringValue = constrain(servoSteeringValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE);
-
-  // Write the value to the servo
-  servoSteering.write(servoSteeringValue);
 }

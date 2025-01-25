@@ -10,7 +10,17 @@ void Dashboard::start()
   pinMode(VOLTMETER_SPEED, OUTPUT);
   pinMode(VOLTMETER_CHARGING, OUTPUT);
   pinMode(VOLTMETER_BATTERY, OUTPUT);
-  
+
+
+  buttonState[0] = HIGH;
+  buttonState[1] = HIGH;
+  buttonState[2] = HIGH;
+  buttonState[3] = HIGH;
+
+  toggleState[0] = LOW;
+  toggleState[1] = LOW;
+  toggleState[2] = LOW;
+  toggleState[3] = LOW;
 
   unsigned long module_connection_time_Start = millis(); // Record the time when the connection attempt starts
 
@@ -46,6 +56,10 @@ void Dashboard::shutdown()
     setVoltmeterPWM(VOLTMETER_CHARGING, 0,  VOLTMETER_CHARGING_CHANNEL);
     setVoltmeterPWM(VOLTMETER_BATTERY,  0,  VOLTMETER_BATTERY_CHANNEL );
   }
+
+  PortExpander& portExpander = PortExpander::getInstance();
+  if( portExpander.initialized )
+    portExpander.digitalWrite(MOSFET_NIGH_LIGHT_PIN, LOW);
 
   initialized = false;
 }

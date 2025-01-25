@@ -6,8 +6,11 @@
 
 
 // Constructor
-BrakeSystem::BrakeSystem(SpeedSensor& sensorInstance): speedSensor(sensorInstance)
+BrakeSystem::BrakeSystem(Dashboard& dashboardInstance, SpeedSensor& sensorInstance)
+  : dashboard(dashboardInstance),      // Initialize the dashboard reference
+    speedSensor(sensorInstance)        // Initialize the pedal sensor reference
 {
+
 }
 
 
@@ -25,15 +28,12 @@ void BrakeSystem::updateServo()
 {
   PortExpander& portExpander = PortExpander::getInstance();
 
-  bool skipUpdate = false;
+  static int previousServoPosition1 = 0;
 
-  int joystick_throttle = brakeLeverPosition;
+  int joystick_throttle = dashboard.joystick_throttle;
 
   if (joystick_throttle > JOYSTICK_THROTTLE_SERVO_BRAKE_MIN)
   {
-    if( servoPosition1 == BRAKE_SERVO_MIN_VALUE)
-      skipUpdate = true;
-
     servoPosition1 = BRAKE_SERVO_MIN_VALUE; // Set servoPosition1 to max if above 100
     servoPosition2 = BRAKE_SERVO_MAX_VALUE; // Set servoPosition1 to 0 if above 100, this servo is in reverse!
   }
@@ -49,9 +49,14 @@ void BrakeSystem::updateServo()
   else
       portExpander.digitalWrite(MOSFET_BRAKE_PIN, HIGH);
 
-  if( skipUpdate )
+
+
+  // do not update servo positions if they are at rest already
+  if( servoPosition1 == BRAKE_SERVO_MIN_VALUE && previousServoPosition1 == servoPosition1)
     return;
 
+  previousServoPosition1 = servoPosition1;
+  //
 
   servoBrake1.write( servoPosition1 );
   servoBrake2.write( servoPosition2 );
@@ -68,7 +73,7 @@ void BrakeSystem::updateBrakeLights()
   unsigned long currentTime = millis();
 
   // Check if the brake lever is below the lower threshold to turn off the light
-  if (brakeLeverPosition > JOYSTICK_THROTTLE_REST_MIN) 
+  if (dashboard.joystick_throttle > JOYSTICK_THROTTLE_REST_MIN) 
   {
     portExpander.digitalWrite(MOSFET_BRAKE_LIGHT_PIN, LOW); // Brake light off
     lightState = false; // Ensure state is consistent
@@ -85,7 +90,7 @@ void BrakeSystem::updateBrakeLights()
     {
       // Calculate the blink interval based on the lever position
       int range = JOYSTICK_THROTTLE_SERVO_BRAKE_MAX - JOYSTICK_THROTTLE_REST_MIN;
-      int positionInRange = brakeLeverPosition - JOYSTICK_THROTTLE_REST_MIN;
+      int positionInRange = dashboard.joystick_throttle - JOYSTICK_THROTTLE_REST_MIN;
       int multiplier = range == 0 ? 1 : map(positionInRange, 0, range, BRAKE_BLINK_MULTIPLIER, 1); // Inverse multiplier from 10 to 1
       int blinkInterval = multiplier * BRAKE_BLINK_RATE;
 
