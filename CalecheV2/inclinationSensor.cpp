@@ -13,7 +13,7 @@ InclinationSensor::InclinationSensor()
 }
 
 // Method to initialize the sensor
-void InclinationSensor::start() 
+void InclinationSensor::setup() 
 {
     if (initialized) 
         return;

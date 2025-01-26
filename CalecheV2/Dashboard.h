@@ -2,6 +2,7 @@
 #define DASHBOARD_H
 
 #include <Adafruit_ADS1X15.h>
+#include "VoltageSensor.h"
 
 class Dashboard {
 public:
@@ -12,12 +13,13 @@ public:
     bool buttonState[4]; // Button states
     bool toggleState[4];
     bool initialized = false;
-    int batteryPercentage = 100;
 
     // Public methods
+    Dashboard(VoltageSensor& sensorInstance);
     void start();
     void shutdown();
     void update();
+    bool hasBraked();
 
 private:
     // Private member variables
@@ -26,6 +28,7 @@ private:
     unsigned long joystickLastUpdateTime = 0;  // Variable to store the last update time
     unsigned long lastDebounceTime = 0;
     const long debounceDelay = 5;  // milliseconds
+    VoltageSensor voltageSensor;
 
     // Private methods
     int readJoystick(int adcPin);

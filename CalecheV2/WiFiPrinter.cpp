@@ -12,6 +12,8 @@ String printMessage = "{}";  // Initial JSON message (empty)
 void WiFiPrinter::setup() 
 {
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  Serial.begin(9600);
   Serial.println("Connecting to WiFi...");
 
   unsigned long startMillis = millis();
@@ -54,6 +56,9 @@ void WiFiPrinter::setup()
   } else {
     Serial.println("Failed to connect to WiFi");
   }
+
+  
+  print("Blue Calèche, Bonjour!");
 }
 
 void WiFiPrinter::setupOTA() 

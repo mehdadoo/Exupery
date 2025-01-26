@@ -8,7 +8,7 @@ void PedalSensor::update()
 {
   PortExpander& portExpander = PortExpander::getInstance();
 
-  if (!portExpander.initialized)
+ if( !portExpander.initialized || !initialized)
     return;
 
   uint8_t sensorState = portExpander.digitalRead(SENSOR_PEDAL_TRIGGER_PIN);  // Read current state of sensor
@@ -21,4 +21,17 @@ void PedalSensor::update()
     stoppedState = true;
   else
      stoppedState = false;
+}
+
+void PedalSensor::shutdown() 
+{
+  if( initialized)
+  {
+  }
+  initialized = false;
+}
+
+void PedalSensor::start() 
+{
+    initialized = true;
 }

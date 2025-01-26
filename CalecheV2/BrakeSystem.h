@@ -20,6 +20,8 @@ class BrakeSystem
     int servoPosition1 = 0;
     int servoPosition2 = 0;
 
+
+
   private:
     // Private properties
     Servo servoBrake1; 

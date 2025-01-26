@@ -4,6 +4,13 @@
 #include "ConstantDefinitions.h"
 #include "PortExpander.h"
 
+// Constructor
+Dashboard::Dashboard(VoltageSensor& sensorInstance)
+  : voltageSensor(sensorInstance)
+{
+
+}
+
 // Initialize the Dashboard
 void Dashboard::start() 
 {
@@ -75,6 +82,11 @@ void Dashboard::update()
   updateVoltmeters();
 }
 
+bool Dashboard::hasBraked()
+{
+  return (joystick_throttle < JOYSTICK_THROTTLE_REST_MIN);
+}
+
 // Update button states
 void Dashboard::updateButtons()
 {
@@ -111,7 +123,7 @@ void Dashboard::updateButtons()
 
   if (currentButtonState == LOW && provisionalButtonState[0] == LOW &&  buttonState[0] == HIGH) 
   {
-    if( millis() - lastLOWTime[0] > 20 )
+    if( millis() - lastLOWTime[0] > 50 )
     {
       buttonState[0] = LOW;
       toggleState[0] = !toggleState[0];
@@ -187,7 +199,7 @@ void Dashboard::updateVoltmeters()
   {  
     
     //map the voltage percentage
-    int pwmVoltagePercentageValue = map(batteryPercentage, 0, 100, 0, 255);// Map percentage to PWM range (0-255)
+    int pwmVoltagePercentageValue = map(voltageSensor.batteryPercentage, 0, 100, 0, 255);// Map percentage to PWM range (0-255)
 
     setVoltmeterPWM(VOLTMETER_BATTERY, pwmVoltagePercentageValue,  VOLTMETER_CHARGING_CHANNEL);
     setVoltmeterPWM(VOLTMETER_SPEED,    joystick_steering,  VOLTMETER_SPEED_CHANNEL);

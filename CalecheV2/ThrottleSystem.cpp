@@ -25,7 +25,11 @@ void ThrottleSystem::shutdown()
 // Method to update the potentiometer values
 void ThrottleSystem::update()
 {
-  if( pedalSensor.isStopped() )
+  if( !dashboard.initialized )
+    return;
+
+
+  if( pedalSensor.isStopped() || dashboard.hasBraked() )
   {
     potValue1 = 0;
     potValue2 = 0;

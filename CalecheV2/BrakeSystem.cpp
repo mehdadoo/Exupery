@@ -16,7 +16,7 @@ BrakeSystem::BrakeSystem(Dashboard& dashboardInstance, SpeedSensor& sensorInstan
 
 void BrakeSystem::update() 
 {
-  if( initialized  )
+  if( initialized && dashboard.initialized )
   {
     updateBrakeLights();
     updateServo();
@@ -44,10 +44,12 @@ void BrakeSystem::updateServo()
     servoPosition2 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_MIN_VALUE, BRAKE_SERVO_MAX_VALUE);
   }
 
-  if (joystick_throttle > JOYSTICK_THROTTLE_REST_MIN)
-      portExpander.digitalWrite(MOSFET_BRAKE_PIN, LOW);
+  if ( dashboard.hasBraked() )
+    portExpander.digitalWrite(MOSFET_BRAKE_PIN, HIGH);
   else
-      portExpander.digitalWrite(MOSFET_BRAKE_PIN, HIGH);
+    portExpander.digitalWrite(MOSFET_BRAKE_PIN, LOW);
+
+    
 
 
 
@@ -56,11 +58,11 @@ void BrakeSystem::updateServo()
     return;
 
   previousServoPosition1 = servoPosition1;
-  //
 
   servoBrake1.write( servoPosition1 );
   servoBrake2.write( servoPosition2 );
 }
+
 
 void BrakeSystem::updateBrakeLights()
 {
@@ -73,7 +75,7 @@ void BrakeSystem::updateBrakeLights()
   unsigned long currentTime = millis();
 
   // Check if the brake lever is below the lower threshold to turn off the light
-  if (dashboard.joystick_throttle > JOYSTICK_THROTTLE_REST_MIN) 
+  if ( !dashboard.hasBraked() ) 
   {
     portExpander.digitalWrite(MOSFET_BRAKE_LIGHT_PIN, LOW); // Brake light off
     lightState = false; // Ensure state is consistent

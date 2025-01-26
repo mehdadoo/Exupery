@@ -1,5 +1,4 @@
 #include <Arduino.h>
-
 #include "PinDefinitions.h"
 #include "ConstantDefinitions.h"
 #include "WiFiPrinter.h"
@@ -15,31 +14,25 @@
 #include "SteeringSystem.h"
 
 PortExpander& portExpander = PortExpander::getInstance();//MPC23S17 port expander
-VoltageSensor voltageSensor;//ADS1115 current and voltage reader
 IgnitionSwitch ignitionSwitch;
-Dashboard dashboard;
 InclinationSensor inclinationSensor;
+VoltageSensor voltageSensor;//ADS1115 current and voltage reader
 SpeedSensor speedSensor;
 PedalSensor pedalSensor;
+Dashboard dashboard(voltageSensor);
 BrakeSystem brakeSystem(dashboard, speedSensor); // Pass speedSensor to the constructor
 ThrottleSystem throttleSystem(dashboard, pedalSensor);
 SteeringSystem steeringSystem(dashboard);
 
 void setup()
 {
-  initializeSerial();
+   WiFiPrinter::setup();
 
-  inclinationSensor.start();
+  inclinationSensor.setup();
 
   // Set event listeners
-  ignitionSwitch.setOnTurnedOnListener([]() {
-    start();
-  });
-
-  ignitionSwitch.setOnTurnedOffListener([]() {
-      shutdown();
-  });
-
+  ignitionSwitch.setOnTurnedOnListener([]() {     start();        });
+  ignitionSwitch.setOnTurnedOffListener([]() {    shutdown();     });
   ignitionSwitch.setup();
 }
 
@@ -47,26 +40,26 @@ void loop()
 {
   ignitionSwitch.update();
   inclinationSensor.update();
+
+  portExpander.update();
   speedSensor.update();
   pedalSensor.update();
   voltageSensor.update();
+  dashboard.update();
+  brakeSystem.update();
+  throttleSystem.update();
+  steeringSystem.update();
   
-  if( dashboard.initialized )
-  {
-    dashboard.batteryPercentage = voltageSensor.batteryPercentage;
-    dashboard.update();
-    brakeSystem.update();
-    throttleSystem.update();
-    steeringSystem.update();
-  }
-  
-  updateOverHTTP();
+  WiFiPrinterUpdate();
 }
 
 void start()
 {
   SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN);
+  
   portExpander.start();
+  speedSensor.start();
+  pedalSensor.start();
   voltageSensor.start();
   dashboard.start();
   brakeSystem.start();
@@ -81,18 +74,14 @@ void shutdown()
   brakeSystem.shutdown();
   dashboard.shutdown();
   voltageSensor.shutdown();
+  pedalSensor.shutdown();
+  speedSensor.shutdown();
   portExpander.shutdown();
+
   SPI.end();
 }
 
-void initializeSerial()
-{
-  Serial.begin(9600);
-  WiFiPrinter::setup();
-  WiFiPrinter::print("Blue Calèche, Bonjour!");
-}
-
-void updateOverHTTP()
+void WiFiPrinterUpdate()
 {
   static unsigned long lastUpdateTime = 0; // Tracks the last time the method was called
   unsigned long currentTime = millis();
@@ -103,12 +92,11 @@ void updateOverHTTP()
       lastUpdateTime = currentTime; // Update the last update time
       WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
                           dashboard.toggleState[0], pedalSensor.isStopped(), dashboard.buttonState[2], dashboard.buttonState[3], 
-                          speedSensor.getSpeed(), speedSensor.getRPM(),
+                          speedSensor.getSpeed(), brakeSystem.servoPosition1,
                           dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
                           voltageSensor.current,
                           inclinationSensor.getInclinationAngle() );
   }
-
   WiFiPrinter::update();
 }

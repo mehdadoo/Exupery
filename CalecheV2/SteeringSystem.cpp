@@ -23,7 +23,7 @@ void SteeringSystem::shutdown()
 // Method to update the potentiometer values
 void SteeringSystem::update() 
 {
-	if( !initialized )
+	if( !initialized || !dashboard.initialized)
 		return;
 	
 	int joystickMidpoint = (JOYSTICK_STEERING_MIN_VALUE + JOYSTICK_STEERING_MAX_VALUE) / 2; // Middle point of the joystick

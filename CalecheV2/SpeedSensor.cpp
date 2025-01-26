@@ -12,13 +12,27 @@ SpeedSensor::SpeedSensor()
     lastSensorTriggerTime = 0;
 }
 
+void SpeedSensor::start() 
+{
+    initialized = true;
+}
+
+void SpeedSensor::shutdown() 
+{
+  if( initialized)
+  {
+  }
+  initialized = false;
+}
+
+
 
 // Update the gearbox
 void SpeedSensor::update() 
 {
   PortExpander& portExpander = PortExpander::getInstance();
 
-  if( !portExpander.initialized )
+  if( !portExpander.initialized || !initialized)
     return;
 
   unsigned long currentTime = millis();

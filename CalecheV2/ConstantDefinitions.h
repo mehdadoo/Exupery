@@ -10,11 +10,11 @@
 #define VOLTMETER_UPDATE_INTERVAL     200
 
 
-#define JOYSTICK_THROTTLE_SERVO_BRAKE_MAX     10
+#define JOYSTICK_THROTTLE_SERVO_BRAKE_MAX     15
 #define JOYSTICK_THROTTLE_SERVO_BRAKE_MIN     70
 #define JOYSTICK_THROTTLE_REST_MIN  90
 #define JOYSTICK_THROTTLE_REST_MAX  120
-#define JOYSTICK_THROTTLE_MAX_VALUE 200
+#define JOYSTICK_THROTTLE_MAX_VALUE 182
 
 #define JOYSTICK_STEERING_MAX_VALUE     196
 #define JOYSTICK_STEERING_MIN_VALUE     0
@@ -24,8 +24,8 @@
 #define STERING_SERVO_MIN_VALUE     0
 
 
-#define BRAKE_SERVO_MIN_VALUE 0
-#define BRAKE_SERVO_MAX_VALUE 180
+#define BRAKE_SERVO_MIN_VALUE 20
+#define BRAKE_SERVO_MAX_VALUE 80
 #define BRAKE_BLINK_RATE          45 //ms
 #define BRAKE_BLINK_MULTIPLIER    4
 
@@ -43,7 +43,7 @@
 #define SENSOR_INTERVAL_30KMH 230 // Time in milliseconds for one magnet read at 30 km/h (24-inch wheel)
 #define SENSOR_INTERVAL_50KMH 138 // Time in milliseconds for one magnet read at 50 km/h (24-inch wheel)
 
-#define PEDAL_SENSOR_STOP_DELAY 750
+#define PEDAL_SENSOR_STOP_DELAY 200
 
 
 //WiFiPrinter
