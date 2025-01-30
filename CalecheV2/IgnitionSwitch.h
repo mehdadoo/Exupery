@@ -18,7 +18,7 @@ public:
 
 private:
     
-
+    bool shouldUpdate = true;
     // Event listeners
     std::function<void()> onTurnedOn = nullptr;
     std::function<void()> onTurnedOff = nullptr;

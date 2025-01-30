@@ -29,6 +29,16 @@ void Dashboard::start()
   toggleState[2] = LOW;
   toggleState[3] = LOW;
 
+  PortExpander& portExpander = PortExpander::getInstance();
+  if( portExpander.initialized )
+  {
+    portExpander.digitalWrite(MOSFET_NIGH_LIGHT_PIN, LOW);
+    portExpander.digitalWrite(MOSFET_HORN_PIN, LOW);
+    portExpander.digitalWrite(MOSFET_REVERSE_PIN, LOW);
+    portExpander.digitalWrite(MOSFET_BRAKE_LIGHT_PIN, LOW);
+    portExpander.digitalWrite(MOSFET_BRAKE_PIN, LOW);
+  }
+
   unsigned long module_connection_time_Start = millis(); // Record the time when the connection attempt starts
 
   while (millis() - module_connection_time_Start < MODULE_CONNECTION_TIMEOUT)
@@ -57,16 +67,21 @@ void Dashboard::start()
 // Deinitialize the Dashboard
 void Dashboard::shutdown() 
 {
-  if( initialized)
-  {
-    setVoltmeterPWM(VOLTMETER_SPEED,    0,  VOLTMETER_SPEED_CHANNEL   );
-    setVoltmeterPWM(VOLTMETER_CHARGING, 0,  VOLTMETER_CHARGING_CHANNEL);
-    setVoltmeterPWM(VOLTMETER_BATTERY,  0,  VOLTMETER_BATTERY_CHANNEL );
-  }
+  digitalWrite(VOLTMETER_SPEED, LOW);
+  digitalWrite(VOLTMETER_CHARGING, LOW);
+  digitalWrite(VOLTMETER_BATTERY, LOW);
 
-  PortExpander& portExpander = PortExpander::getInstance();
-  if( portExpander.initialized )
-    portExpander.digitalWrite(MOSFET_NIGH_LIGHT_PIN, LOW);
+  // Set GPIOs as INPUT to avoid any backfeeding
+  pinMode(VOLTMETER_SPEED, INPUT);
+  pinMode(VOLTMETER_CHARGING, INPUT);
+  pinMode(VOLTMETER_BATTERY, INPUT);
+
+  // Set I2C lines to INPUT to release the bus
+  pinMode(SDA, INPUT);
+  pinMode(SCL, INPUT);
+
+  // Delay to ensure shutdown stabilization
+  delay(10);
 
   initialized = false;
 }
@@ -95,61 +110,23 @@ void Dashboard::updateButtons()
   if( !portExpander.initialized )
     return;
 
- 
-  //static const uint8_t mosfetPins[] = {MOSFET_1_PIN, MOSFET_2_PIN, MOSFET_3_PIN, MOSFET_REVERSE_PIN, MOSFET_BRAKE_PIN};
-
   static unsigned long lastLOWTime[4] = {0, 0, 0, 0};
   static unsigned long provisionalButtonState[4] = {HIGH, HIGH, HIGH, HIGH};
 
-  uint8_t currentButtonState = portExpander.digitalRead( BUTTON_1_PIN );
+  uint8_t currentButtonState;
 
   static bool  updateToggleState[4] = {false, false, false, false};
   
 
-  if (currentButtonState != provisionalButtonState[0]) 
-  {
-    if (currentButtonState == HIGH) 
-    {
-      buttonState[0] = HIGH;
-      provisionalButtonState[0] = HIGH;
-    }
-    else 
-    {
-      lastLOWTime[0] = millis();
-      provisionalButtonState[0] = LOW;
-    }
-
-  }
-
-  if (currentButtonState == LOW && provisionalButtonState[0] == LOW &&  buttonState[0] == HIGH) 
-  {
-    if( millis() - lastLOWTime[0] > 50 )
-    {
-      buttonState[0] = LOW;
-      toggleState[0] = !toggleState[0];
-      updateToggleState[0] = true;
-    }
-  }
-
-  if( updateToggleState[0] )
-  {
-    portExpander.digitalWrite(MOSFET_NIGH_LIGHT_PIN, toggleState[0]);
-    updateToggleState[0]= false;
-  }
-
-  /*  
-
   for (uint8_t i = 0; i < 4; i++)
   {
-    uint8_t currentButtonState = portExpander.digitalRead( i );  // Read current state of button
+    currentButtonState = portExpander.digitalRead( i );
 
-    // If the button state has changed, print the new state
     if (currentButtonState != provisionalButtonState[i]) 
     {
       if (currentButtonState == HIGH) 
       {
         buttonState[i] = HIGH;
-        portExpander.digitalWrite(mosfetPins[i], LOW);
         provisionalButtonState[i] = HIGH;
       }
       else 
@@ -162,15 +139,74 @@ void Dashboard::updateButtons()
 
     if (currentButtonState == LOW && provisionalButtonState[i] == LOW &&  buttonState[i] == HIGH) 
     {
-      if( millis() - lastLOWTime[i] > debounceDelay )
+      if( millis() - lastLOWTime[i] > DASHBOARD_BUTTON_DEBOUNCE_DELAY )
       {
         buttonState[i] = LOW;
-        portExpander.digitalWrite(mosfetPins[i], HIGH);
+        toggleState[i] = !toggleState[i];
+        updateToggleState[i] = true;
       }
     }
   }
 
-  */
+  if( updateToggleState[0] )
+  {
+    portExpander.digitalWrite(MOSFET_NIGH_LIGHT_PIN, toggleState[0]);
+    updateToggleState[0]= false;
+  }
+
+  if( updateToggleState[1] )
+  {
+    portExpander.digitalWrite(MOSFET_HORN_PIN, toggleState[1]);
+    updateToggleState[1]= false;
+  }
+
+  if( updateToggleState[2] )
+  {
+    //portExpander.digitalWrite(MOSFET_REVERSE_PIN, toggleState[2]);
+    updateToggleState[2]= false;
+  }
+
+  if( updateToggleState[3] )
+  {
+    //portExpander.digitalWrite(MOSFET_REVERSE_PIN, toggleState[2]);
+    updateToggleState[3]= false;
+  }
+
+  portExpander.digitalWrite(BUZZER_PIN, !buttonState[1]);
+    
+
+  /*for (uint8_t i = 0; i < 4; i++)
+  {
+    uint8_t currentButtonState = portExpander.digitalRead( i );  // Read current state of button
+
+    // If the button state has changed, print the new state
+    if (currentButtonState != provisionalButtonState[i]) 
+    {
+      if (currentButtonState == HIGH) 
+      {
+        buttonState[i] = HIGH;
+        //portExpander.digitalWrite(MOSFET_HORN_PIN, LOW);
+        provisionalButtonState[i] = HIGH;
+      }
+      else 
+      {
+        lastLOWTime[i] = millis();
+        provisionalButtonState[i] = LOW;
+      }
+
+    }
+
+    if (currentButtonState == LOW && provisionalButtonState[i] == LOW &&  buttonState[i] == HIGH) 
+    {
+      if( millis() - lastLOWTime[i] > 100 )
+      {
+        buttonState[i] = LOW;
+        //portExpander.digitalWrite(MOSFET_HORN_PIN, HIGH);
+      }
+    }
+  }*/
+
+  
 
 }
 
@@ -201,9 +237,10 @@ void Dashboard::updateVoltmeters()
     //map the voltage percentage
     int pwmVoltagePercentageValue = map(voltageSensor.batteryPercentage, 0, 100, 0, 255);// Map percentage to PWM range (0-255)
 
-    setVoltmeterPWM(VOLTMETER_BATTERY, pwmVoltagePercentageValue,  VOLTMETER_CHARGING_CHANNEL);
-    setVoltmeterPWM(VOLTMETER_SPEED,    joystick_steering,  VOLTMETER_SPEED_CHANNEL);
-    setVoltmeterPWM(VOLTMETER_CHARGING,  joystick_knob,  VOLTMETER_BATTERY_CHANNEL);
+    //setVoltmeterPWM(VOLTMETER_BATTERY,  pwmVoltagePercentageValue,  VOLTMETER_CHARGING_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_SPEED,      joystick_steering,          VOLTMETER_SPEED_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_CHARGING,   joystick_knob,              VOLTMETER_BATTERY_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_BATTERY,    pwmVoltagePercentageValue,  VOLTMETER_CHARGING_CHANNEL);
 
     voltMetersLastUpdateTime = currentTime;  // Update the last update time
   }

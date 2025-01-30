@@ -22,6 +22,8 @@ class ThrottleSystem
     int potValue1;           // Value for the first potentiometer
     int potValue2;           // Value for the second potentiometer
 
+    bool initialized;
+
     Dashboard& dashboard;    // Reference to the Dashboard instance
     PedalSensor& pedalSensor; // an instance of the speed sensor passed in to the constructor
 };

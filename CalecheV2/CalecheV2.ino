@@ -1,4 +1,7 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include <SPI.h>
+
 #include "PinDefinitions.h"
 #include "ConstantDefinitions.h"
 #include "WiFiPrinter.h"
@@ -26,21 +29,23 @@ SteeringSystem steeringSystem(dashboard);
 
 void setup()
 {
-   WiFiPrinter::setup();
+  WiFiPrinter::setup();
 
-  inclinationSensor.setup();
+  shutdown();
 
   // Set event listeners
   ignitionSwitch.setOnTurnedOnListener([]() {     start();        });
   ignitionSwitch.setOnTurnedOffListener([]() {    shutdown();     });
   ignitionSwitch.setup();
+
+ 
 }
 
 void loop()
 {
   ignitionSwitch.update();
+  
   inclinationSensor.update();
-
   portExpander.update();
   speedSensor.update();
   pedalSensor.update();
@@ -65,10 +70,12 @@ void start()
   brakeSystem.start();
   throttleSystem.start();
   steeringSystem.start();
+  inclinationSensor.start();
 }
 
 void shutdown()
 {
+  inclinationSensor.shutdown();
   steeringSystem.shutdown();
   throttleSystem.shutdown();
   brakeSystem.shutdown();
@@ -77,8 +84,9 @@ void shutdown()
   pedalSensor.shutdown();
   speedSensor.shutdown();
   portExpander.shutdown();
-
+  
   SPI.end();
+  Wire.end();
 }
 
 void WiFiPrinterUpdate()
@@ -91,11 +99,11 @@ void WiFiPrinterUpdate()
   {
       lastUpdateTime = currentTime; // Update the last update time
       WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
-                          dashboard.toggleState[0], pedalSensor.isStopped(), dashboard.buttonState[2], dashboard.buttonState[3], 
-                          speedSensor.getSpeed(), brakeSystem.servoPosition1,
+                          dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
+                          speedSensor.getSpeed(), steeringSystem.servoValue,
                           dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
-                          voltageSensor.current,
+                          voltageSensor.batteryPercentage,
                           inclinationSensor.getInclinationAngle() );
   }
   WiFiPrinter::update();

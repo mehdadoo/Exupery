@@ -144,11 +144,19 @@
 			  }
 			});
 
-          // Update Message if present in the response
-          if (data.message !== undefined) {
-            const messageField = document.getElementById("messageValue");
-            messageField.innerText += "\n" + data.message;  // Append the new message
-          }
+		  
+			  // Update Message if present in the response
+			if (data.message !== undefined) 
+			{
+				const messageField = document.getElementById("messageValue");
+
+				// Check if the message contains "bonjour"
+				if (data.message.toLowerCase().includes("bonjour")) 
+					messageField.innerText = ""; // Clear the message field
+
+				messageField.innerText += "\n" + data.message; // Append the new message
+			}
+
 
 			const rawResponseText = document.getElementById("rawResponseText");
 			if (!star) {

@@ -17,6 +17,10 @@ void SteeringSystem::shutdown()
     servo.detach();
   }
 
+  pinMode(SERVO_STEERING, INPUT);
+  // Add a delay for stabilization
+  delay(10);
+
   initialized = false;
 }
 

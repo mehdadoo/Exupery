@@ -25,13 +25,20 @@ void IgnitionSwitch::update()
 	// Read the current state of the car key switch
 	int currentState = digitalRead(POWER_SWITCH_PIN);
 
+  if( currentState != isKeyOn)
+  {
+    shouldUpdate = true;
+  }
+
 	// Check if the state has changed
-	if (currentState != isKeyOn) 
+	if ( shouldUpdate ) 
 	{
 		if (currentState == LOW) 
     {
-      neopixelWrite(RGB_BUILTIN,0,5,5); // Green led
-      digitalWrite(MOSFET_48V_PIN, HIGH); 
+      neopixelWrite(RGB_BUILTIN,0,0,24); // blue led
+      digitalWrite(MOSFET_48V_PIN, LOW); 
+
+      delay( 200 );
 
 		  onTurnedOn();
 
@@ -40,20 +47,18 @@ void IgnitionSwitch::update()
     }
 		else 
     {
-      neopixelWrite(RGB_BUILTIN,  8,  0,  0);   //faint red led
-
 		  onTurnedOff();
-
-      digitalWrite( MOSFET_48V_PIN, LOW); 
+      digitalWrite( MOSFET_48V_PIN, HIGH); 
+      delay(200);
       neopixelWrite(RGB_BUILTIN,  64,  0,  0); // full red led
       WiFiPrinter::print("Car Turned Off");
-    }
 
-		// Update the previous state
-		isKeyOn = currentState;
+      
+    }
+    isKeyOn = currentState;
+    shouldUpdate = false;
 	}
-  
-  
+  // Update the previous state
 }
 
 void IgnitionSwitch::setOnTurnedOnListener(std::function<void()> callback) {

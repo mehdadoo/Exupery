@@ -9,7 +9,8 @@ class InclinationSensor
 {
 public:
     InclinationSensor();  // Constructor
-    void setup();  // Method to initialize the sensor
+    void start();  // Method to initialize the sensor
+    void shutdown();
     void update();  // Method to update the sensor readings and calculations
     float getInclinationAngle();  // Method to get the current inclination angle
     

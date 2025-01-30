@@ -18,14 +18,30 @@ void ThrottleSystem::shutdown()
   potValue1 = 0;
   potValue2 = 0;
 
-  potentiometer1.set(potValue1);  // Apply shutdown value to potentiometer 1
-  potentiometer2.set(potValue2);  // Apply shutdown value to potentiometer 2
+  if( initialized )
+  {
+    potentiometer1.set(potValue1);  // Apply shutdown value to potentiometer 1
+    potentiometer2.set(potValue2);  // Apply shutdown value to potentiometer 2
+  }
+
+  // Set potentiometer control pins to INPUT to prevent backfeeding
+  digitalWrite(DigiPot_CS1, HIGH); // Pull CS high before disabling
+  digitalWrite(DigiPot_CS2, HIGH);
+  pinMode(DigiPot_CS1, INPUT);
+  pinMode(DigiPot_CS2, INPUT);
+  pinMode(DigiPot_NC, INPUT);
+  pinMode(DigiPot_UD, INPUT);
+
+  // Add a delay for stabilization
+  delay(10);
+
+  initialized = false;
 }
 
 // Method to update the potentiometer values
 void ThrottleSystem::update()
 {
-  if( !dashboard.initialized )
+  if( !dashboard.initialized || !initialized)
     return;
 
 
@@ -60,6 +76,10 @@ void ThrottleSystem::update()
 // Method to start the throttle system, enabling potentiometer control
 void ThrottleSystem::start()
 {
+  // Reinitialize potentiometer pins
+  pinMode(DigiPot_CS1, OUTPUT);
+  pinMode(DigiPot_CS2, OUTPUT);
+
   // Code to start the system or enable throttling
   // You may want to set initial values or enable any specific features at start
   potValue1 = 0;
@@ -67,4 +87,6 @@ void ThrottleSystem::start()
 
   potentiometer1.set(potValue1);
   potentiometer2.set(potValue2);
+
+  initialized = true;
 }

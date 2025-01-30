@@ -12,11 +12,18 @@ InclinationSensor::InclinationSensor()
 {
 }
 
+void InclinationSensor::shutdown() 
+{
+  initialized = false;
+
+}
+
 // Method to initialize the sensor
-void InclinationSensor::setup() 
+void InclinationSensor::start() 
 {
     if (initialized) 
         return;
+
 
     unsigned long module_connection_time_Start = millis();  // Record the time when the connection attempt starts
 

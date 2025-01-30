@@ -11,9 +11,10 @@ String printMessage = "{}";  // Initial JSON message (empty)
 // Static method to begin Wi-Fi connection and start the server
 void WiFiPrinter::setup() 
 {
+  Serial.begin(9600);
+
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  Serial.begin(9600);
   Serial.println("Connecting to WiFi...");
 
   unsigned long startMillis = millis();

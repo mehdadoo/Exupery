@@ -6,8 +6,10 @@
 #define I2C_SCL 36
 
 // Pin definitions for existing functionality
-#define POWER_SWITCH_PIN  15   // Input for car key switch
+#define POWER_SWITCH_PIN  14  // Input for car key switch
 #define MOSFET_48V_PIN      34   // Output for 48V MOSFET
+
+#define VOLTAGE_DIRECT_PIN 15
 
 
 
@@ -61,6 +63,7 @@ Voltmeter 3: ledc 5, Channel: 7, Timer: 3
 #define BUTTON_1_PIN 1   // GPB1 (Pin 1 on Bank B)
 #define BUTTON_2_PIN 2   // GPB2 (Pin 2 on Bank B)
 #define BUTTON_3_PIN 3   // GPB3 (Pin 3 on Bank B)
+#define BUZZER_PIN 7   // GPB7 (Pin 7 on Bank B)
 
 // GPIO Pin Definitions for MOSFET Control
 #define MOSFET_NIGH_LIGHT_PIN 0  // GPIO A0 (Pin 0 on Bank A)

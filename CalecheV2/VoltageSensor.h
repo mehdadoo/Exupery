@@ -1,15 +1,12 @@
 #ifndef VOLTAGESENSOR_H
 #define VOLTAGESENSOR_H
 
-#include <Adafruit_ADS1X15.h>
-
 class VoltageSensor {
 public:
     // Public member variables
     bool initialized = false;
     float voltage = 0.0;
-    float current = 0.0;
-    int batteryPercentage = 100;
+    int batteryPercentage = 0;
 
     // Public methods
     void start();
@@ -18,12 +15,9 @@ public:
 
 private:
     // Private member variables
-    Adafruit_ADS1115 ads1115;
     unsigned long lastUpdateTime = 0; // Stores the last update time
-
     // Private methods
     float readBatteryVoltage();
-    int readCurrentSensor( int adcPin );
 };
 
 #endif // VOLTAGESENSOR_H

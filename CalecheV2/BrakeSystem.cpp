@@ -44,15 +44,15 @@ void BrakeSystem::updateServo()
     servoPosition2 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_MIN_VALUE, BRAKE_SERVO_MAX_VALUE);
   }
 
-  if ( dashboard.hasBraked() )
-    portExpander.digitalWrite(MOSFET_BRAKE_PIN, HIGH);
-  else
-    portExpander.digitalWrite(MOSFET_BRAKE_PIN, LOW);
-
-    
-
-
-
+  static bool previousBrakeState = LOW;
+  bool currentBrakeState = dashboard.hasBraked() ? HIGH : LOW;
+  // Update only if the state has changed
+  if (currentBrakeState != previousBrakeState) 
+  {
+    portExpander.digitalWrite(MOSFET_BRAKE_PIN, currentBrakeState);
+    previousBrakeState = currentBrakeState; // Update the previous state
+  }
+  
   // do not update servo positions if they are at rest already
   if( servoPosition1 == BRAKE_SERVO_MIN_VALUE && previousServoPosition1 == servoPosition1)
     return;
@@ -127,6 +127,12 @@ void BrakeSystem::shutdown()
     servoBrake1.detach();
     servoBrake2.detach();
   }
+
+  // Set servo control pins to INPUT to prevent backfeeding
+  pinMode(SERVO_BRAKE_1, INPUT);
+  pinMode(SERVO_BRAKE_2, INPUT);
+
+  delay(10);
 
   initialized = false;
 }
