@@ -31,12 +31,22 @@ LCDDisplay lcdDisplay;
 
 void setup()
 {
-  // Set event listeners
-  ignitionSwitch.setOnTurnedOnListener([]() {     start();        });
-  ignitionSwitch.setOnTurnedOffListener([]() {    shutdown();     });
-  ignitionSwitch.setup();
+  Serial.begin(9600);
 
-  dashboard.onRequestWiFi([]() {       WiFiPrinter::setup();        });
+  // Check if the serial port is available
+  unsigned long startMillis = millis();
+  while (!Serial && millis() - startMillis < 2000) 
+  {
+    // Wait up to 5 seconds for the serial connection
+    delay(10);
+  }
+  Serial.println( "Serial startup: " + String ( millis() - startMillis ) );
+
+  // Set event listeners
+  dashboard.onRequestWiFi([]() {                  WiFiPrinter::setup();     });
+  ignitionSwitch.setOnTurnedOnListener([]() {     start();                  });
+  ignitionSwitch.setOnTurnedOffListener([]() {    shutdown();               });
+  ignitionSwitch.setup();
 }
 
 void loop()
@@ -52,7 +62,14 @@ void loop()
   brakeSystem.update();
   throttleSystem.update();
   steeringSystem.update();
-  lcdDisplay.update();
+  //lcdDisplay.update();
+
+  lcdDisplay.updateDisplay(dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
+                          speedSensor.getSpeed(), pedalSensor.isStopped(),
+                          dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
+                          voltageSensor.voltage,
+                          voltageSensor.batteryPercentage,
+                          inclinationSensor.getInclinationAngle() );
   
   WiFiPrinterUpdate();
 }

@@ -66,6 +66,6 @@
 #define UPDATE_OVER_HTTP_FREQUENCY    200   //ms
 
 //LCDDisplay
-#define DISPLAY_FPS 50
+#define DISPLAY_FPS 30
 
 #endif

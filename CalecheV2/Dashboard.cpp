@@ -107,10 +107,17 @@ void Dashboard::updateButtons()
 
   static bool  updateToggleState[4] = {false, false, false, false};
   
+  PortExpanderPin buttons[] = 
+  {
+    BUTTON_0_PIN, 
+    BUTTON_1_PIN, 
+    BUTTON_2_PIN, 
+    BUTTON_3_PIN
+  };
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    currentButtonState = HIGH;//portExpander.digitalReadMCP23S17('B', i );
+    currentButtonState = portExpander.digitalReadMCP23S17( buttons[i] );
 
     if (currentButtonState != provisionalButtonState[i]) 
     {
@@ -133,6 +140,15 @@ void Dashboard::updateButtons()
         buttonState[i] = LOW;
         toggleState[i] = !toggleState[i];
         updateToggleState[i] = true;
+
+        if( i == 0)
+        {
+          requestWiFiCallback();
+        }
+        else if (i == 1)
+        {
+          WiFiPrinter::print("port expander: "+ String( portExpander.readMCP23S17(0x00) ));
+        }
       }
     }
   }
@@ -163,7 +179,8 @@ void Dashboard::updateButtons()
 
   if( buttonState[0] == LOW &&  buttonState[1] == LOW && buttonState[2] == HIGH &&  buttonState[3] == HIGH)
   {
-    requestWiFiCallback();
+    
+    
   }
 
 }

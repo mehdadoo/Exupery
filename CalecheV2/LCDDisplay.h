@@ -22,23 +22,28 @@ class LCDDisplay
     void start();
     void shutdown();
 
+    void updateDisplay(
+        bool button1, bool button2, bool button3, bool button4, 
+        int speedSensor, int pedalSensor,
+        int joystick_throttle, int joystick_knob, int joystick_steering,
+        float voltage, float current, float inclinationAngle);
+
     void updateGauge(int value);
 
   private:
     bool initialized = false;
+    unsigned long lastDisplayUpdate = 0;
 
     Arduino_DataBus *bus;
     Arduino_GFX *gfx;
 
-    int current_value = 0;
-    int direction = 1;
-    int v = 0;
-
-    unsigned long lastDisplayUpdate = 0;
-
     // Private methods
-    void drawGauge();
-    void drawNeedle(int value, uint16_t color);
+    void drawButtonIndicator(int x, int y, bool state);
+    void drawSlider(int x, int y, int value, const char* label);
+    void drawCircularGauge(int x, int y, float value, float minVal, float maxVal, const char* label);
+    void drawBarIndicator(int x, int y, float value, float minVal, float maxVal, const char* label);
+    void drawInclinationArrow(int x, int y, float angle);
+
 };
 
 #endif

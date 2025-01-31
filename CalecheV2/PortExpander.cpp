@@ -38,26 +38,17 @@ void PortExpander::start()
   digitalWriteMCP23S17(MOSFET_BRAKE_PIN,       LOW);
   digitalWriteMCP23S17(MOSFET_REVERSE_PIN,     LOW);
 
-  
-  delay(20);
-
-  WiFiPrinter::print(String( readMCP23S17(0x00) ));
-
-
+  //readMCP23S17(0x00) always reads 0 see there is no way for us to check if the module is working correctly ;(
   // Check if the module is initialized (simple check), Check IODIR register
   //if (readMCP23S17(0x00) == 0x00) 
   //{  
   //  WiFiPrinter::print("MCP23S17 Initialization Failed!");
-
   //} 
   //else 
   //{
-    unsigned long initialization_time = millis() - module_connection_time_Start;
-        
-    // Print the initialization time
-    WiFiPrinter::print("MCP23S17 initialized in " + String( initialization_time ) + "ms");
-
-    initialized = true;
+  unsigned long initialization_time = millis() - module_connection_time_Start;
+  WiFiPrinter::print("MCP23S17 initialized in " + String( initialization_time ) + "ms");
+  initialized = true;
   //} 
 
   // Deactivate SPI device
@@ -106,8 +97,6 @@ void PortExpander::shutdown()
 
   // Wait for a brief moment to stabilize
   delay(10);
-
-
 
   initialized = false;
 }
