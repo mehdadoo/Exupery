@@ -1,4 +1,6 @@
 #include "ThrottleSystem.h"
+#include "PinDefinitions.h"
+#include "ConstantDefinitions.h"
 
 // Constructor to initialize the potentiometers and set initial values
 // Constructor to initialize the potentiometers and set initial values

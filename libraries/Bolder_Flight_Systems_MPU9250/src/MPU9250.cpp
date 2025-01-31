@@ -36,130 +36,229 @@ MPU9250::MPU9250(SPIClass &bus,uint8_t csPin){
   _useSPI = true; // set to use SPI
 }
 
+void MPU9250::update() 
+{
+  if (_stateMachine == 1) 
+  {
+      if( _useSPI ) { // using SPI for communication
+        // use low speed SPI for register setting
+        _useSPIHS = false;
+        // setting CS pin to output
+        pinMode(_csPin,OUTPUT);
+        // setting CS pin high
+        digitalWrite(_csPin,HIGH);
+        // begin SPI communication
+        _spi->begin();
+      } else { // using I2C for communication
+        // starting the I2C bus
+        _i2c->begin();
+        // setting the I2C clock
+        _i2c->setClock(_i2cRate);
+      }
+      // select clock source to gyro
+      if(writeRegister(PWR_MGMNT_1,CLOCK_SEL_PLL) < 0){
+        _stateMachine = -1;
+      }
+      // enable I2C master mode
+      if(writeRegister(USER_CTRL,I2C_MST_EN) < 0){
+        _stateMachine = -2;
+      }
+      // set the I2C bus speed to 400 kHz
+      if(writeRegister(I2C_MST_CTRL,I2C_MST_CLK) < 0){
+        _stateMachine = -3;
+      }
+      // set AK8963 to Power Down
+      writeAK8963Register(AK8963_CNTL1,AK8963_PWR_DOWN);
+      // reset the MPU9250
+      writeRegister(PWR_MGMNT_1,PWR_RESET);
+      // wait for MPU-9250 to come back up
+      delay(1);
+      // reset the AK8963
+      writeAK8963Register(AK8963_CNTL2,AK8963_RESET);
+      // select clock source to gyro
+      if(writeRegister(PWR_MGMNT_1,CLOCK_SEL_PLL) < 0){
+        _stateMachine = -4;
+      }
+      // check the WHO AM I byte, expected value is 0x71 (decimal 113) or 0x73 (decimal 115)
+      if((whoAmI() != 113)&&(whoAmI() != 115)){
+        _stateMachine = -5;
+      }
+      // enable accelerometer and gyro
+      if(writeRegister(PWR_MGMNT_2,SEN_ENABLE) < 0){
+        _stateMachine = -6;
+      }
+      // setting accel range to 16G as default
+      if(writeRegister(ACCEL_CONFIG,ACCEL_FS_SEL_16G) < 0){
+        _stateMachine = -7;
+      }
+      _accelScale = G * 16.0f/32767.5f; // setting the accel scale to 16G
+      _accelRange = ACCEL_RANGE_16G;
+      // setting the gyro range to 2000DPS as default
+      if(writeRegister(GYRO_CONFIG,GYRO_FS_SEL_2000DPS) < 0){
+        _stateMachine = -8;
+      }
+      _gyroScale = 2000.0f/32767.5f * _d2r; // setting the gyro scale to 2000DPS
+      _gyroRange = GYRO_RANGE_2000DPS;
+      // setting bandwidth to 184Hz as default
+      if(writeRegister(ACCEL_CONFIG2,ACCEL_DLPF_184) < 0){ 
+        _stateMachine = -9;
+      } 
+      if(writeRegister(CONFIG,GYRO_DLPF_184) < 0){ // setting gyro bandwidth to 184Hz
+        _stateMachine = -10;
+      }
+      _bandwidth = DLPF_BANDWIDTH_184HZ;
+      // setting the sample rate divider to 0 as default
+      if(writeRegister(SMPDIV,0x00) < 0){ 
+        _stateMachine = -11;
+      } 
+      _srd = 0;
+      // enable I2C master mode
+      if(writeRegister(USER_CTRL,I2C_MST_EN) < 0){
+        _stateMachine = -12;
+      }
+      // set the I2C bus speed to 400 kHz
+      if( writeRegister(I2C_MST_CTRL,I2C_MST_CLK) < 0){
+        _stateMachine = -13;
+      }
+      // check AK8963 WHO AM I register, expected value is 0x48 (decimal 72)
+      if( whoAmIAK8963() != 72 ){
+        _stateMachine = -14;
+      }
+      /* get the magnetometer calibration */
+      // set AK8963 to Power Down
+      if(writeAK8963Register(AK8963_CNTL1,AK8963_PWR_DOWN) < 0){
+        _stateMachine = -15;
+      }
+      _stateMachine = 2;
+      lastSampleTime = millis();
+  }
+  else if (_stateMachine == 2) 
+  {
+    unsigned long currentMillis = millis(); 
+    if( currentMillis - lastSampleTime >= 100 )
+      _stateMachine = 3;
+  }
+  else if (_stateMachine == 3) 
+  {
+    // set AK8963 to FUSE ROM access
+    if(writeAK8963Register(AK8963_CNTL1,AK8963_FUSE_ROM) < 0){
+      _stateMachine = -16;
+    }
+    else
+    {
+      _stateMachine = 4;
+      lastSampleTime = millis();
+    }
+  }
+  else if (_stateMachine == 4) 
+  {
+    unsigned long currentMillis = millis(); 
+    if( currentMillis - lastSampleTime >= 100 )
+      _stateMachine = 5;
+  }
+  else if (_stateMachine == 5) 
+  {
+    // read the AK8963 ASA registers and compute magnetometer scale factors
+    readAK8963Registers(AK8963_ASA,3,_buffer);
+    _magScaleX = ((((float)_buffer[0]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
+    _magScaleY = ((((float)_buffer[1]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
+    _magScaleZ = ((((float)_buffer[2]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla 
+    // set AK8963 to Power Down
+    if(writeAK8963Register(AK8963_CNTL1,AK8963_PWR_DOWN) < 0){
+      _stateMachine = -17;
+    }
+    else
+    {
+      _stateMachine = 6;
+      lastSampleTime = millis();
+    }
+  }
+  else if (_stateMachine == 6) 
+  {
+    unsigned long currentMillis = millis(); 
+    if( currentMillis - lastSampleTime >= 100 )
+      _stateMachine = 7;
+  }
+  else if (_stateMachine == 7) 
+  {
+    // set AK8963 to 16 bit resolution, 100 Hz update rate
+    if(writeAK8963Register(AK8963_CNTL1,AK8963_CNT_MEAS2) < 0){
+      _stateMachine = -18;
+    }
+    else
+    {
+      _stateMachine = 8;
+      lastSampleTime = millis();
+    }
+  }
+  else if (_stateMachine == 8) 
+  {
+    unsigned long currentMillis = millis(); 
+    if( currentMillis - lastSampleTime >= 100 )
+      _stateMachine = 9;
+  }
+  else if (_stateMachine == 9) 
+  {
+    // select clock source to gyro
+    if(writeRegister(PWR_MGMNT_1,CLOCK_SEL_PLL) < 0){
+      _stateMachine = -19;
+    }       
+    // instruct the MPU9250 to get 7 bytes of data from the AK8963 at the sample rate
+    readAK8963Registers(AK8963_HXL,7,_buffer);
+    // estimate gyro bias
+    calibrateGyro();
+    _stateMachine = 10;
+    lastSampleTime = millis();
+  }
+  else if (_stateMachine == 10) 
+  {
+    //static unsigned long 
+    lastSampleTime = 0;  // Ensure this is persistent between calls
+    unsigned long currentMillis = millis();   // Get current time
+
+    if (currentMillis - lastSampleTime >= 20)  // 20ms interval check
+    {
+      lastSampleTime = currentMillis;  // Update last sample time to current time
+
+      readSensor();
+      _gxbD += (getGyroX_rads() + _gxb) / ((double)_numSamples);
+      _gybD += (getGyroY_rads() + _gyb) / ((double)_numSamples);
+      _gzbD += (getGyroZ_rads() + _gzb) / ((double)_numSamples);
+
+      sampleIndex++;
+
+      if (sampleIndex >= 20) 
+      {
+        sampleIndex = 0;  // Reset counter after completing all samples
+        _gxb = (float)_gxbD;
+        _gyb = (float)_gybD;
+        _gzb = (float)_gzbD;
+
+        // set the range, bandwidth, and srd back to what they were
+        if (setGyroRange(_gyroRange) < 0) 
+        {
+          _stateMachine = -4;
+        }
+        if (setDlpfBandwidth(_bandwidth) < 0) 
+        {
+          _stateMachine = -5;
+        }
+        if (setSrd(_srd) < 0) 
+        {
+          _stateMachine = -6;
+        }
+        _stateMachine = 11;
+      }
+    }
+  }
+}
+
+
+
 /* starts communication with the MPU-9250 */
-int MPU9250::begin(){
-  if( _useSPI ) { // using SPI for communication
-    // use low speed SPI for register setting
-    _useSPIHS = false;
-    // setting CS pin to output
-    pinMode(_csPin,OUTPUT);
-    // setting CS pin high
-    digitalWrite(_csPin,HIGH);
-    // begin SPI communication
-    _spi->begin();
-  } else { // using I2C for communication
-    // starting the I2C bus
-    _i2c->begin();
-    // setting the I2C clock
-    _i2c->setClock(_i2cRate);
-  }
-  // select clock source to gyro
-  if(writeRegister(PWR_MGMNT_1,CLOCK_SEL_PLL) < 0){
-    return -1;
-  }
-  // enable I2C master mode
-  if(writeRegister(USER_CTRL,I2C_MST_EN) < 0){
-    return -2;
-  }
-  // set the I2C bus speed to 400 kHz
-  if(writeRegister(I2C_MST_CTRL,I2C_MST_CLK) < 0){
-    return -3;
-  }
-  // set AK8963 to Power Down
-  writeAK8963Register(AK8963_CNTL1,AK8963_PWR_DOWN);
-  // reset the MPU9250
-  writeRegister(PWR_MGMNT_1,PWR_RESET);
-  // wait for MPU-9250 to come back up
-  delay(1);
-  // reset the AK8963
-  writeAK8963Register(AK8963_CNTL2,AK8963_RESET);
-  // select clock source to gyro
-  if(writeRegister(PWR_MGMNT_1,CLOCK_SEL_PLL) < 0){
-    return -4;
-  }
-  // check the WHO AM I byte, expected value is 0x71 (decimal 113) or 0x73 (decimal 115)
-  if((whoAmI() != 113)&&(whoAmI() != 115)){
-    return -5;
-  }
-  // enable accelerometer and gyro
-  if(writeRegister(PWR_MGMNT_2,SEN_ENABLE) < 0){
-    return -6;
-  }
-  // setting accel range to 16G as default
-  if(writeRegister(ACCEL_CONFIG,ACCEL_FS_SEL_16G) < 0){
-    return -7;
-  }
-  _accelScale = G * 16.0f/32767.5f; // setting the accel scale to 16G
-  _accelRange = ACCEL_RANGE_16G;
-  // setting the gyro range to 2000DPS as default
-  if(writeRegister(GYRO_CONFIG,GYRO_FS_SEL_2000DPS) < 0){
-    return -8;
-  }
-  _gyroScale = 2000.0f/32767.5f * _d2r; // setting the gyro scale to 2000DPS
-  _gyroRange = GYRO_RANGE_2000DPS;
-  // setting bandwidth to 184Hz as default
-  if(writeRegister(ACCEL_CONFIG2,ACCEL_DLPF_184) < 0){ 
-    return -9;
-  } 
-  if(writeRegister(CONFIG,GYRO_DLPF_184) < 0){ // setting gyro bandwidth to 184Hz
-    return -10;
-  }
-  _bandwidth = DLPF_BANDWIDTH_184HZ;
-  // setting the sample rate divider to 0 as default
-  if(writeRegister(SMPDIV,0x00) < 0){ 
-    return -11;
-  } 
-  _srd = 0;
-  // enable I2C master mode
-  if(writeRegister(USER_CTRL,I2C_MST_EN) < 0){
-  	return -12;
-  }
-	// set the I2C bus speed to 400 kHz
-	if( writeRegister(I2C_MST_CTRL,I2C_MST_CLK) < 0){
-		return -13;
-	}
-	// check AK8963 WHO AM I register, expected value is 0x48 (decimal 72)
-	if( whoAmIAK8963() != 72 ){
-    return -14;
-	}
-  /* get the magnetometer calibration */
-  // set AK8963 to Power Down
-  if(writeAK8963Register(AK8963_CNTL1,AK8963_PWR_DOWN) < 0){
-    return -15;
-  }
-  delay(100); // long wait between AK8963 mode changes
-  // set AK8963 to FUSE ROM access
-  if(writeAK8963Register(AK8963_CNTL1,AK8963_FUSE_ROM) < 0){
-    return -16;
-  }
-  delay(100); // long wait between AK8963 mode changes
-  // read the AK8963 ASA registers and compute magnetometer scale factors
-  readAK8963Registers(AK8963_ASA,3,_buffer);
-  _magScaleX = ((((float)_buffer[0]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
-  _magScaleY = ((((float)_buffer[1]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
-  _magScaleZ = ((((float)_buffer[2]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla 
-  // set AK8963 to Power Down
-  if(writeAK8963Register(AK8963_CNTL1,AK8963_PWR_DOWN) < 0){
-    return -17;
-  }
-  delay(100); // long wait between AK8963 mode changes  
-  // set AK8963 to 16 bit resolution, 100 Hz update rate
-  if(writeAK8963Register(AK8963_CNTL1,AK8963_CNT_MEAS2) < 0){
-    return -18;
-  }
-  delay(100); // long wait between AK8963 mode changes
-  // select clock source to gyro
-  if(writeRegister(PWR_MGMNT_1,CLOCK_SEL_PLL) < 0){
-    return -19;
-  }       
-  // instruct the MPU9250 to get 7 bytes of data from the AK8963 at the sample rate
-  readAK8963Registers(AK8963_HXL,7,_buffer);
-  // estimate gyro bias
-  if (calibrateGyro() < 0) {
-    return -20;
-  }
-  // successful init, return 1
-  return 1;
+void MPU9250::begin()
+{
+  _stateMachine = 1;
 }
 
 /* sets the accelerometer full scale range to values other than default */
@@ -632,7 +731,8 @@ void MPU9250FIFO::getFifoTemperature_C(size_t *size,float* data) {
 }
 
 /* estimates the gyro biases */
-int MPU9250::calibrateGyro() {
+int MPU9250::calibrateGyro() 
+{
   // set the range, bandwidth, and srd
   if (setGyroRange(GYRO_RANGE_250DPS) < 0) {
     return -1;
@@ -648,28 +748,11 @@ int MPU9250::calibrateGyro() {
   _gxbD = 0;
   _gybD = 0;
   _gzbD = 0;
-  for (size_t i=0; i < _numSamples; i++) {
-    readSensor();
-    _gxbD += (getGyroX_rads() + _gxb)/((double)_numSamples);
-    _gybD += (getGyroY_rads() + _gyb)/((double)_numSamples);
-    _gzbD += (getGyroZ_rads() + _gzb)/((double)_numSamples);
-    delay(20);
-  }
-  _gxb = (float)_gxbD;
-  _gyb = (float)_gybD;
-  _gzb = (float)_gzbD;
 
-  // set the range, bandwidth, and srd back to what they were
-  if (setGyroRange(_gyroRange) < 0) {
-    return -4;
-  }
-  if (setDlpfBandwidth(_bandwidth) < 0) {
-    return -5;
-  }
-  if (setSrd(_srd) < 0) {
-    return -6;
-  }
-  return 1;
+
+ _stateMachine = 9;
+
+ return 1;
 }
 
 /* returns the gyro bias in the X direction, rad/s */

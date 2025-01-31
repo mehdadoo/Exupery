@@ -2,23 +2,20 @@
 
 class IgnitionSwitch {
 public:
-    IgnitionSwitch();
-
-    // Method to set up the switch
     void setup();
-
-    // Check the current state of the ignition
     void update();
+    void start();
+    void shutdown();
 
     // Set external event listeners
     void setOnTurnedOnListener(std::function<void()> callback);
     void setOnTurnedOffListener(std::function<void()> callback);
 
-    bool isKeyOn = false; // State of the key switch
-
+    bool isKeyOn = false;
 private:
     
-    bool shouldUpdate = true;
+    unsigned long keyOffTime = 0; // Time when key switched off
+    bool waitingForOff = false;   // Flag to track off delay
     // Event listeners
     std::function<void()> onTurnedOn = nullptr;
     std::function<void()> onTurnedOff = nullptr;

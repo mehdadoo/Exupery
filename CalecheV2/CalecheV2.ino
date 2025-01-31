@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Wire.h>
+//#include <Wire.h>
 #include <SPI.h>
 
 #include "PinDefinitions.h"
@@ -8,52 +8,51 @@
 #include "PortExpander.h"
 #include "IgnitionSwitch.h"
 #include "VoltageSensor.h"
-#include "InclinationSensor.h"
 #include "SpeedSensor.h"
 #include "PedalSensor.h"
-#include "BrakeSystem.h"
-#include "ThrottleSystem.h"
 #include "Dashboard.h"
-#include "SteeringSystem.h"
+#include "InclinationSensor.h"
+//#include "BrakeSystem.h"
+//#include "ThrottleSystem.h"
+//#include "SteeringSystem.h"
+//#include "LCDDisplay.h"
 
 PortExpander& portExpander = PortExpander::getInstance();//MPC23S17 port expander
 IgnitionSwitch ignitionSwitch;
-InclinationSensor inclinationSensor;
 VoltageSensor voltageSensor;//ADS1115 current and voltage reader
 SpeedSensor speedSensor;
 PedalSensor pedalSensor;
 Dashboard dashboard(voltageSensor);
-BrakeSystem brakeSystem(dashboard, speedSensor); // Pass speedSensor to the constructor
-ThrottleSystem throttleSystem(dashboard, pedalSensor);
-SteeringSystem steeringSystem(dashboard);
+InclinationSensor inclinationSensor;
+//BrakeSystem brakeSystem(dashboard, speedSensor); // Pass speedSensor to the constructor
+//ThrottleSystem throttleSystem(dashboard, pedalSensor);
+//SteeringSystem steeringSystem(dashboard);
+//LCDDisplay lcdDisplay;
 
 void setup()
 {
-  WiFiPrinter::setup();
-
-  shutdown();
-
   // Set event listeners
   ignitionSwitch.setOnTurnedOnListener([]() {     start();        });
   ignitionSwitch.setOnTurnedOffListener([]() {    shutdown();     });
   ignitionSwitch.setup();
 
- 
+  dashboard.onRequestWiFi([]() {       WiFiPrinter::setup();        });
 }
 
 void loop()
 {
   ignitionSwitch.update();
   
-  inclinationSensor.update();
   portExpander.update();
   speedSensor.update();
   pedalSensor.update();
   voltageSensor.update();
   dashboard.update();
-  brakeSystem.update();
-  throttleSystem.update();
-  steeringSystem.update();
+  inclinationSensor.update();
+  //brakeSystem.update();
+  //throttleSystem.update();
+  //steeringSystem.update();
+  //lcdDisplay.update();
   
   WiFiPrinterUpdate();
 }
@@ -67,18 +66,21 @@ void start()
   pedalSensor.start();
   voltageSensor.start();
   dashboard.start();
-  brakeSystem.start();
-  throttleSystem.start();
-  steeringSystem.start();
   inclinationSensor.start();
+  //brakeSystem.start();
+  //throttleSystem.start();
+  //steeringSystem.start();
+  //lcdDisplay.start();
 }
 
 void shutdown()
 {
+  //lcdDisplay.shutdown();
+  
+  //steeringSystem.shutdown();
+  //throttleSystem.shutdown();
+  //brakeSystem.shutdown();
   inclinationSensor.shutdown();
-  steeringSystem.shutdown();
-  throttleSystem.shutdown();
-  brakeSystem.shutdown();
   dashboard.shutdown();
   voltageSensor.shutdown();
   pedalSensor.shutdown();
@@ -86,7 +88,7 @@ void shutdown()
   portExpander.shutdown();
   
   SPI.end();
-  Wire.end();
+  //Wire.end();
 }
 
 void WiFiPrinterUpdate()
@@ -98,9 +100,17 @@ void WiFiPrinterUpdate()
   if (currentTime - lastUpdateTime >= UPDATE_OVER_HTTP_FREQUENCY) 
   {
       lastUpdateTime = currentTime; // Update the last update time
-      WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
+      /*WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
                           dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
                           speedSensor.getSpeed(), steeringSystem.servoValue,
+                          dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
+                          voltageSensor.voltage,
+                          voltageSensor.batteryPercentage,
+                          inclinationSensor.getInclinationAngle() );*/
+
+      WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
+                          dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
+                          speedSensor.getSpeed(), 47,
                           dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
                           voltageSensor.batteryPercentage,

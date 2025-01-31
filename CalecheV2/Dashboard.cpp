@@ -29,16 +29,6 @@ void Dashboard::start()
   toggleState[2] = LOW;
   toggleState[3] = LOW;
 
-  PortExpander& portExpander = PortExpander::getInstance();
-  if( portExpander.initialized )
-  {
-    portExpander.digitalWrite(MOSFET_NIGH_LIGHT_PIN, LOW);
-    portExpander.digitalWrite(MOSFET_HORN_PIN, LOW);
-    portExpander.digitalWrite(MOSFET_REVERSE_PIN, LOW);
-    portExpander.digitalWrite(MOSFET_BRAKE_LIGHT_PIN, LOW);
-    portExpander.digitalWrite(MOSFET_BRAKE_PIN, LOW);
-  }
-
   unsigned long module_connection_time_Start = millis(); // Record the time when the connection attempt starts
 
   while (millis() - module_connection_time_Start < MODULE_CONNECTION_TIMEOUT)
@@ -120,7 +110,7 @@ void Dashboard::updateButtons()
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    currentButtonState = portExpander.digitalRead( i );
+    currentButtonState = portExpander.digitalReadMCP23S17('B', i );
 
     if (currentButtonState != provisionalButtonState[i]) 
     {
@@ -134,7 +124,6 @@ void Dashboard::updateButtons()
         lastLOWTime[i] = millis();
         provisionalButtonState[i] = LOW;
       }
-
     }
 
     if (currentButtonState == LOW && provisionalButtonState[i] == LOW &&  buttonState[i] == HIGH) 
@@ -150,64 +139,39 @@ void Dashboard::updateButtons()
 
   if( updateToggleState[0] )
   {
-    portExpander.digitalWrite(MOSFET_NIGH_LIGHT_PIN, toggleState[0]);
+    portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_NIGH_LIGHT_PIN, toggleState[0]);
     updateToggleState[0]= false;
   }
 
   if( updateToggleState[1] )
   {
-    portExpander.digitalWrite(MOSFET_HORN_PIN, toggleState[1]);
+    portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_HORN_PIN, toggleState[1]);
     updateToggleState[1]= false;
   }
 
   if( updateToggleState[2] )
   {
-    //portExpander.digitalWrite(MOSFET_REVERSE_PIN, toggleState[2]);
+    //portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_REVERSE_PIN, toggleState[2]);
     updateToggleState[2]= false;
   }
 
   if( updateToggleState[3] )
   {
-    //portExpander.digitalWrite(MOSFET_REVERSE_PIN, toggleState[2]);
+    //portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_REVERSE_PIN, toggleState[2]);
     updateToggleState[3]= false;
   }
 
-  portExpander.digitalWrite(BUZZER_PIN, !buttonState[1]);
-    
+  portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_B, BUZZER_PIN, !buttonState[0]);
 
-  /*for (uint8_t i = 0; i < 4; i++)
+  if( buttonState[0] == LOW &&  buttonState[1] == LOW && buttonState[2] == HIGH &&  buttonState[3] == HIGH)
   {
-    uint8_t currentButtonState = portExpander.digitalRead( i );  // Read current state of button
+    requestWiFiCallback();
+  }
 
-    // If the button state has changed, print the new state
-    if (currentButtonState != provisionalButtonState[i]) 
-    {
-      if (currentButtonState == HIGH) 
-      {
-        buttonState[i] = HIGH;
-        //portExpander.digitalWrite(MOSFET_HORN_PIN, LOW);
-        provisionalButtonState[i] = HIGH;
-      }
-      else 
-      {
-        lastLOWTime[i] = millis();
-        provisionalButtonState[i] = LOW;
-      }
+}
 
-    }
-
-    if (currentButtonState == LOW && provisionalButtonState[i] == LOW &&  buttonState[i] == HIGH) 
-    {
-      if( millis() - lastLOWTime[i] > 100 )
-      {
-        buttonState[i] = LOW;
-        //portExpander.digitalWrite(MOSFET_HORN_PIN, HIGH);
-      }
-    }
-  }*/
-
-  
-
+void Dashboard::onRequestWiFi(std::function<void()> callback) {
+    requestWiFiCallback = callback;
 }
 
 // Update joystick states

@@ -1,8 +1,6 @@
 #ifndef PEDAL_SENSOR_H
 #define PEDAL_SENSOR_H
 
-#include "PinDefinitions.h"
-#include "ConstantDefinitions.h"
 
 class PedalSensor 
 {

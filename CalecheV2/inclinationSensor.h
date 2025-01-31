@@ -2,7 +2,7 @@
 #define INCLINATION_SENSOR_H
 
 #include "MPU9250.h"
-#include "WiFiPrinter.h"
+
 
 
 class InclinationSensor 
@@ -16,6 +16,7 @@ public:
     
 private:
     MPU9250 IMU;  // MPU9250 sensor object
+    unsigned long module_connection_time_Start = millis();
     unsigned long lastUpdateTime;  // Last time the sensor was updated
     bool initialized;  // Flag to check if the sensor is initialized
     float inclination_angle;  // Current inclination angle

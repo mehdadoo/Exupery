@@ -11,20 +11,35 @@ String printMessage = "{}";  // Initial JSON message (empty)
 // Static method to begin Wi-Fi connection and start the server
 void WiFiPrinter::setup() 
 {
+  if (WiFi.status() == WL_CONNECTED) 
+    return;
+    
   Serial.begin(9600);
 
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   Serial.println("Connecting to WiFi...");
 
-  unsigned long startMillis = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - startMillis < 5000) {
-    delay(10);
+  int retryCount = 0;
+  while (retryCount < MAX_WIFI_CONNECTION_RETRIES) 
+  {
+      unsigned long startMillis = millis(); // Track start time for timeout
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+      while (WiFi.status() != WL_CONNECTED && millis() - startMillis < RETRY_INTERVAL)
+          delay(10);
+
+      if (WiFi.status() == WL_CONNECTED) 
+          break; // Exit loop if connected
+
+      retryCount++; // Increase retry counter
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
+
+  if (WiFi.status() == WL_CONNECTED) 
+  {
     // Initialize web server
-    server.on("/getData", HTTP_GET, []() {
+    server.on("/getData", HTTP_GET, []() 
+    {
       // Allow cross-origin requests
       server.sendHeader("Access-Control-Allow-Origin", "*");
       server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -43,7 +58,6 @@ void WiFiPrinter::setup()
       serializeJson(doc, printMessage);// Serialize the updated JSON document back into the printMessage string
     });
 
-
     server.begin();
 
     setupOTA();
@@ -51,14 +65,12 @@ void WiFiPrinter::setup()
     Serial.println("Connected to Wi-Fi");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
-
-    
-
-  } else {
+  } 
+  else 
+  {
     Serial.println("Failed to connect to WiFi");
   }
 
-  
   print("Blue Calèche, Bonjour!");
 }
 
@@ -105,12 +117,12 @@ void WiFiPrinter::update()
   {
     server.handleClient(); // Handle HTTP requests
     ArduinoOTA.handle(); // Handle OTA updates
-    return;
   }
   // Handle Wi-Fi connection retry logic if disconnected (optional)
 }
 
-void WiFiPrinter::print(const String& value) {
+void WiFiPrinter::print(const String& value) 
+{
   // Create a dynamic JSON document to parse and update the existing JSON
   DynamicJsonDocument doc(1024); // Allocate enough space for the document
 
@@ -143,6 +155,9 @@ void WiFiPrinter::printAll(bool powerSwitch,
                           float inclinationAngle
                           )
 {
+  if (WiFi.status() != WL_CONNECTED) 
+    return;
+
   // Create a dynamic JSON document to parse and update the existing JSON
   DynamicJsonDocument doc(1024); // Allocate enough space for the document
 

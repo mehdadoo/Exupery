@@ -21,6 +21,9 @@ public:
     void update();
     bool hasBraked();
 
+    // Set external event listeners
+    void onRequestWiFi(std::function<void()> callback);
+
 private:
     // Private member variables
     Adafruit_ADS1115 ads1115;
@@ -36,6 +39,8 @@ private:
     void updateJoysticks();
     void updateVoltmeters();
     void setVoltmeterPWM(int pin, int pwmValue, int channel, int freq = 5000, int resolution = 8);
+
+    std::function<void()> requestWiFiCallback = nullptr;
 };
 
 #endif // DASHBOARD_H

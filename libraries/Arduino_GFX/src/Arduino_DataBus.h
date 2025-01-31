@@ -85,31 +85,31 @@ typedef volatile ARDUINOGFX_PORT_t *PORTreg_t;
 #endif
 
 #if defined(ARDUINO_ARCH_ARC32) || defined(ARDUINO_MAXIM)
-#define SPI_DEFAULT_FREQ 16000000
+#define SPI_DEFAULT_FREQ 10000000
 // Teensy 3.0, 3.1/3.2, 3.5, 3.6
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
-#define SPI_DEFAULT_FREQ 40000000
+#define SPI_DEFAULT_FREQ 10000000
 // Teensy 4.x
 #elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
-#define SPI_DEFAULT_FREQ 40000000
+#define SPI_DEFAULT_FREQ 10000000
 #elif defined(__AVR__) || defined(TEENSYDUINO)
-#define SPI_DEFAULT_FREQ 8000000
+#define SPI_DEFAULT_FREQ 10000000
 #elif defined(ARDUINO_ARCH_NRF52840)
-#define SPI_DEFAULT_FREQ 8000000
+#define SPI_DEFAULT_FREQ 10000000
 #elif defined(ESP8266) || defined(ESP32)
-#define SPI_DEFAULT_FREQ 40000000
+#define SPI_DEFAULT_FREQ 10000000
 #elif defined(RTL8722DM)
-#define SPI_DEFAULT_FREQ 20000000
+#define SPI_DEFAULT_FREQ 10000000
 #elif defined(RASPI)
-#define SPI_DEFAULT_FREQ 80000000
+#define SPI_DEFAULT_FREQ 10000000
 #elif defined(ARDUINO_ARCH_STM32F1)
-#define SPI_DEFAULT_FREQ 36000000
+#define SPI_DEFAULT_FREQ 10000000
 #elif defined(ARDUINO_BLACKPILL_F411CE)
-#define SPI_DEFAULT_FREQ 50000000
+#define SPI_DEFAULT_FREQ 10000000
 #elif defined(F_CPU)
 #define SPI_DEFAULT_FREQ (F_CPU / 4)
 #else
-#define SPI_DEFAULT_FREQ 24000000 ///< Default SPI data clock frequency
+#define SPI_DEFAULT_FREQ 10000000 ///< Default SPI data clock frequency
 #endif
 
 #ifndef UNUSED

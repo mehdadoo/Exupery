@@ -68,7 +68,11 @@ class MPU9250{
     };
     MPU9250(TwoWire &bus,uint8_t address);
     MPU9250(SPIClass &bus,uint8_t csPin);
-    int begin();
+    size_t sampleIndex = 0;
+    unsigned long lastSampleTime = 0;
+    int _stateMachine = 0;
+    void update();
+    void begin();
     int setAccelRange(AccelRange range);
     int setGyroRange(GyroRange range);
     int setDlpfBandwidth(DlpfBandwidth bandwidth);

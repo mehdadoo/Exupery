@@ -47,8 +47,14 @@ static int16_t *cached_points;
 static uint16_t cached_points_idx = 0;
 static int16_t *last_cached_point;
 
+#define MOSFET_48V_PIN      34   // Output for 48V MOSFET
+
 void setup(void)
 {
+  pinMode(MOSFET_48V_PIN, OUTPUT);
+  digitalWrite(MOSFET_48V_PIN, LOW); 
+  delay( 200 );
+
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);

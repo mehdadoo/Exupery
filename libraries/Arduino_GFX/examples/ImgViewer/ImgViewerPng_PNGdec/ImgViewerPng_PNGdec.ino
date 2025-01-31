@@ -58,11 +58,8 @@
 Arduino_GFX *gfx = create_default_Arduino_GFX();
 #else /* !defined(DISPLAY_DEV_KIT) */
 
-/* More data bus class: https://github.com/moononournation/Arduino_GFX/wiki/Data-Bus-Class */
-Arduino_DataBus *bus = create_default_Arduino_DataBus();
-
-/* More display class: https://github.com/moononournation/Arduino_GFX/wiki/Display-Class */
-Arduino_GFX *gfx = new Arduino_ILI9341(bus, DF_GFX_RST, 3 /* rotation */, false /* IPS */);
+Arduino_DataBus *bus = new Arduino_ESP32SPI(4, 2, 12, 13, GFX_NOT_DEFINED);
+Arduino_GFX *gfx = new Arduino_GC9A01(bus, 6, 0, true);
 
 #endif /* !defined(DISPLAY_DEV_KIT) */
 /*******************************************************************************

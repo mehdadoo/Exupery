@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <math.h>
 #include "ConstantDefinitions.h"
+#include "WiFiPrinter.h"
 
 // Constructor
 InclinationSensor::InclinationSensor() 
@@ -15,7 +16,8 @@ InclinationSensor::InclinationSensor()
 void InclinationSensor::shutdown() 
 {
   initialized = false;
-
+  
+  IMU._stateMachine = 0;
 }
 
 // Method to initialize the sensor
@@ -24,26 +26,41 @@ void InclinationSensor::start()
     if (initialized) 
         return;
 
-
-    unsigned long module_connection_time_Start = millis();  // Record the time when the connection attempt starts
-
-    int status = IMU.begin();  // Start the MPU9250 sensor
-
-    if (status < 0) {
-        WiFiPrinter::print("MPU initialization unsuccessful!");
-    } else {
-        unsigned long initialization_time = millis() - module_connection_time_Start;
-        
-        // Print the initialization time
-        WiFiPrinter::print("MPU initialized in " + String(initialization_time) + " ms");
-
-        initialized = true;
+    if( IMU._stateMachine <= 0)
+    {
+      module_connection_time_Start = millis();
+      IMU.begin();  // Start the MPU9250 sensor
     }
 }
 
 // Method to update the sensor data and calculate inclination angle
 void InclinationSensor::update() 
 {
+    IMU.update();
+
+    static int previousStateMachine = -1; // Store the previous state
+
+    if (IMU._stateMachine != previousStateMachine) 
+    {
+        WiFiPrinter::print("State Machine changed to: " + String(IMU._stateMachine));
+        unsigned long initialization_time = millis() - module_connection_time_Start;
+        
+        if(IMU._stateMachine == 11 )
+        {
+            initialized = true;
+            WiFiPrinter::print("InclinationSensor initialized in " + String( initialization_time ) + "ms");
+        }
+        else if(IMU._stateMachine < 0 )
+        {
+          // Print the initialization time
+          WiFiPrinter::print("InclinationSensor NOT initialized after " + String( initialization_time ) + "ms");
+        }
+
+        previousStateMachine = IMU._stateMachine; // Update previous state
+    }
+
+    
+
     if (!initialized) 
         return;
 

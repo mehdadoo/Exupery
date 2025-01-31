@@ -1,8 +1,6 @@
 #ifndef SPEED_SENSOR_H
 #define SPEED_SENSOR_H
 
-#include "PinDefinitions.h"
-#include "ConstantDefinitions.h"
 
 class SpeedSensor 
 {
