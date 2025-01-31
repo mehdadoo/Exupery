@@ -18,6 +18,8 @@ class BrakeSystem
     int servoPosition1 = 0;
     int servoPosition2 = 0;
 
+    int brakePercentage = 0;
+
 
 
   private:

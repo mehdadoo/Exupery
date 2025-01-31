@@ -2,7 +2,9 @@
 #include "ConstantDefinitions.h"
 #include <ArduinoJson.h>
 #include <WiFi.h>
-//#include <ArduinoOTA.h>
+#include <ArduinoOTA.h>
+#include "Buzzer.h"
+
 
 // Initialize static member
 WebServer WiFiPrinter::server(80);  // Set up the server on port 80
@@ -29,6 +31,7 @@ void WiFiPrinter::setup()
           break; // Exit loop if connected
 
       retryCount++; // Increase retry counter
+      Buzzer::getInstance().toggle();
   }
 
 
@@ -43,7 +46,6 @@ void WiFiPrinter::setup()
       server.sendHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With");
       
       // Send the current message as raw JSON
-      //Serial.println("Request received. Sending data...");
       server.send(200, "application/json", printMessage);
 
 
@@ -62,49 +64,22 @@ void WiFiPrinter::setup()
     Serial.println("Connected to Wi-Fi");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
+
+    Buzzer::getInstance().off();
   } 
   else 
   {
     Serial.println("Failed to connect to WiFi");
+
+    Buzzer::getInstance().beep3();
   }
 
   print("Blue Calèche, Bonjour!");
 }
 
 void WiFiPrinter::setupOTA() 
-{/*
-    // OTA setup
-    ArduinoOTA.onStart([]() {
-        String type;
-        if (ArduinoOTA.getCommand() == U_FLASH) {
-            type = "sketch";
-        } else { // U_SPIFFS
-            type = "filesystem";
-        }
-        Serial.println("Start updating " + type);
-    });
-    ArduinoOTA.onEnd([]() {
-        Serial.println("\nUpdate Complete!");
-    });
-    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    });
-    ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
-        if (error == OTA_AUTH_ERROR) {
-            Serial.println("Auth Failed");
-        } else if (error == OTA_BEGIN_ERROR) {
-            Serial.println("Begin Failed");
-        } else if (error == OTA_CONNECT_ERROR) {
-            Serial.println("Connect Failed");
-        } else if (error == OTA_RECEIVE_ERROR) {
-            Serial.println("Receive Failed");
-        } else if (error == OTA_END_ERROR) {
-            Serial.println("End Failed");
-        }
-    });
-    ArduinoOTA.begin();
-    */
+{
+  ArduinoOTA.begin();
 }
 
 // Static method to handle Wi-Fi retry logic and keep server running
@@ -113,9 +88,8 @@ void WiFiPrinter::update()
   if (WiFi.status() == WL_CONNECTED) 
   {
     server.handleClient(); // Handle HTTP requests
-    //ArduinoOTA.handle(); // Handle OTA updates
+    ArduinoOTA.handle(); // Handle OTA updates
   }
-  // Handle Wi-Fi connection retry logic if disconnected (optional)
 }
 
 void WiFiPrinter::print(const String& value) 

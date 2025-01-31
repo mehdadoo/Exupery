@@ -4,6 +4,7 @@
 #include "ConstantDefinitions.h"
 #include "PortExpander.h"
 #include "Buzzer.h"
+#include "Horn.h"
 
 // Constructor
 Dashboard::Dashboard(VoltageSensor& sensorInstance)
@@ -141,17 +142,16 @@ void Dashboard::updateButtons()
         buttonState[i] = LOW;
         toggleState[i] = !toggleState[i];
         updateToggleState[i] = true;
+        Buzzer::getInstance().beep();
 
-        if( i == 0)
+        if (i == 1)
+        {
+          Horn::getInstance().beep();
+        }
+        else if( i == 3)
         {
           requestWiFiCallback();
         }
-        else if (i == 1)
-        {
-          WiFiPrinter::print("port expander: "+ String( portExpander.readMCP23S17(0x00) ));
-        }
-
-        Buzzer::getInstance().beep();
       }
     }
   }
@@ -164,7 +164,6 @@ void Dashboard::updateButtons()
 
   if( updateToggleState[1] )
   {
-    portExpander.digitalWriteMCP23S17(MOSFET_HORN_PIN, toggleState[1]);
     updateToggleState[1]= false;
   }
 
@@ -182,8 +181,7 @@ void Dashboard::updateButtons()
 
   if( buttonState[0] == LOW &&  buttonState[1] == LOW && buttonState[2] == HIGH &&  buttonState[3] == HIGH)
   {
-    
-    
+    //requestWiFiCallback();
   }
 
 }

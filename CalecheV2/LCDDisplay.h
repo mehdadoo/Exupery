@@ -18,15 +18,14 @@ class LCDDisplay
     LCDDisplay();
 
     // Public methods
-    void update();
     void start();
     void shutdown();
 
-    void updateDisplay(
+    void update(
         bool button1, bool button2, bool button3, bool button4, 
-        int speedSensor, int pedalSensor,
+        float speed, bool pedalSensorisStopped,
         int joystick_throttle, int joystick_knob, int joystick_steering,
-        float voltage, float current, float inclinationAngle);
+        float voltage, int steeringPercentage, int brakePercentage, int throttle1_perentage, int throttle2_perentage, float inclinationAngle);
 
     void updateGauge(int value);
 
@@ -38,10 +37,9 @@ class LCDDisplay
     Arduino_GFX *gfx;
 
     // Private methods
+    void drawTextBox(int x, int y, float value, const char* text);
     void drawButtonIndicator(int x, int y, bool state);
     void drawSlider(int x, int y, int value, const char* label);
-    void drawCircularGauge(int x, int y, float value, float minVal, float maxVal, const char* label);
-    void drawBarIndicator(int x, int y, float value, float minVal, float maxVal, const char* label);
     void drawInclinationArrow(int x, int y, float angle);
 
 };

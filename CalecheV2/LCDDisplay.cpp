@@ -12,22 +12,6 @@ LCDDisplay::LCDDisplay()
 {
 }
 
-void LCDDisplay::update() 
-{
-  /*if( !initialized)
-    return;
-
-  unsigned long currentMillis = millis();
-
-  if (currentMillis - lastDisplayUpdate >= (1000 / DISPLAY_FPS)) 
-  {
-      lastDisplayUpdate = currentMillis;
-
-      // Your display update code here
-      updateGauge(v);
-      v += direction;
-  }*/
-}
 
 void LCDDisplay::shutdown() 
 {
@@ -65,11 +49,12 @@ void LCDDisplay::start()
 
 
 
-void LCDDisplay::updateDisplay(
+void LCDDisplay::update(
     bool button1, bool button2, bool button3, bool button4, 
-    int speedSensor, int pedalSensor,
+    float speed, bool pedalSensorisStopped,
     int joystick_throttle, int joystick_knob, int joystick_steering,
-    float voltage, float current, float inclinationAngle)
+    float voltage, int steeringPercentage, int brakePercentage, int throttle1_perentage, int throttle2_perentage,
+    float inclinationAngle)
 {
     if (!initialized) 
         return;
@@ -85,30 +70,48 @@ void LCDDisplay::updateDisplay(
     int centerY = gfx->height() / 2;
     
     // Draw buttons as indicators
-    drawButtonIndicator(centerX - 50, 20, button1);
-    drawButtonIndicator(centerX - 25, 20, button2);
-    drawButtonIndicator(centerX + 25, 20, button3);
-    drawButtonIndicator(centerX + 50, 20, button4);
+    drawButtonIndicator(centerX - 30, 15, button1);
+    drawButtonIndicator(centerX - 10, 15, button2);
+    drawButtonIndicator(centerX + 10, 15, button3);
+    drawButtonIndicator(centerX + 30, 15, button4);
 
     // Draw Sliders
-    drawSlider(20, 50, speedSensor, "Speed");
-    drawSlider(20, 70, pedalSensor, "Pedal");
-    drawSlider(20, 90, joystick_throttle, "Throttle");
-    drawSlider(20, 110, joystick_knob, "Knob");
-    drawSlider(20, 130, joystick_steering, "Steering");
+    drawTextBox(60, 30, joystick_throttle, "Throttle");
+    drawTextBox(60, 50, joystick_knob, "Knob");
+    drawTextBox(60, 70, joystick_steering, "Joystick S");
+    drawTextBox(60, 90, steeringPercentage, "steering");
+    drawTextBox(60, 110, brakePercentage, "brake");
+    drawTextBox(60, 130, throttle1_perentage, "throttle1");
+    drawTextBox(60, 150, throttle2_perentage, "throttle2");
+    drawTextBox(60, 170, speed, "Speed");
+    drawTextBox(60, 190, voltage, "voltage");
 
-    // Draw Voltage Gauge
-    //drawCircularGauge(centerX, centerY, voltage, 0, 60, "VOLT");
-    drawBarIndicator(centerX + 50, centerY - 80, voltage, 30, 60, "Volts");
-
-    // Draw Current as Bar Indicator
-    drawBarIndicator(centerX + 50, centerY - 20, current, 0, 20, "Amp");
+    drawButtonIndicator(gfx->width() - 30, centerY- 50, pedalSensorisStopped);
 
     // Draw Inclination Arrow
-    drawInclinationArrow(centerX, centerY + 60, inclinationAngle);
+    drawInclinationArrow(centerX, 210, inclinationAngle);
 }
 
 // ======================== DRAW HELPER FUNCTIONS ========================
+
+void LCDDisplay::drawTextBox(int x, int y, float value, const char* label) 
+{
+    // Define a fixed-size box for text clearing
+    int textWidth = 100;  // Adjust width as needed
+    int textHeight = 20; // Adjust height as needed
+
+    // Erase previous value by drawing a black rectangle
+    gfx->fillRect(x, y, textWidth, textHeight, BLACK);
+
+    // Draw the new text
+    gfx->setTextColor(WHITE);
+    gfx->setCursor(x + 5, y + 5); // Small padding inside the box
+
+    // Correct way to concatenate C-string with String object
+    gfx->print(String(label) + ": " + String(value, 1));
+}
+
+
 
 // Draws small LED indicators for buttons
 void LCDDisplay::drawButtonIndicator(int x, int y, bool state)
@@ -120,57 +123,31 @@ void LCDDisplay::drawButtonIndicator(int x, int y, bool state)
 // Draws a horizontal slider
 void LCDDisplay::drawSlider(int x, int y, int value, const char* label)
 {
-    gfx->fillRect(x, y, 80, 8, BLACK);
     gfx->drawRect(x, y, 80, 8, WHITE);
-    gfx->fillRect(x+1, y+1, map(value, 0, 100, 0, 80)-2, 8-2, BLUE);
+    gfx->fillRect(x+1, y+1, 78, 6, BLACK);
+    gfx->fillRect(x+1, y+1, map(value, 0, 100, 0, 80)-2, 6, BLUE);
     gfx->setCursor(x + 85, y);
     gfx->print(label);
 }
 
-// Draws a circular voltage gauge
-void LCDDisplay::drawCircularGauge(int x, int y, float value, float minVal, float maxVal, const char* label)
-{
-    float angle = map(value, minVal, maxVal, -135, 135) * DEG_TO_RAD;
-    int radius = 40;
 
-    // Draw tick marks
-    for (int i = -135; i <= 135; i += 30) 
-    {
-        int tx = x + cos(i * DEG_TO_RAD) * radius;
-        int ty = y + sin(i * DEG_TO_RAD) * radius;
-        gfx->drawPixel(tx, ty, WHITE);
-    }
-
-    // Draw needle
-    int nx = x + cos(angle) * (radius - 5);
-    int ny = y + sin(angle) * (radius - 5);
-    gfx->drawLine(x, y, nx, ny, RED);
-
-    gfx->setCursor(x - 10, y + 50);
-    gfx->print(label);
-}
-
-// Draws a vertical bar for current
-void LCDDisplay::drawBarIndicator(int x, int y, float value, float minVal, float maxVal, const char* label)
-{
-    int height = 40;
-    int barHeight = map(value, minVal, maxVal, 0, height);
-    gfx->fillRect(x, y, 8, height, BLACK);
-    gfx->drawRect(x, y, 8, height, WHITE);
-    gfx->fillRect(x, y + height - barHeight, 8, barHeight, GREEN);
-    gfx->setCursor(x + 12, y + height / 2);
-    gfx->print(label);
-}
 
 // Draws an arrow for inclination angle
 void LCDDisplay::drawInclinationArrow(int x, int y, float angle)
 {
-    float rad = angle * DEG_TO_RAD;
-    int length = 20;
+    static float prev_angle = 0;
+
+    float rad = prev_angle * DEG_TO_RAD;
+    int length = 30;
     int arrowX = x + cos(rad) * length;
     int arrowY = y + sin(rad) * length;
-    
-    gfx->fillCircle(x, y, 40,  BLACK);
+    gfx->drawLine(x, y, arrowX, arrowY, BLACK);
+
+    rad = angle * DEG_TO_RAD;
+    length = 30;
+    arrowX = x + cos(rad) * length;
+    arrowY = y + sin(rad) * length;
     gfx->drawLine(x, y, arrowX, arrowY, YELLOW);
-    gfx->fillCircle(arrowX, arrowY, 3, YELLOW);
+
+    prev_angle = angle;
 }

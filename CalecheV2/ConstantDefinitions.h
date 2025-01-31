@@ -60,7 +60,7 @@
 
 //WiFiPrinter
 #define WIFI_PASSWORD                 "cScrT9vJRTHCf3vzh2"
-#define WIFI_SSID                     "Bbox-B3A9B36F"
+#define WIFI_SSID                     "Bbox-B3A9B36F "
 #define MAX_WIFI_CONNECTION_RETRIES   5
 #define RETRY_INTERVAL                1000  //ms
 #define UPDATE_OVER_HTTP_FREQUENCY    200   //ms
@@ -68,7 +68,10 @@
 //LCDDisplay
 #define DISPLAY_FPS 30
 
-//BUZZER
-#define BUZZER_BEEP_DURATION 50
+//Buzzer
+#define BUZZER_BEEP_DURATION 30
+
+//Horn
+#define HORN_DURATION 10
 
 #endif

@@ -35,8 +35,8 @@ void SteeringSystem::update()
 
 	if (abs(dashboard.joystick_steering - joystickMidpoint) <= JOYSTICK_STEERING_REST_GAP) 
 	{
-	// Within the rest gap: set servo to the midpoint
-	servoValue = servoMidpoint;
+	  // Within the rest gap: set servo to the midpoint
+	  servoValue = servoMidpoint;
 	} 
 	else if (dashboard.joystick_steering < joystickMidpoint - JOYSTICK_STEERING_REST_GAP) 
 	{
@@ -60,7 +60,8 @@ void SteeringSystem::update()
 	// Ensure the calculated servo value is within the allowed range
 	servoValue = constrain(servoValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE);
 
-  servo_percentage = map(servoValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE, 0, 100);
+  steering_percentage = map(servoValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE, 0, 100);
+  steering_percentage = constrain(steering_percentage, 0, 100);
 
 	// Write the value to the servo
 	servo.write(servoValue);

@@ -108,20 +108,20 @@ void PortExpander::update()
 
 // Private methods for MCP23S17 operations
 void PortExpander::writeMCP23S17(uint8_t registerAddress, uint8_t data) {
-    ::digitalWrite(CS_PIN, LOW);
+    digitalWrite(CS_PIN, LOW);
     SPI.transfer(0x40); // Write command
     SPI.transfer(registerAddress);
     SPI.transfer(data);
-    ::digitalWrite(CS_PIN, HIGH);
+    digitalWrite(CS_PIN, HIGH);
 }
 
 uint8_t PortExpander::readMCP23S17(uint8_t registerAddress) 
 {
-    ::digitalWrite(CS_PIN, LOW);
+    digitalWrite(CS_PIN, LOW);
     SPI.transfer(0x41); // Read command
     SPI.transfer(registerAddress);
     uint8_t data = SPI.transfer(0x00);
-    ::digitalWrite(CS_PIN, HIGH);
+    digitalWrite(CS_PIN, HIGH);
     return data;
 }
 

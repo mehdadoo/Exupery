@@ -10,7 +10,6 @@ class PedalSensor
     void start();
     void shutdown();
     bool isStopped() { return stoppedState; }
-    int sensorTriggers = 0;
 
   private:
     bool stoppedState; 

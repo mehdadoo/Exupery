@@ -17,6 +17,8 @@
 #include "SteeringSystem.h"
 #include "LCDDisplay.h"
 #include "Buzzer.h"
+#include "Horn.h"
+
 
 IgnitionSwitch ignitionSwitch;
 PortExpander& portExpander = PortExpander::getInstance();
@@ -30,6 +32,7 @@ ThrottleSystem throttleSystem(dashboard, pedalSensor);
 SteeringSystem steeringSystem(dashboard);
 LCDDisplay lcdDisplay;
 Buzzer& buzzer = Buzzer::getInstance();
+Horn& horn = Horn::getInstance();
 
 void setup()
 {
@@ -65,14 +68,13 @@ void loop()
   throttleSystem.update();
   steeringSystem.update();
   buzzer.update();
-  //lcdDisplay.update();
-  
+  horn.update();
 
-  lcdDisplay.updateDisplay(dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
+  lcdDisplay.update(dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
                           speedSensor.getSpeed(), pedalSensor.isStopped(),
                           dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
-                          voltageSensor.batteryPercentage,
+                          steeringSystem.steering_percentage, brakeSystem.brakePercentage, throttleSystem.throttle1_percentage, throttleSystem.throttle2_percentage,
                           inclinationSensor.getInclinationAngle() );
   
   WiFiPrinterUpdate();
@@ -92,7 +94,6 @@ void start()
   brakeSystem.start();
   throttleSystem.start();
   steeringSystem.start();
-  buzzer.start();
   
 }
 
@@ -100,7 +101,6 @@ void shutdown()
 {
   lcdDisplay.shutdown();
   
-  buzzer.shutdown();
   steeringSystem.shutdown();
   throttleSystem.shutdown();
   brakeSystem.shutdown();

@@ -59,6 +59,8 @@ void BrakeSystem::updateServo()
 
   previousServoPosition1 = servoPosition1;
 
+  brakePercentage = map(servoPosition1, BRAKE_SERVO_MIN_VALUE, BRAKE_SERVO_MAX_VALUE, 0, 100);
+
   servoBrake1.write( servoPosition1 );
   servoBrake2.write( servoPosition2 );
 }

@@ -1,38 +1,33 @@
-#ifndef BUZZER_H
-#define BUZZER_H
+#ifndef HORN_H
+#define HORN_H
 
-class Buzzer 
+class Horn 
 {
 public:
     // Singleton access method
-    static Buzzer& getInstance() 
+    static Horn& getInstance() 
     {
-        static Buzzer instance;
+        static Horn instance;
         return instance;
     }
 
     // Public methods
     void update();
     void beep();
-    void beep3();
-    void toggle();
-    void off();
 
     // Public member variables
     bool initialized = false;
 private:
     // Private constructor for Singleton
-    Buzzer() {}
-    ~Buzzer() {}
+    Horn() {}
+    ~Horn() {}
 
     // Delete copy constructor and assignment operator to prevent copying
-    Buzzer(const Buzzer&) = delete;
-    Buzzer& operator=(const Buzzer&) = delete;
+    Horn(const Horn&) = delete;
+    Horn& operator=(const Horn&) = delete;
 
     unsigned long beepStart; // Track start time for timeout
     bool is_beeping;
-    bool is_beeping_3;
-    bool beep_state = LOW;
 };
 
-#endif // BUZZER_H
+#endif // HORN_H
