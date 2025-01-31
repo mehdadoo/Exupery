@@ -51,6 +51,9 @@ void ThrottleSystem::update()
   {
     potValue1 = 0;
     potValue2 = 0;
+
+    potentiometer1_percentage = 0;
+    potentiometer2_percentage = 0;
   }
   else
   {
@@ -70,6 +73,9 @@ void ThrottleSystem::update()
   // Ensure potValue never exceeds 75
   potValue1 = min(potValue1, POTENTIOMETER_MAX_VALUE);
   potValue2 = min(potValue2, POTENTIOMETER_MAX_VALUE); 
+
+  potentiometer1_percentage = map(potValue1, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE, 0, 100);
+  potentiometer2_percentage = map(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE, 0, 100);
 
   potentiometer1.set(potValue2);
   potentiometer2.set(potValue1);

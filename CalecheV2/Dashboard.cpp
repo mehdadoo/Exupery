@@ -3,6 +3,7 @@
 #include "PinDefinitions.h"
 #include "ConstantDefinitions.h"
 #include "PortExpander.h"
+#include "Buzzer.h"
 
 // Constructor
 Dashboard::Dashboard(VoltageSensor& sensorInstance)
@@ -149,6 +150,8 @@ void Dashboard::updateButtons()
         {
           WiFiPrinter::print("port expander: "+ String( portExpander.readMCP23S17(0x00) ));
         }
+
+        Buzzer::getInstance().beep();
       }
     }
   }
@@ -175,7 +178,7 @@ void Dashboard::updateButtons()
     updateToggleState[3]= false;
   }
 
-  portExpander.digitalWriteMCP23S17(BUZZER_PIN, !buttonState[0]);
+  
 
   if( buttonState[0] == LOW &&  buttonState[1] == LOW && buttonState[2] == HIGH &&  buttonState[3] == HIGH)
   {

@@ -16,6 +16,7 @@
 #include "ThrottleSystem.h"
 #include "SteeringSystem.h"
 #include "LCDDisplay.h"
+#include "Buzzer.h"
 
 IgnitionSwitch ignitionSwitch;
 PortExpander& portExpander = PortExpander::getInstance();
@@ -28,6 +29,7 @@ BrakeSystem brakeSystem(dashboard, speedSensor);
 ThrottleSystem throttleSystem(dashboard, pedalSensor);
 SteeringSystem steeringSystem(dashboard);
 LCDDisplay lcdDisplay;
+Buzzer& buzzer = Buzzer::getInstance();
 
 void setup()
 {
@@ -62,7 +64,9 @@ void loop()
   brakeSystem.update();
   throttleSystem.update();
   steeringSystem.update();
+  buzzer.update();
   //lcdDisplay.update();
+  
 
   lcdDisplay.updateDisplay(dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
                           speedSensor.getSpeed(), pedalSensor.isStopped(),
@@ -88,6 +92,7 @@ void start()
   brakeSystem.start();
   throttleSystem.start();
   steeringSystem.start();
+  buzzer.start();
   
 }
 
@@ -95,6 +100,7 @@ void shutdown()
 {
   lcdDisplay.shutdown();
   
+  buzzer.shutdown();
   steeringSystem.shutdown();
   throttleSystem.shutdown();
   brakeSystem.shutdown();

@@ -68,4 +68,7 @@
 //LCDDisplay
 #define DISPLAY_FPS 30
 
+//BUZZER
+#define BUZZER_BEEP_DURATION 50
+
 #endif

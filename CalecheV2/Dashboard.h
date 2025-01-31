@@ -4,6 +4,7 @@
 #include <Adafruit_ADS1X15.h>
 #include "VoltageSensor.h"
 
+
 class Dashboard {
 public:
     // Public member variables

@@ -60,6 +60,8 @@ void SteeringSystem::update()
 	// Ensure the calculated servo value is within the allowed range
 	servoValue = constrain(servoValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE);
 
+  servo_percentage = map(servoValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE, 0, 100);
+
 	// Write the value to the servo
 	servo.write(servoValue);
 }

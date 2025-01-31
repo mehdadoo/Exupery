@@ -14,6 +14,9 @@ class ThrottleSystem
     void update();     // Method to update the potentiometer values
     void start();      // Method to start the throttle system
 
+    int potentiometer1_percentage;           // Value for the first potentiometer
+    int potentiometer2_percentage;           // Value for the second potentiometer
+
   private:
     // Private members
     DigiPot potentiometer1;  // First potentiometer

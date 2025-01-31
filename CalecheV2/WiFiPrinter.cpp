@@ -11,8 +11,6 @@ String printMessage = "{}";  // Initial JSON message (empty)
 // Static method to begin Wi-Fi connection and start the server
 void WiFiPrinter::setup() 
 {
-  print("Connecting to WiFi...");
-  
   if (WiFi.status() == WL_CONNECTED) 
     return;
 

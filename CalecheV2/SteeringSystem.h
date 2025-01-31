@@ -13,6 +13,7 @@ class SteeringSystem
     void update();     // Method to update the potentiometer values
     void start();      // Method to start the throttle system
     int servoValue;       
+    int servo_percentage;
 
   private:
     // Private members
