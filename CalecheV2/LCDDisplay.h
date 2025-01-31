@@ -8,8 +8,8 @@
 #define GAUGE_MIN 0
 #define GAUGE_MAX 100
 
-
-#include <Arduino_GFX_Library.h>
+#include "Arduino_DataBus.h"
+#include "Arduino_GFX.h"
 
 class LCDDisplay 
 {
@@ -31,6 +31,10 @@ class LCDDisplay
     Arduino_GFX *gfx;
 
     int current_value = 0;
+    int direction = 1;
+    int v = 0;
+
+    unsigned long lastDisplayUpdate = 0;
 
     // Private methods
     void drawGauge();

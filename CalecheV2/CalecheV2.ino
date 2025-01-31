@@ -1,5 +1,5 @@
 #include <Arduino.h>
-//#include <Wire.h>
+#include <Wire.h>
 #include <SPI.h>
 
 #include "PinDefinitions.h"
@@ -12,22 +12,22 @@
 #include "PedalSensor.h"
 #include "Dashboard.h"
 #include "InclinationSensor.h"
-//#include "BrakeSystem.h"
-//#include "ThrottleSystem.h"
-//#include "SteeringSystem.h"
-//#include "LCDDisplay.h"
+#include "BrakeSystem.h"
+#include "ThrottleSystem.h"
+#include "SteeringSystem.h"
+#include "LCDDisplay.h"
 
-PortExpander& portExpander = PortExpander::getInstance();//MPC23S17 port expander
 IgnitionSwitch ignitionSwitch;
-VoltageSensor voltageSensor;//ADS1115 current and voltage reader
+PortExpander& portExpander = PortExpander::getInstance();
+VoltageSensor voltageSensor;
 SpeedSensor speedSensor;
 PedalSensor pedalSensor;
 Dashboard dashboard(voltageSensor);
 InclinationSensor inclinationSensor;
-//BrakeSystem brakeSystem(dashboard, speedSensor); // Pass speedSensor to the constructor
-//ThrottleSystem throttleSystem(dashboard, pedalSensor);
-//SteeringSystem steeringSystem(dashboard);
-//LCDDisplay lcdDisplay;
+BrakeSystem brakeSystem(dashboard, speedSensor);
+ThrottleSystem throttleSystem(dashboard, pedalSensor);
+SteeringSystem steeringSystem(dashboard);
+LCDDisplay lcdDisplay;
 
 void setup()
 {
@@ -49,16 +49,17 @@ void loop()
   voltageSensor.update();
   dashboard.update();
   inclinationSensor.update();
-  //brakeSystem.update();
-  //throttleSystem.update();
-  //steeringSystem.update();
-  //lcdDisplay.update();
+  brakeSystem.update();
+  throttleSystem.update();
+  steeringSystem.update();
+  lcdDisplay.update();
   
   WiFiPrinterUpdate();
 }
 
 void start()
 {
+  lcdDisplay.start();
   SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN);
   
   portExpander.start();
@@ -67,19 +68,19 @@ void start()
   voltageSensor.start();
   dashboard.start();
   inclinationSensor.start();
-  //brakeSystem.start();
-  //throttleSystem.start();
-  //steeringSystem.start();
-  //lcdDisplay.start();
+  brakeSystem.start();
+  throttleSystem.start();
+  steeringSystem.start();
+  
 }
 
 void shutdown()
 {
-  //lcdDisplay.shutdown();
+  lcdDisplay.shutdown();
   
-  //steeringSystem.shutdown();
-  //throttleSystem.shutdown();
-  //brakeSystem.shutdown();
+  steeringSystem.shutdown();
+  throttleSystem.shutdown();
+  brakeSystem.shutdown();
   inclinationSensor.shutdown();
   dashboard.shutdown();
   voltageSensor.shutdown();
@@ -88,7 +89,7 @@ void shutdown()
   portExpander.shutdown();
   
   SPI.end();
-  //Wire.end();
+  Wire.end();
 }
 
 void WiFiPrinterUpdate()
@@ -99,18 +100,10 @@ void WiFiPrinterUpdate()
   // Check if enough time has been passed since last print call
   if (currentTime - lastUpdateTime >= UPDATE_OVER_HTTP_FREQUENCY) 
   {
-      lastUpdateTime = currentTime; // Update the last update time
-      /*WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
-                          dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
-                          speedSensor.getSpeed(), steeringSystem.servoValue,
-                          dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
-                          voltageSensor.voltage,
-                          voltageSensor.batteryPercentage,
-                          inclinationSensor.getInclinationAngle() );*/
-
+      lastUpdateTime = currentTime;
       WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
                           dashboard.toggleState[0], dashboard.toggleState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
-                          speedSensor.getSpeed(), 47,
+                          speedSensor.getSpeed(), pedalSensor.isStopped(),
                           dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
                           voltageSensor.batteryPercentage,

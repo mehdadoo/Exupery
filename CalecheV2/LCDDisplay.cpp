@@ -2,25 +2,31 @@
 #include "WiFiPrinter.h"
 #include "PinDefinitions.h"
 #include "ConstantDefinitions.h"
+#include "databus/Arduino_ESP32SPI.h"
+#include "display/Arduino_GC9A01.h"
 
 // Constructor using an initializer list
 LCDDisplay::LCDDisplay()
-    : bus(new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, GFX_NOT_DEFINED)),
+    : bus(new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, MISO_PIN)),
       gfx(new Arduino_GC9A01(bus, TFT_RST, 0, true))
 {
 }
 
 void LCDDisplay::update() 
 {
- if( !initialized)
+  if( !initialized)
     return;
 
-  for (int i = GAUGE_MIN; i <= GAUGE_MAX; i += 1) 
-  {
-    updateGauge(i);
-    delay(50);
-  }
+  unsigned long currentMillis = millis();
 
+  if (currentMillis - lastDisplayUpdate >= (1000 / DISPLAY_FPS)) 
+  {
+      lastDisplayUpdate = currentMillis;
+
+      // Your display update code here
+      updateGauge(v);
+      v += direction;
+  }
 }
 
 void LCDDisplay::shutdown() 
@@ -65,7 +71,7 @@ void LCDDisplay::drawGauge()
   int centerY = gfx->height() / 2;
   int radius = min(centerX, centerY) - 10;
 
-  for (int i = 0; i <= 100; i += 10) 
+  for (int i = 0; i <= 100; i += 5) 
   {
     float angle = map(i, GAUGE_MIN, GAUGE_MAX, -135, 135) * DEG_TO_RAD;
     int x0 = centerX + cos(angle) * (radius - 10);
@@ -75,7 +81,7 @@ void LCDDisplay::drawGauge()
     gfx->drawLine(x0, y0, x1, y1, MARK_COLOR);
   }
 
-  gfx->fillCircle(centerX, centerY, 5, CENTER_COLOR);
+  //gfx->fillCircle(centerX, centerY, 5, CENTER_COLOR);
 }
 
 void LCDDisplay::updateGauge(int value) 
@@ -83,8 +89,16 @@ void LCDDisplay::updateGauge(int value)
   if (!initialized) 
     return;
 
-  if (value < GAUGE_MIN) value = GAUGE_MIN;
-  if (value > GAUGE_MAX) value = GAUGE_MAX;
+  if (value < GAUGE_MIN)
+  {
+    value = GAUGE_MIN;
+    direction = 1;
+  }
+  else if (value > GAUGE_MAX) 
+  {
+    value = GAUGE_MAX;
+    direction = -1;
+  }
 
   int centerX = gfx->width() / 2;
   int centerY = gfx->height() / 2;

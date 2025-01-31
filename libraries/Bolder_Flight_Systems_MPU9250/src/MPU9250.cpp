@@ -206,7 +206,23 @@ void MPU9250::update()
     // instruct the MPU9250 to get 7 bytes of data from the AK8963 at the sample rate
     readAK8963Registers(AK8963_HXL,7,_buffer);
     // estimate gyro bias
-    calibrateGyro();
+    
+    // set the range, bandwidth, and srd
+    if (setGyroRange(GYRO_RANGE_250DPS) < 0) {
+      _stateMachine =  -20;
+    }
+    if (setDlpfBandwidth(DLPF_BANDWIDTH_20HZ) < 0) {
+      _stateMachine =  -21;
+    }
+    if (setSrd(19) < 0) {
+      _stateMachine =  -22;
+    }
+
+    // take samples and find bias
+    _gxbD = 0;
+    _gybD = 0;
+    _gzbD = 0;
+
     _stateMachine = 10;
     lastSampleTime = millis();
   }
@@ -237,15 +253,15 @@ void MPU9250::update()
         // set the range, bandwidth, and srd back to what they were
         if (setGyroRange(_gyroRange) < 0) 
         {
-          _stateMachine = -4;
+          _stateMachine = -23;
         }
         if (setDlpfBandwidth(_bandwidth) < 0) 
         {
-          _stateMachine = -5;
+          _stateMachine = -24;
         }
         if (setSrd(_srd) < 0) 
         {
-          _stateMachine = -6;
+          _stateMachine = -25;
         }
         _stateMachine = 11;
       }
@@ -730,30 +746,6 @@ void MPU9250FIFO::getFifoTemperature_C(size_t *size,float* data) {
   memcpy(data,_tFifo,_tSize*sizeof(float));  
 }
 
-/* estimates the gyro biases */
-int MPU9250::calibrateGyro() 
-{
-  // set the range, bandwidth, and srd
-  if (setGyroRange(GYRO_RANGE_250DPS) < 0) {
-    return -1;
-  }
-  if (setDlpfBandwidth(DLPF_BANDWIDTH_20HZ) < 0) {
-    return -2;
-  }
-  if (setSrd(19) < 0) {
-    return -3;
-  }
-
-  // take samples and find bias
-  _gxbD = 0;
-  _gybD = 0;
-  _gzbD = 0;
-
-
- _stateMachine = 9;
-
- return 1;
-}
 
 /* returns the gyro bias in the X direction, rad/s */
 float MPU9250::getGyroBiasX_rads() {

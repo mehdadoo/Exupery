@@ -2,7 +2,7 @@
 #include "ConstantDefinitions.h"
 #include <ArduinoJson.h>
 #include <WiFi.h>
-#include <ArduinoOTA.h>
+//#include <ArduinoOTA.h>
 
 // Initialize static member
 WebServer WiFiPrinter::server(80);  // Set up the server on port 80
@@ -75,7 +75,7 @@ void WiFiPrinter::setup()
 }
 
 void WiFiPrinter::setupOTA() 
-{
+{/*
     // OTA setup
     ArduinoOTA.onStart([]() {
         String type;
@@ -107,7 +107,7 @@ void WiFiPrinter::setupOTA()
         }
     });
     ArduinoOTA.begin();
-    
+    */
 }
 
 // Static method to handle Wi-Fi retry logic and keep server running
@@ -116,7 +116,7 @@ void WiFiPrinter::update()
   if (WiFi.status() == WL_CONNECTED) 
   {
     server.handleClient(); // Handle HTTP requests
-    ArduinoOTA.handle(); // Handle OTA updates
+    //ArduinoOTA.handle(); // Handle OTA updates
   }
   // Handle Wi-Fi connection retry logic if disconnected (optional)
 }

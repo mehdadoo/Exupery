@@ -42,7 +42,7 @@ void InclinationSensor::update()
 
     if (IMU._stateMachine != previousStateMachine) 
     {
-        WiFiPrinter::print("State Machine changed to: " + String(IMU._stateMachine));
+        //WiFiPrinter::print("InclinationSensor initializing: " + String(IMU._stateMachine) + " of 11");
         unsigned long initialization_time = millis() - module_connection_time_Start;
         
         if(IMU._stateMachine == 11 )

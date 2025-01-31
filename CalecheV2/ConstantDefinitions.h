@@ -66,4 +66,7 @@
 #define RETRY_INTERVAL                1000  //ms
 #define UPDATE_OVER_HTTP_FREQUENCY    200   //ms
 
+//LCDDisplay
+#define DISPLAY_FPS 50
+
 #endif
