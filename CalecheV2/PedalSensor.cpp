@@ -13,7 +13,7 @@ void PedalSensor::update()
  if( !portExpander.initialized || !initialized)
     return;
 
-  uint8_t sensorState = portExpander.digitalReadMCP23S17(PORT_EXPANDER_PORT_A, SENSOR_PEDAL_TRIGGER_PIN);  // Read current state of sensor
+  uint8_t sensorState = portExpander.digitalReadMCP23S17(SENSOR_PEDAL_TRIGGER_PIN);  // Read current state of sensor
 
   if ( sensorState == HIGH )
     lastSensorTriggerTime = millis();

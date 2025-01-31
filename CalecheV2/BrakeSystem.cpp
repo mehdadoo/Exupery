@@ -49,7 +49,7 @@ void BrakeSystem::updateServo()
   // Update only if the state has changed
   if (currentBrakeState != previousBrakeState) 
   {
-    portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_BRAKE_PIN, currentBrakeState);
+    portExpander.digitalWriteMCP23S17(MOSFET_BRAKE_PIN, currentBrakeState);
     previousBrakeState = currentBrakeState; // Update the previous state
   }
   
@@ -77,7 +77,7 @@ void BrakeSystem::updateBrakeLights()
   // Check if the brake lever is below the lower threshold to turn off the light
   if ( !dashboard.hasBraked() ) 
   {
-    portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_BRAKE_LIGHT_PIN, LOW); // Brake light off
+    portExpander.digitalWriteMCP23S17(MOSFET_BRAKE_LIGHT_PIN, LOW); // Brake light off
     lightState = false; // Ensure state is consistent
   } 
   else
@@ -85,7 +85,7 @@ void BrakeSystem::updateBrakeLights()
     if ( speedSensor.isStopped() ) 
     {
       // Full brightness: Keep the light on
-      portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_BRAKE_LIGHT_PIN, HIGH);
+      portExpander.digitalWriteMCP23S17(MOSFET_BRAKE_LIGHT_PIN, HIGH);
       lightState = true; // Ensure state is consistent
     } 
     else 
@@ -100,7 +100,7 @@ void BrakeSystem::updateBrakeLights()
       if (currentTime - lastBlinkTime >= blinkInterval) 
       {
           lightState = !lightState; // Toggle the light state
-          portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_BRAKE_LIGHT_PIN, lightState ? HIGH : LOW);
+          portExpander.digitalWriteMCP23S17(MOSFET_BRAKE_LIGHT_PIN, lightState ? HIGH : LOW);
           lastBlinkTime = currentTime; // Reset the timer
       }
     }

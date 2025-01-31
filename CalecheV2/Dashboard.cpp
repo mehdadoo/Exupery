@@ -110,7 +110,7 @@ void Dashboard::updateButtons()
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    currentButtonState = portExpander.digitalReadMCP23S17('B', i );
+    currentButtonState = HIGH;//portExpander.digitalReadMCP23S17('B', i );
 
     if (currentButtonState != provisionalButtonState[i]) 
     {
@@ -139,29 +139,27 @@ void Dashboard::updateButtons()
 
   if( updateToggleState[0] )
   {
-    portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_NIGH_LIGHT_PIN, toggleState[0]);
+    portExpander.digitalWriteMCP23S17(MOSFET_NIGH_LIGHT_PIN, toggleState[0]);
     updateToggleState[0]= false;
   }
 
   if( updateToggleState[1] )
   {
-    portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_HORN_PIN, toggleState[1]);
+    portExpander.digitalWriteMCP23S17(MOSFET_HORN_PIN, toggleState[1]);
     updateToggleState[1]= false;
   }
 
   if( updateToggleState[2] )
   {
-    //portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_REVERSE_PIN, toggleState[2]);
     updateToggleState[2]= false;
   }
 
   if( updateToggleState[3] )
   {
-    //portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_A, MOSFET_REVERSE_PIN, toggleState[2]);
     updateToggleState[3]= false;
   }
 
-  portExpander.digitalWriteMCP23S17(PORT_EXPANDER_PORT_B, BUZZER_PIN, !buttonState[0]);
+  portExpander.digitalWriteMCP23S17(BUZZER_PIN, !buttonState[0]);
 
   if( buttonState[0] == LOW &&  buttonState[1] == LOW && buttonState[2] == HIGH &&  buttonState[3] == HIGH)
   {

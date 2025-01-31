@@ -1,6 +1,5 @@
 #include "esp32-hal-gpio.h"
 #include "PortExpander.h"
-#include "PinDefinitions.h"
 #include "WiFiPrinter.h"
 #include <SPI.h>
 #include <Arduino.h>
@@ -14,30 +13,30 @@ void PortExpander::start()
   pinMode(CS_PIN, OUTPUT);
   digitalWrite(CS_PIN, HIGH);  // Keep CS pin high initially
 
-  // Set GPIO B0 to B3 as input
-  pinModeMCP23S17('B', 0, INPUT); //BUTTON_0_PIN
-  pinModeMCP23S17('B', 1, INPUT); //BUTTON_1_PIN
-  pinModeMCP23S17('B', 2, INPUT); //BUTTON_2_PIN
-  pinModeMCP23S17('B', 3, INPUT); //BUTTON_3_PIN
-  pinModeMCP23S17('B', 4, INPUT_PULLUP); //EMPTY
-  pinModeMCP23S17('B', 5, INPUT_PULLUP); //EMPTY
-  pinModeMCP23S17('B', 6, INPUT_PULLUP); //EMPTY
-  pinModeMCP23S17('B', 7, OUTPUT); // BUZZER_PIN
-  pinModeMCP23S17('A', 0, OUTPUT); //MOSFET_BRAKE_LIGHT_PIN
-  pinModeMCP23S17('A', 1, OUTPUT);//MOSFET_HORN_PIN
-  pinModeMCP23S17('A', 2, OUTPUT);//MOSFET_NIGH_LIGHT_PIN
-  pinModeMCP23S17('A', 3, OUTPUT);//MOSFET_BRAKE_PIN
-  pinModeMCP23S17('A', 4, OUTPUT);//MOSFET_REVERSE_PIN
-  pinModeMCP23S17('A', 5, INPUT_PULLDOWN);//SENSOR_PEDAL_TRIGGER_PIN
-  pinModeMCP23S17('A', 6, INPUT_PULLDOWN);//SENSOR_WHEEL_SPEED_PIN
-  pinModeMCP23S17('A', 7, INPUT_PULLDOWN);//SENSOR_5V_EMPTY_PIN
+  pinModeMCP23S17(BUTTON_0_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_1_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_2_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_3_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_4_PIN,             INPUT_PULLUP);
+  pinModeMCP23S17(BUTTON_5_PIN,             INPUT_PULLUP);
+  pinModeMCP23S17(BUTTON_6_PIN,             INPUT_PULLUP);
+  pinModeMCP23S17(BUZZER_PIN,               OUTPUT);
+  pinModeMCP23S17(MOSFET_NIGH_LIGHT_PIN,    OUTPUT);
+  pinModeMCP23S17(MOSFET_BRAKE_LIGHT_PIN,   OUTPUT);
+  pinModeMCP23S17(MOSFET_HORN_PIN,          OUTPUT);
+  pinModeMCP23S17(MOSFET_REVERSE_PIN,       OUTPUT);
+  pinModeMCP23S17(MOSFET_BRAKE_PIN,         OUTPUT);
+  pinModeMCP23S17(SENSOR_WHEEL_SPEED_PIN,   INPUT_PULLDOWN);
+  pinModeMCP23S17(SENSOR_5V_EMPTY_PIN,      INPUT_PULLDOWN);
+  pinModeMCP23S17(SENSOR_PEDAL_TRIGGER_PIN, INPUT_PULLDOWN);
 
-  digitalWriteMCP23S17('B', BUZZER_PIN,             LOW);
-  digitalWriteMCP23S17('A', MOSFET_BRAKE_LIGHT_PIN, LOW);
-  digitalWriteMCP23S17('A', MOSFET_HORN_PIN,        LOW);
-  digitalWriteMCP23S17('A', MOSFET_NIGH_LIGHT_PIN,  LOW);
-  digitalWriteMCP23S17('A', MOSFET_BRAKE_PIN,       LOW);
-  digitalWriteMCP23S17('A', MOSFET_REVERSE_PIN,     LOW);
+
+  digitalWriteMCP23S17(BUZZER_PIN,             LOW);
+  digitalWriteMCP23S17(MOSFET_BRAKE_LIGHT_PIN, LOW);
+  digitalWriteMCP23S17(MOSFET_HORN_PIN,        LOW);
+  digitalWriteMCP23S17(MOSFET_NIGH_LIGHT_PIN,  LOW);
+  digitalWriteMCP23S17(MOSFET_BRAKE_PIN,       LOW);
+  digitalWriteMCP23S17(MOSFET_REVERSE_PIN,     LOW);
 
   
   delay(20);
@@ -73,24 +72,24 @@ void PortExpander::shutdown()
     pinMode(CS_PIN, OUTPUT);
     digitalWrite(CS_PIN, HIGH);  // Keep CS pin high initially
   }
-  
+
   // Set all MCP23S17 GPIOs to INPUT mode
-  pinModeMCP23S17('B', 0, INPUT);
-  pinModeMCP23S17('B', 1, INPUT);
-  pinModeMCP23S17('B', 2, INPUT);
-  pinModeMCP23S17('B', 3, INPUT);
-  pinModeMCP23S17('B', 4, INPUT);
-  pinModeMCP23S17('B', 5, INPUT);
-  pinModeMCP23S17('B', 6, INPUT);
-  pinModeMCP23S17('B', 7, INPUT);
-  pinModeMCP23S17('A', 0, INPUT);
-  pinModeMCP23S17('A', 1, INPUT);
-  pinModeMCP23S17('A', 2, INPUT);
-  pinModeMCP23S17('A', 3, INPUT);
-  pinModeMCP23S17('A', 4, INPUT);
-  pinModeMCP23S17('A', 5, INPUT);
-  pinModeMCP23S17('A', 6, INPUT);
-  pinModeMCP23S17('A', 7, INPUT);
+  pinModeMCP23S17(BUTTON_0_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_1_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_2_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_3_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_4_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_5_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_6_PIN,             INPUT);
+  pinModeMCP23S17(BUZZER_PIN,               INPUT);
+  pinModeMCP23S17(MOSFET_NIGH_LIGHT_PIN,    INPUT);
+  pinModeMCP23S17(MOSFET_BRAKE_LIGHT_PIN,   INPUT);
+  pinModeMCP23S17(MOSFET_HORN_PIN,          INPUT);
+  pinModeMCP23S17(SENSOR_WHEEL_SPEED_PIN,   INPUT);
+  pinModeMCP23S17(SENSOR_5V_EMPTY_PIN,      INPUT);
+  pinModeMCP23S17(SENSOR_PEDAL_TRIGGER_PIN, INPUT);
+  pinModeMCP23S17(MOSFET_REVERSE_PIN,       INPUT);
+  pinModeMCP23S17(MOSFET_BRAKE_PIN,         INPUT);
 
   writeMCP23S17(0x12, 0x00); // Clear GPIOA
   writeMCP23S17(0x13, 0x00); // Clear GPIOB
@@ -137,41 +136,42 @@ uint8_t PortExpander::readMCP23S17(uint8_t registerAddress)
     return data;
 }
 
-void PortExpander::pinModeMCP23S17(uint8_t port, uint8_t pin, uint8_t mode) {
-    uint8_t registerAddress = (port == 'A') ? 0x00 : 0x01; // IODIRA or IODIRB
+void PortExpander::pinModeMCP23S17(const PortExpanderPin& pin, uint8_t mode) {
+    uint8_t registerAddress = (pin.port == 'A') ? 0x00 : 0x01; // IODIRA or IODIRB
     uint8_t currentIODIR = readMCP23S17(registerAddress);
     if (mode == INPUT) {
-        currentIODIR |= (1 << pin);
+        currentIODIR |= (1 << pin.pin);
     } else {
-        currentIODIR &= ~(1 << pin);
+        currentIODIR &= ~(1 << pin.pin);
     }
     writeMCP23S17(registerAddress, currentIODIR);
 }
 
-void PortExpander::pullUpMCP23S17(uint8_t port, uint8_t pin, bool enable) {
-    uint8_t registerAddress = (port == 'A') ? 0x0C : 0x0D; // GPPUA or GPPUB
+void PortExpander::pullUpMCP23S17(const PortExpanderPin& pin, bool enable) {
+    uint8_t registerAddress = (pin.port == 'A') ? 0x0C : 0x0D; // GPPUA or GPPUB
     uint8_t currentGPPU = readMCP23S17(registerAddress);
     if (enable) {
-        currentGPPU |= (1 << pin);
+        currentGPPU |= (1 << pin.pin);
     } else {
-        currentGPPU &= ~(1 << pin);
+        currentGPPU &= ~(1 << pin.pin);
     }
     writeMCP23S17(registerAddress, currentGPPU);
 }
 
-uint8_t PortExpander::digitalReadMCP23S17(uint8_t port, uint8_t pin) {
-    uint8_t registerAddress = (port == 'A') ? 0x12 : 0x13; // GPIOA or GPIOB
+uint8_t PortExpander::digitalReadMCP23S17(const PortExpanderPin& pin) 
+{
+    uint8_t registerAddress = (pin.port == 'A') ? 0x12 : 0x13; // GPIOA or GPIOB
     uint8_t currentGPIO = readMCP23S17(registerAddress);
-    return (currentGPIO & (1 << pin)) ? HIGH : LOW;
+    return (currentGPIO & (1 << pin.pin)) ? HIGH : LOW;
 }
 
-void PortExpander::digitalWriteMCP23S17(uint8_t port, uint8_t pin, uint8_t value) {
-    uint8_t registerAddress = (port == 'A') ? 0x12 : 0x13; // GPIOA or GPIOB
+void PortExpander::digitalWriteMCP23S17(const PortExpanderPin& pin, uint8_t value) {
+    uint8_t registerAddress = (pin.port == 'A') ? 0x12 : 0x13; // GPIOA or GPIOB
     uint8_t currentGPIO = readMCP23S17(registerAddress);
     if (value == HIGH) {
-        currentGPIO |= (1 << pin);
+        currentGPIO |= (1 << pin.pin);
     } else {
-        currentGPIO &= ~(1 << pin);
+        currentGPIO &= ~(1 << pin.pin);
     }
     writeMCP23S17(registerAddress, currentGPIO);
 }

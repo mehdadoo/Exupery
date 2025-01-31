@@ -1,6 +1,7 @@
 #ifndef PORT_EXPANDER_H
 #define PORT_EXPANDER_H
 
+#include "PinDefinitions.h"
 
 class PortExpander 
 {
@@ -17,8 +18,8 @@ public:
     void shutdown();
     void update();
 
-    uint8_t digitalReadMCP23S17(uint8_t port, uint8_t pin);
-    void digitalWriteMCP23S17(uint8_t port, uint8_t pin, uint8_t value);
+    uint8_t digitalReadMCP23S17(const PortExpanderPin& pin);
+    void digitalWriteMCP23S17(const PortExpanderPin& pin,  uint8_t value);
     // Public member variables
     bool initialized = false;
 
@@ -34,8 +35,8 @@ private:
     // Private methods
     void writeMCP23S17(uint8_t registerAddress, uint8_t data);
     uint8_t readMCP23S17(uint8_t registerAddress);
-    void pinModeMCP23S17(uint8_t port, uint8_t pin, uint8_t mode);
-    void pullUpMCP23S17(uint8_t port, uint8_t pin, bool enable);
+    void pinModeMCP23S17(const PortExpanderPin& pin, uint8_t mode);
+    void pullUpMCP23S17(const PortExpanderPin& pin, bool enable);
     
 };
 

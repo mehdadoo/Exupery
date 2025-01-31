@@ -47,7 +47,7 @@ void SpeedSensor::update()
   }
   
 
-  uint8_t sensorState = portExpander.digitalReadMCP23S17(PORT_EXPANDER_PORT_A, SENSOR_WHEEL_SPEED_PIN);  // Read current state of sensor
+  uint8_t sensorState = portExpander.digitalReadMCP23S17(SENSOR_WHEEL_SPEED_PIN);  // Read current state of sensor
   static int lastSensorState = LOW;
 
   // Check for a HIGH to LOW transition (magnet passing the sensor)

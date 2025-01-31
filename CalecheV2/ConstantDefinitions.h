@@ -9,8 +9,7 @@
 #define IGNITION_MOSFET_STARTUP_DELAY 100
 
 //PortExapnder
-#define PORT_EXPANDER_PORT_A 'A'
-#define PORT_EXPANDER_PORT_B 'B'
+
 
 //VoltageSensor
 #define VOLTAGE_SENSOR_DEVIDER_FACTOR   0.0642 // the ratio of the R1 and R2 read by ohm meter
