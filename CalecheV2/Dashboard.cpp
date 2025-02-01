@@ -53,7 +53,10 @@ void Dashboard::start()
 
   // If initialization failed after the timeout, call the error handling method
   if (!initialized) 
+  {
      WiFiPrinter::print( "Could not inilialize ADS1115 for joystick" );
+     Buzzer::getInstance().beep3();
+  }
 }
 
 // Deinitialize the Dashboard

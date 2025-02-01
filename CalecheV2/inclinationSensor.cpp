@@ -3,6 +3,7 @@
 #include <math.h>
 #include "ConstantDefinitions.h"
 #include "WiFiPrinter.h"
+#include "Buzzer.h"
 
 // Constructor
 InclinationSensor::InclinationSensor() 
@@ -54,6 +55,7 @@ void InclinationSensor::update()
         {
           // Print the initialization time
           WiFiPrinter::print("InclinationSensor NOT initialized after " + String( initialization_time ) + "ms");
+          Buzzer::getInstance().beep3();
         }
 
         previousStateMachine = IMU._stateMachine; // Update previous state

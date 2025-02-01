@@ -44,16 +44,19 @@ void Buzzer::update()
 
 void Buzzer::beep() 
 {
-    PortExpander& portExpander = PortExpander::getInstance();
+  if (is_beeping_3)
+    return;
 
-    if( !portExpander.initialized )
-        return;
+  PortExpander& portExpander = PortExpander::getInstance();
 
-    portExpander.digitalWriteMCP23S17(BUZZER_PIN, HIGH);
+  if( !portExpander.initialized )
+      return;
 
-    beepStart = millis();
-    is_beeping = true;
-    is_beeping_3 = false;
+  portExpander.digitalWriteMCP23S17(BUZZER_PIN, HIGH);
+
+  beepStart = millis();
+  is_beeping = true;
+  is_beeping_3 = false;
 }
 
 void Buzzer::beep3() 

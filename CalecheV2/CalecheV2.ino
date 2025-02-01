@@ -36,17 +36,6 @@ Horn& horn = Horn::getInstance();
 
 void setup()
 {
-  Serial.begin(9600);
-
-  // Check if the serial port is available
-  unsigned long startMillis = millis();
-  while (!Serial && millis() - startMillis < 2000) 
-  {
-    // Wait up to 5 seconds for the serial connection
-    delay(10);
-  }
-  Serial.println( "Serial startup: " + String ( millis() - startMillis ) );
-
   // Set event listeners
   dashboard.onRequestWiFi([]() {                  WiFiPrinter::setup();     });
   ignitionSwitch.setOnTurnedOnListener([]() {     start();                  });

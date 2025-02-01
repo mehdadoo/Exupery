@@ -4,6 +4,7 @@
 #include "ConstantDefinitions.h"
 #include "databus/Arduino_ESP32SPI.h"
 #include "display/Arduino_GC9A01.h"
+#include "Buzzer.h"
 
 // Constructor using an initializer list
 LCDDisplay::LCDDisplay()
@@ -44,7 +45,11 @@ void LCDDisplay::start()
 
   // If initialization failed after the timeout, call the error handling method
   if (!initialized) 
+  {
      WiFiPrinter::print( "Could NOT inilialize LCDDisplay" );
+     Buzzer::getInstance().beep3();
+  }
+
 }
 
 

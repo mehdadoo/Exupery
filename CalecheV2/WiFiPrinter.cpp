@@ -19,19 +19,27 @@ void WiFiPrinter::setup()
   Serial.println("Connecting to WiFi...");
 
   int retryCount = 0;
+
   while (retryCount < MAX_WIFI_CONNECTION_RETRIES) 
   {
       unsigned long startMillis = millis(); // Track start time for timeout
+      Buzzer::getInstance().beep();
+      
       WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
       while (WiFi.status() != WL_CONNECTED && millis() - startMillis < RETRY_INTERVAL)
+      {
           delay(10);
+
+          if ( millis() - startMillis >= 50) 
+            Buzzer::getInstance().off();
+      }
 
       if (WiFi.status() == WL_CONNECTED) 
           break; // Exit loop if connected
 
       retryCount++; // Increase retry counter
-      Buzzer::getInstance().toggle();
+      
   }
 
 

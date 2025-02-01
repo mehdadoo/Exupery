@@ -3,6 +3,7 @@
 #include "ConstantDefinitions.h"
 #include <Arduino.h>
 #include "WiFiPrinter.h"
+#include "Buzzer.h"
 
 void IgnitionSwitch::setup() 
 {
@@ -31,9 +32,14 @@ void IgnitionSwitch::start()
 
   unsigned long initialization_time = millis() - module_connection_time_Start;
   WiFiPrinter::print("Car start in " + String( initialization_time ) + "ms");
+  Buzzer::getInstance().beep();
 }
 void IgnitionSwitch::shutdown() 
 {
+  Buzzer::getInstance().beep();
+  delay(BUZZER_BEEP_DURATION);
+  Buzzer::getInstance().off();
+
   isKeyOn = false;
   onTurnedOff();
   digitalWrite(MOSFET_48V_PIN, HIGH);
