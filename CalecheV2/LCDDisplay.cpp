@@ -86,12 +86,11 @@ void LCDDisplay::update(
     //drawButtonIndicator(centerX + 10, 50, button4);
     drawButtonIndicator(centerX, centerY + 50, button3);
 
-    drawTextBox(80, centerY - 15, speed, "KM/H");
-    drawTextBox(80, centerY + 15, voltage, "v");
+    drawTextBox(80, centerY - 30, speed, "KM/H");
+    drawTextBox(80, centerY +  0, voltage, "v");
+    drawTextBox(80, centerY + 30, inclinationAngle, "°");
 
     //drawSlider(60, 110, steeringPercentage, "Steering");
-
-    //drawInclinationArrow(centerX, 150, inclinationAngle);
     //drawButtonIndicator(centerX - 10, 170, pedalSensorIsStopped);
     //drawButtonIndicator(centerX + 10, 170, speedSensorIsStopped);
 

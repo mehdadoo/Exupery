@@ -34,12 +34,13 @@ void BrakeSystem::updateServo()
   static bool previousBrakeState = LOW;
   bool currentBrakeState = dashboard.hasBraked() ? HIGH : LOW;
 
-
   //handbrake!
   if( dashboard.toggleState[2] )
   {
     servoPosition1 = BRAKE_SERVO_1_MAX_VALUE;
     servoPosition2 = BRAKE_SERVO_2_MAX_VALUE; 
+
+    currentBrakeState = true;
   }
   else if (joystick_throttle > JOYSTICK_THROTTLE_SERVO_BRAKE_MIN)
   {
@@ -121,6 +122,7 @@ void BrakeSystem::updateBrakeLights()
 
 void BrakeSystem::start() 
 {
+  
   servoBrake1.attach(SERVO_BRAKE_1); 
   servoBrake2.attach(SERVO_BRAKE_2);
 
@@ -135,6 +137,17 @@ void BrakeSystem::shutdown()
 {
   if( initialized)
   {
+     //handbrake!
+    servoPosition1 = BRAKE_SERVO_1_MAX_VALUE;
+    servoPosition2 = BRAKE_SERVO_2_MAX_VALUE; 
+
+    servoBrake1.write( servoPosition1 );
+    servoBrake2.write( servoPosition2 );
+
+    delay( 300 );
+
+
+
     servoBrake1.detach();
     servoBrake2.detach();
   }
