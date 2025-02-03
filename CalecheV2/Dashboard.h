@@ -30,11 +30,9 @@ private:
     // Private member variables
     Adafruit_ADS1115 ads1115;
     unsigned long voltMetersLastUpdateTime = 0;  // Variable to store the last update time
-    unsigned long joystickLastUpdateTime = 0;  // Variable to store the last update time
     unsigned long lastDebounceTime = 0;
-    const long debounceDelay = 5;  // milliseconds
     VoltageSensor& voltageSensor;
-    SpeedSensor& speedSensor; // an instance of the speed sensor passed in to the constructor
+    SpeedSensor& speedSensor;
 
     // Private methods
     int readJoystick(int adcPin);

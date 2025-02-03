@@ -4,11 +4,12 @@
 
 // Constructor to initialize the potentiometers and set initial values
 // Constructor to initialize the potentiometers and set initial values
-ThrottleSystem::ThrottleSystem(Dashboard& dashboardInstance, PedalSensor& sensorInstance)
+ThrottleSystem::ThrottleSystem(Dashboard& dashboardInstance, PedalSensor& sensorInstance, SpeedSensor& speedSensorInstance)
   : potentiometer1(DigiPot_NC, DigiPot_UD, DigiPot_CS1),
     potentiometer2(DigiPot_NC, DigiPot_UD, DigiPot_CS2),
-    dashboard(dashboardInstance),      // Initialize the dashboard reference
-    pedalSensor(sensorInstance)        // Initialize the pedal sensor reference
+    dashboard(dashboardInstance),  
+    pedalSensor(sensorInstance),
+    speedSensor(speedSensorInstance) 
 {
 }
 
@@ -26,14 +27,6 @@ void ThrottleSystem::shutdown()
     potentiometer2.set(potValue2);  // Apply shutdown value to potentiometer 2
   }
 
-  // Set potentiometer control pins to INPUT to prevent backfeeding
-  //digitalWrite(DigiPot_CS1, HIGH); // Pull CS high before disabling
-  //digitalWrite(DigiPot_CS2, HIGH);
-  //pinMode(DigiPot_CS1, INPUT);
-  //pinMode(DigiPot_CS2, INPUT);
-  //pinMode(DigiPot_NC, INPUT);
-  //pinMode(DigiPot_UD, INPUT);
-
   // Add a delay for stabilization
   delay(10);
 
@@ -47,7 +40,7 @@ void ThrottleSystem::update()
     return;
 
 
-  if( pedalSensor.isStopped() || dashboard.hasBraked() )
+  if( pedalSensor.isStopped() || dashboard.hasBraked() || speedSensor.getSpeed() > MAX_AUTHORISED_SPEED )
   {
     potValue1 = 0;
     potValue2 = 0;

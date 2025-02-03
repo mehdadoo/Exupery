@@ -28,7 +28,7 @@ PedalSensor pedalSensor;
 Dashboard dashboard(voltageSensor, speedSensor);
 InclinationSensor inclinationSensor;
 BrakeSystem brakeSystem(dashboard, speedSensor);
-ThrottleSystem throttleSystem(dashboard, pedalSensor);
+ThrottleSystem throttleSystem(dashboard, pedalSensor, speedSensor);
 SteeringSystem steeringSystem(dashboard);
 LCDDisplay lcdDisplay;
 Buzzer& buzzer = Buzzer::getInstance();
@@ -85,7 +85,7 @@ void start()
   brakeSystem.start();
   throttleSystem.start();
   steeringSystem.start();
-  
+
   WiFiPrinter::setup();
 }
 

@@ -197,16 +197,9 @@ void Dashboard::onRequestWiFi(std::function<void()> callback) {
 // Update joystick states
 void Dashboard::updateJoysticks()
 {
-  unsigned long currentTime = millis();  // Get the current time
-
-  if (currentTime - joystickLastUpdateTime >= MPU_UPDATE_INTERVAL) 
-  {  // Check if enough time has passed
-    joystick_steering = readJoystick(3);
-    joystick_throttle = constrain(readJoystick(0), 0, JOYSTICK_THROTTLE_MAX_VALUE);
-    joystick_knob =     constrain(readJoystick(1), 0, JOYSTICK_THROTTLE_MAX_VALUE);
-    
-    joystickLastUpdateTime = currentTime;  // Update the last update time
-  }
+  joystick_steering = readJoystick(3);
+  joystick_throttle = constrain(readJoystick(0), 0, JOYSTICK_THROTTLE_MAX_VALUE);
+  joystick_knob =     constrain(readJoystick(1), 0, JOYSTICK_THROTTLE_MAX_VALUE);
 }
 
 // Update voltmeter readings

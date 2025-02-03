@@ -4,12 +4,13 @@
 #include <DigiPotX9Cxxx.h>
 #include "Dashboard.h"
 #include "PedalSensor.h"
+#include "SpeedSensor.h"
 
 class ThrottleSystem
 {
   public:
     // Public methods
-    ThrottleSystem(Dashboard& dashboardInstance, PedalSensor& sensorInstance);  // Constructor
+    ThrottleSystem(Dashboard& dashboardInstance, PedalSensor& sensorInstance, SpeedSensor& speedSensorInstance);  // Constructor
     void shutdown();   // Method to shutdown the throttle system
     void update();     // Method to update the potentiometer values
     void start();      // Method to start the throttle system
@@ -29,6 +30,7 @@ class ThrottleSystem
 
     Dashboard& dashboard;    // Reference to the Dashboard instance
     PedalSensor& pedalSensor; // an instance of the speed sensor passed in to the constructor
+    SpeedSensor& speedSensor;
 };
 
 #endif

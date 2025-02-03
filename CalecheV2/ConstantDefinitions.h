@@ -20,11 +20,10 @@
 //SpeedSensor
 #define WHEEL_DIAMETER          24
 #define INCHES_TO_METERS        0.0254
-#define SECONDS_PER_MINUTE      60
-#define SENSOR_INTERVAL_3KMH    2300  // at 3k/h this time is needed for each reading of the speed sensor. so basically we consider speeds lower than this as stopped!
 #define SENSOR_INTERVAL_25KMH   276 // Time in milliseconds for one magnet read at 30 km/h (24-inch wheel)
-#define SENSOR_INTERVAL_30KMH   230 // Time in milliseconds for one magnet read at 30 km/h (24-inch wheel)
 #define SENSOR_INTERVAL_50KMH   138 // Time in milliseconds for one magnet read at 50 km/h (24-inch wheel)
+#define MAX_AUTHORISED_SPEED    25
+#define SPEED_SAMPLES           5  // Number of samples for smoothing
 
 //PedalSensor
 #define PEDAL_SENSOR_STOP_DELAY 200

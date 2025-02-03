@@ -82,11 +82,23 @@ void SpeedSensor::calculateRPM()
     float wheelCircumference = WHEEL_DIAMETER * INCHES_TO_METERS * 3.14159;
     speed = (rpm * wheelCircumference * 60) / 1000;
 
-    if( speed <= 3.0)
-      speed = 0.0;
+    if (speed <= 3.0)
+        speed = 0.0;
+
+    // Moving Average Filter
+    static float speedBuffer[SPEED_SAMPLES] = {0};  
+    static int speedIndex = 0;  
+    static float speedSum = 0;  
+
+    speedSum -= speedBuffer[speedIndex];  // Remove oldest value
+    speedBuffer[speedIndex] = speed;      // Store new speed value
+    speedSum += speed;                    // Add new value to sum
+
+    speedIndex = (speedIndex + 1) % SPEED_SAMPLES;  // Circular buffer update
+
+    averageSpeed = speedSum / SPEED_SAMPLES;  // Compute smoothed speed
   }
 }
-
 
 void SpeedSensor::saveTriggerTime() 
 {
@@ -96,9 +108,7 @@ void SpeedSensor::saveTriggerTime()
   lastSensorTriggerTime = currentTime;
 }
 
-
 bool SpeedSensor::isStopped() 
 {
   return (speed == 0.0);
 }
-
