@@ -55,8 +55,8 @@
 #define JOYSTICK_STEERING_MAX_VALUE     206
 #define JOYSTICK_STEERING_MIN_VALUE     0
 #define JOYSTICK_STEERING_REST_GAP      14
-#define STERING_SERVO_MAX_VALUE         178
-#define STERING_SERVO_MIN_VALUE         14
+#define STEERING_SERVO_MAX_VALUE         178
+#define STEERING_SERVO_MIN_VALUE         14
 
 //ThrottleSystem
 #define POTENTIOMETER_MIN_VALUE     30    //.84v is the motor throttle min voltage

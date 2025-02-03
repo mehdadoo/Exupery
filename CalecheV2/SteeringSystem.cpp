@@ -33,7 +33,15 @@ void SteeringSystem::update()
 		return;
 	
 	int joystickMidpoint = (JOYSTICK_STEERING_MIN_VALUE + JOYSTICK_STEERING_MAX_VALUE) / 2; // Middle point of the joystick
-	int servoMidpoint = (STERING_SERVO_MIN_VALUE + STERING_SERVO_MAX_VALUE) / 2;           // Middle point of the servo range
+	int servoMidpoint = (STEERING_SERVO_MIN_VALUE + STEERING_SERVO_MAX_VALUE) / 2;           // Middle point of the servo range
+
+
+  int speed_percentage = map((int)speedSensor.getSpeed(), 0, 25, 0, 100);
+
+  float scaling_factor = 1.0 - (0.7 * speed_percentage / 100.0);
+  int speed_adjusted_servo_min = servoMidpoint - (scaling_factor * (servoMidpoint - STEERING_SERVO_MIN_VALUE));
+  int speed_adjusted_servo_max = servoMidpoint + (scaling_factor * (STEERING_SERVO_MAX_VALUE - servoMidpoint));
+
 
 	if (abs(dashboard.joystick_steering - joystickMidpoint) <= JOYSTICK_STEERING_REST_GAP) 
 	{
@@ -46,7 +54,7 @@ void SteeringSystem::update()
 	servoValue = map(dashboard.joystick_steering, 
 							 JOYSTICK_STEERING_MIN_VALUE, 
 							 joystickMidpoint - JOYSTICK_STEERING_REST_GAP, 
-							 STERING_SERVO_MIN_VALUE, 
+							 speed_adjusted_servo_min, 
 							 servoMidpoint);
 	} 
 	else 
@@ -56,13 +64,13 @@ void SteeringSystem::update()
 							 joystickMidpoint + JOYSTICK_STEERING_REST_GAP, 
 							 JOYSTICK_STEERING_MAX_VALUE, 
 							 servoMidpoint, 
-							 STERING_SERVO_MAX_VALUE);
+							 speed_adjusted_servo_max);
 	}
 
 	// Ensure the calculated servo value is within the allowed range
-	servoValue = constrain(servoValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE);
+	servoValue = constrain(servoValue, STEERING_SERVO_MIN_VALUE, STEERING_SERVO_MAX_VALUE);
 
-  steering_percentage = map(servoValue, STERING_SERVO_MIN_VALUE, STERING_SERVO_MAX_VALUE, 0, 100);
+  steering_percentage = map(servoValue, STEERING_SERVO_MIN_VALUE, STEERING_SERVO_MAX_VALUE, 0, 100);
   steering_percentage = constrain(steering_percentage, 0, 100);
 
 	// Write the value to the servo

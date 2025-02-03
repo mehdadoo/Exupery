@@ -59,7 +59,7 @@ void LCDDisplay::update(
         float voltage, 
         int steeringPercentage,
         int brakePercentage,
-        bool isLimitingSpeed, int throttle1_perentage, int throttle2_perentage,
+        int throttle1_perentage, int throttle2_perentage,
         float inclinationAngle)
 {
     if (!initialized) 
