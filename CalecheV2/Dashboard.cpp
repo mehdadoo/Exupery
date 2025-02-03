@@ -152,8 +152,9 @@ void Dashboard::updateButtons()
         {
           Horn::getInstance().beep();
         }
-        else if( i == 3)
+        else if( i == 2 && !speedSensor.isStopped())
         {
+          toggleState[i] = LOW;
           //requestWiFiCallback();
         }
       }

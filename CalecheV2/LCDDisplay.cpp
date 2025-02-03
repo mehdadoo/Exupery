@@ -84,9 +84,11 @@ void LCDDisplay::update(
     //drawButtonIndicator(centerX - 30, 50, button2);
     //drawButtonIndicator(centerX - 10, 50, button1);
     //drawButtonIndicator(centerX + 10, 50, button4);
-    //drawButtonIndicator(centerX + 30, 50, button3);
-    drawTextBox(90, centerY - 15, speed, "KM/H");
-    drawTextBox(90, centerY + 15, voltage, "v");
+    drawButtonIndicator(centerX, centerY + 50, button3);
+
+    drawTextBox(80, centerY - 15, speed, "KM/H");
+    drawTextBox(80, centerY + 15, voltage, "v");
+
     //drawSlider(60, 110, steeringPercentage, "Steering");
 
     //drawInclinationArrow(centerX, 150, inclinationAngle);
@@ -119,10 +121,9 @@ void LCDDisplay::drawTextBox(int x, int y, float value, const char* label)
     gfx->setTextColor( 0x9492 );
     //gfx->setTextSize(3);
     gfx->setFont(&FreeMono8pt7b);
-    gfx->setCursor(x + 45, y + 5); // Small padding inside the box
+    gfx->setCursor(x + 47, y + 5); // Small padding inside the box
     gfx->print( String(label) );
 }
-
 
 
 // Draws small LED indicators for buttons

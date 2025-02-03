@@ -31,11 +31,21 @@ void BrakeSystem::updateServo()
   static int previousServoPosition1 = 0;
 
   int joystick_throttle = dashboard.joystick_throttle;
+  static bool previousBrakeState = LOW;
+  bool currentBrakeState = dashboard.hasBraked() ? HIGH : LOW;
 
-  if (joystick_throttle > JOYSTICK_THROTTLE_SERVO_BRAKE_MIN)
+
+  //handbrake!
+  if( dashboard.toggleState[2] )
   {
-    servoPosition1 = BRAKE_SERVO_1_MIN_VALUE; // Set servoPosition1 to max if above 100
-    servoPosition2 = BRAKE_SERVO_2_MIN_VALUE; // Set servoPosition1 to 0 if above 100, this servo is in reverse!
+    servoPosition1 = BRAKE_SERVO_1_MAX_VALUE;
+    servoPosition2 = BRAKE_SERVO_2_MAX_VALUE; 
+  }
+  else if (joystick_throttle > JOYSTICK_THROTTLE_SERVO_BRAKE_MIN)
+  {
+    //if joystick is not in brake position area
+    servoPosition1 = BRAKE_SERVO_1_MIN_VALUE;
+    servoPosition2 = BRAKE_SERVO_2_MIN_VALUE; 
   }
   else
   {
@@ -44,8 +54,7 @@ void BrakeSystem::updateServo()
     servoPosition2 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_2_MAX_VALUE, BRAKE_SERVO_2_MIN_VALUE);
   }
 
-  static bool previousBrakeState = LOW;
-  bool currentBrakeState = dashboard.hasBraked() ? HIGH : LOW;
+  
   // Update only if the state has changed
   if (currentBrakeState != previousBrakeState) 
   {

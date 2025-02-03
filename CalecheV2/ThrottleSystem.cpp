@@ -147,7 +147,7 @@ void ThrottleSystem::update()
   if( !dashboard.initialized || !initialized)
     return;
 
-  if( /*pedalSensor.isStopped() ||*/ dashboard.hasBraked())
+  if( pedalSensor.isStopped() || dashboard.hasBraked())
   {
     setThrottleToZero();
   }
