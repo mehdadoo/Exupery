@@ -38,7 +38,7 @@ void SteeringSystem::update()
 
   int speed_percentage = map((int)speedSensor.getSpeed(), 0, 25, 0, 100);
 
-  float scaling_factor = 1.0 - (0.7 * speed_percentage / 100.0);
+  float scaling_factor = 1.0 - (STEERING_SPEED_SCALE_FACTOR * speed_percentage / 100.0);
   int speed_adjusted_servo_min = servoMidpoint - (scaling_factor * (servoMidpoint - STEERING_SERVO_MIN_VALUE));
   int speed_adjusted_servo_max = servoMidpoint + (scaling_factor * (STEERING_SERVO_MAX_VALUE - servoMidpoint));
 
