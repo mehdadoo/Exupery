@@ -29,7 +29,7 @@ void Dashboard::start()
 
   toggleState[0] = LOW;
   toggleState[1] = LOW;
-  toggleState[2] = LOW;
+  toggleState[2] = HIGH;
   toggleState[3] = LOW;
 
   unsigned long module_connection_time_Start = millis(); // Record the time when the connection attempt starts

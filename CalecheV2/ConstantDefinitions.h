@@ -44,9 +44,9 @@
 #define JOYSTICK_THROTTLE_REST_MAX         120
 #define JOYSTICK_THROTTLE_MAX_VALUE        182
 #define BRAKE_SERVO_1_MIN_VALUE            20
-#define BRAKE_SERVO_1_MAX_VALUE            93 //prev 88
+#define BRAKE_SERVO_1_MAX_VALUE            95
 #define BRAKE_SERVO_2_MIN_VALUE            38
-#define BRAKE_SERVO_2_MAX_VALUE            98 //prev 93
+#define BRAKE_SERVO_2_MAX_VALUE            103
 #define BRAKE_BLINK_RATE                   45 //ms
 #define BRAKE_BLINK_MULTIPLIER             4
 

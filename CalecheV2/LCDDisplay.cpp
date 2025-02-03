@@ -105,7 +105,7 @@ void LCDDisplay::drawTextBox(int x, int y, float value, const char* label)
 {
     // Define a fixed-size box for text clearing
     int textWidth = 80;  // Adjust width as needed
-    int textHeight = 40; // Adjust height as needed
+    int textHeight = 30; // Adjust height as needed
 
     // Erase previous value by drawing a black rectangle
     gfx->fillRect(x, y-20, textWidth, textHeight, BLACK);
@@ -128,7 +128,7 @@ void LCDDisplay::drawTextBox(int x, int y, float value, const char* label)
 // Draws small LED indicators for buttons
 void LCDDisplay::drawButtonIndicator(int x, int y, bool state)
 {
-    uint16_t color = state ? GREEN : RED;
+    uint16_t color = state ? 0xd867 : BLACK;
     gfx->fillCircle(x, y, 5, color);
 }
 
