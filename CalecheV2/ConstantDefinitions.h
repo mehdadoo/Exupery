@@ -56,8 +56,9 @@
 #define STERING_SERVO_MIN_VALUE         14
 
 //ThrottleSystem
-#define POTENTIOMETER_MIN_VALUE 30 //.84v is the motor throttle min voltage
-#define POTENTIOMETER_MAX_VALUE 63 //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
+#define POTENTIOMETER_MIN_VALUE 30    //.84v is the motor throttle min voltage
+#define POTENTIOMETER_MAX_VALUE 63    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
+#define THROTTLE_UPDATE_EASE_SPEED 40 // the more the slower the ease
 
 //WiFiPrinter
 #define WIFI_PASSWORD                 "cScrT9vJRTHCf3vzh2"

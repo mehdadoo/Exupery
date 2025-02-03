@@ -61,7 +61,7 @@ void SpeedSensor::update()
       //1. act upon
       calculateRPM();
       saveTriggerTime();
-      Buzzer::getInstance().beep();
+      //Buzzer::getInstance().beep();
       
       //2. clear flags for next read
       sensorTriggered = false;

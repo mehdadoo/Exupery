@@ -24,8 +24,11 @@ class ThrottleSystem
     DigiPot potentiometer2;  // Second potentiometer
 
     int potValue1;           // Value for the first potentiometer
+    int targetPotValue1 = 0;
     int potValue2;           // Value for the second potentiometer
+    int targetPotValue2 = 0;
 
+    unsigned long lastThrottleUpdateTime;
     bool initialized;
 
     Dashboard& dashboard;    // Reference to the Dashboard instance

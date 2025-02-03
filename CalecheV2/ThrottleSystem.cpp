@@ -1,6 +1,7 @@
 #include "ThrottleSystem.h"
 #include "PinDefinitions.h"
 #include "ConstantDefinitions.h"
+#include <algorithm> // For std::fill
 
 // Constructor to initialize the potentiometers and set initial values
 // Constructor to initialize the potentiometers and set initial values
@@ -39,7 +40,6 @@ void ThrottleSystem::update()
   if( !dashboard.initialized || !initialized)
     return;
 
-
   if( pedalSensor.isStopped() || dashboard.hasBraked() || speedSensor.getSpeed() > MAX_AUTHORISED_SPEED )
   {
     potValue1 = 0;
@@ -50,22 +50,38 @@ void ThrottleSystem::update()
   }
   else
   {
-    int joystick_knob = dashboard.joystick_knob;
-    int joystick_throttle = dashboard.joystick_throttle;
 
-    potValue1 = map(joystick_knob, 0, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
-    potValue2 = 0; // Initialize potValue2
+    unsigned long currentTime = millis();
 
-    if (joystick_throttle < JOYSTICK_THROTTLE_REST_MAX) 
-        potValue2 = 0; // Set potValue2 to 0 if below 100
-    else
-      potValue2 = map(joystick_throttle, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);// Map joystick_throttle from 100 to 200 to potValue2 from 0 to 75
+    if (currentTime - lastThrottleUpdateTime > THROTTLE_UPDATE_EASE_SPEED)
+    {
+      //int joystick_knob = dashboard.joystick_knob;
+      int joystick_throttle = dashboard.joystick_throttle;
+
+      //potValue1 = map(joystick_knob, 0, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
+      //potValue2 = 0; // Initialize potValue2
+
+      if (joystick_throttle < JOYSTICK_THROTTLE_REST_MAX) 
+      {
+          potValue2 = 0; // Set potValue2 to 0 if below 100
+      }
+      else
+      {
+        targetPotValue2 = map(joystick_throttle, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 63, more details in the constant definition line
+    
+        // Adjust potValue2 towards targetPotValue2 (same logic)
+        if (potValue2 < targetPotValue2)
+          potValue2 ++;
+        else if (potValue2 > targetPotValue2)
+          potValue2 --;
+
+        // Constrain the values (just in case)
+        potValue2 = constrain(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE);
+      }
+
+      lastThrottleUpdateTime = currentTime;
+    }
   }
-
-  // Apply the value to the potentiometers
-  // Ensure potValue never exceeds 75
-  potValue1 = min(potValue1, POTENTIOMETER_MAX_VALUE);
-  potValue2 = min(potValue2, POTENTIOMETER_MAX_VALUE); 
 
   potentiometer1.set(potValue2);
   potentiometer2.set(potValue1);
