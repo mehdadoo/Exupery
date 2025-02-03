@@ -4,8 +4,10 @@
 #include "ConstantDefinitions.h"
 
 // Constructor
-SteeringSystem::SteeringSystem(Dashboard& dashboardInstance) 
-  : dashboard(dashboardInstance), servoValue(0) // Initialize members
+SteeringSystem::SteeringSystem(Dashboard& dashboardInstance, SpeedSensor& speedSensorInstance)
+  : dashboard(dashboardInstance),
+    servoValue(0),
+    speedSensor(speedSensorInstance) 
 {
 }
 

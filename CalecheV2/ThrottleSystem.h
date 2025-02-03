@@ -28,12 +28,25 @@ class ThrottleSystem
     int potValue2;           // Value for the second potentiometer
     int targetPotValue2 = 0;
 
+    int throttle_value = 0;
+
+    bool activeEngine;
+
     unsigned long lastThrottleUpdateTime;
     bool initialized;
 
     Dashboard& dashboard;    // Reference to the Dashboard instance
     PedalSensor& pedalSensor; // an instance of the speed sensor passed in to the constructor
     SpeedSensor& speedSensor;
+
+    void setThrottleToZero();
+    void chooseEngine();
+    void easeEnginePowerTowardsTarget();
+    int updateThrottleValue();
+    void calculateTargetPotValues();
+    void limitMaxSpeed();
+    void updatePotentiometerValues();
+    bool enoughTimeHasPassed();
 };
 
 #endif

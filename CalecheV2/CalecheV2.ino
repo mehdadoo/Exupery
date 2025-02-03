@@ -29,7 +29,7 @@ Dashboard dashboard(voltageSensor, speedSensor);
 InclinationSensor inclinationSensor;
 BrakeSystem brakeSystem(dashboard, speedSensor);
 ThrottleSystem throttleSystem(dashboard, pedalSensor, speedSensor);
-SteeringSystem steeringSystem(dashboard);
+SteeringSystem steeringSystem(dashboard, speedSensor);
 LCDDisplay lcdDisplay;
 Buzzer& buzzer = Buzzer::getInstance();
 Horn& horn = Horn::getInstance();
