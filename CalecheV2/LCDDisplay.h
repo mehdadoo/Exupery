@@ -43,6 +43,8 @@ class LCDDisplay
 
     // Private methods
     void drawTextBox(int x, int y, float value, const char* text);
+    void drawArcSlider(int value, bool isLeft, uint16_t fillColor, uint16_t emptyColor);
+    void drawBrakeSlider(int value, uint16_t fillColor, uint16_t emptyColor);
     void drawButtonIndicator(int x, int y, bool state);
     void drawSlider(int x, int y, int value, const char* label);
     void drawInclinationArrow(int x, int y, float angle);
