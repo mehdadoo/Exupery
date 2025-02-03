@@ -6,15 +6,13 @@
 #include "Buzzer.h"
 #include <Arduino.h>
 
-
-// Global instance for ISR
-volatile bool sensorTriggered = false;
-// ISR function (called when sensor state changes)
-void IRAM_ATTR sensorISR() 
+int lastSensorState = LOW; // Global instance for ISR
+volatile bool sensorTriggered = false; // ISR function (called when sensor state changes)
+void IRAM_ATTR handleMCP23S17Interrupt() 
 {
-    sensorTriggered = true;
+  if( lastSensorState == HIGH)
+    sensorTriggered = true; // Flag for main loop
 }
-
 
 // Constructor
 SpeedSensor::SpeedSensor()
@@ -34,7 +32,7 @@ void SpeedSensor::start()
     return;
 
   initialized = true;
-  attachInterrupt(digitalPinToInterrupt(MCP23S17_INT_PIN), sensorISR, FALLING); // Attach interrupt to the MCP23S17 INT pin, Adjust FALLING/RISING as needed
+  attachInterrupt(digitalPinToInterrupt(MCP23S17_INT_PIN), handleMCP23S17Interrupt, FALLING); // Attach interrupt to the MCP23S17 INT pin, Adjust FALLING/RISING as needed
 }
 
 void SpeedSensor::shutdown() 
@@ -46,23 +44,28 @@ void SpeedSensor::shutdown()
 // Update the gearbox
 void SpeedSensor::update() 
 {
-  if (!initialized) return;
+  if (!initialized)
+    return;
 
+  PortExpander& portExpander = PortExpander::getInstance();
   unsigned long currentTime = millis();
-  
+  lastSensorState = portExpander.digitalReadMCP23S17(SENSOR_WHEEL_SPEED_PIN);
+
   if( currentTime - lastSensorTriggerTime > lastSensorTriggerDuration)
     calculateRPM();
-
-  if (sensorTriggered) 
+  
+  if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_50KMH) 
   {
-    sensorTriggered = false;
-
-    unsigned long currentTime = millis();
-    if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_50KMH) 
+    if (sensorTriggered) 
     {
+      //1. act upon
       calculateRPM();
       saveTriggerTime();
       Buzzer::getInstance().beep();
+      
+      //2. clear flags for next read
+      sensorTriggered = false;
+      portExpander.clearInterrupt();
     }
   }
 }
@@ -78,6 +81,9 @@ void SpeedSensor::calculateRPM()
 
     float wheelCircumference = WHEEL_DIAMETER * INCHES_TO_METERS * 3.14159;
     speed = (rpm * wheelCircumference * 60) / 1000;
+
+    if( speed <= 3.0)
+      speed = 0.0;
   }
 }
 
@@ -93,12 +99,6 @@ void SpeedSensor::saveTriggerTime()
 
 bool SpeedSensor::isStopped() 
 {
-  // If enough time has passed since the last trigger, consider the car stopped because we are cycling less than 3km/h
-  unsigned long currentTime = millis();
-  if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_3KMH) 
-  {
-    return true;
-  }
-  return false;
+  return (speed == 0.0);
 }
 

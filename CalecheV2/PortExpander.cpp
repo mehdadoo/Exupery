@@ -17,6 +17,12 @@ void PortExpander::start()
   digitalWrite(CS_PIN, HIGH);  // Keep CS pin high initially
   pinMode(MCP23S17_INT_PIN, INPUT_PULLUP); // Configure INT pin as INPUT
 
+
+  writeMCP23S17(0x00, 0xFF); // IODIRA: Set all as input
+  writeMCP23S17(0x06, 0xFF); // DEFVALA: Default state HIGH
+  writeMCP23S17(0x08, 0xFF); // INTCONA: Compare to DEFVALA (edge-triggered)
+  writeMCP23S17(0x04, 0xFF); // GPINTENA: Enable interrupts
+
   pinModeMCP23S17(BUTTON_0_PIN,             INPUT);
   pinModeMCP23S17(BUTTON_1_PIN,             INPUT);
   pinModeMCP23S17(BUTTON_2_PIN,             INPUT);
@@ -43,7 +49,7 @@ void PortExpander::start()
   digitalWriteMCP23S17(MOSFET_REVERSE_PIN,     LOW);
 
 
-  enableInterruptMCP23S17(SENSOR_WHEEL_SPEED_PIN, FALLING);
+  
 
   //readMCP23S17(0x00) always reads 0 see there is no way for us to check if the module is working correctly ;(
   // Check if the module is initialized (simple check), Check IODIR register
@@ -59,6 +65,8 @@ void PortExpander::start()
     WiFiPrinter::print("MCP23S17 readMCP23S17: " + String( readMCP23S17(0x00)) );
    
   } 
+
+  enableInterruptMCP23S17();
 
   initialized = true;
 
@@ -105,29 +113,36 @@ void PortExpander::shutdown()
 // Update function (implement as needed)
 void PortExpander::update() 
 {
+  
 }
 
+void PortExpander::clearInterrupt() 
+{
+  readMCP23S17(0x10);  // INTCAPA register (0x10) clears interrupt
+}
 
 // Enable interrupt-on-change for a pin
-void PortExpander::enableInterruptMCP23S17(const PortExpanderPin& pin, uint8_t mode) 
+void PortExpander::enableInterruptMCP23S17()
 {
-    uint8_t registerAddress = (pin.port == 'A') ? 0x04 : 0x05;  // GPINTENA or GPINTENB
-    uint8_t currentInterrupts = readMCP23S17(registerAddress);
-    currentInterrupts |= (1 << pin.pin);  // Enable interrupt for pin
-    writeMCP23S17(registerAddress, currentInterrupts);
+    const uint8_t A3_PIN = 3;   // A3 is bit 3 in Port A
+    const uint8_t GPINTENA = 0x04;  // Interrupt Enable Register for Port A
+    const uint8_t DEFVALA = 0x06;   // Default Value Register for Port A
+    const uint8_t INTCONA = 0x08;   // Interrupt Control Register for Port A
 
-    uint8_t defvalReg = (pin.port == 'A') ? 0x06 : 0x07;  // DEFVALA or DEFVALB
-    uint8_t intconReg = (pin.port == 'A') ? 0x08 : 0x09;  // INTCONA or INTCONB
+    // Read current interrupt settings
+    uint8_t currentInterrupts = readMCP23S17(GPINTENA);
 
-    if (mode == FALLING) {
-        writeMCP23S17(defvalReg, 1 << pin.pin);
-        writeMCP23S17(intconReg, 1 << pin.pin);
-    } else if (mode == RISING) {
-        writeMCP23S17(defvalReg, 0 << pin.pin);
-        writeMCP23S17(intconReg, 1 << pin.pin);
-    } else {  // CHANGE
-        writeMCP23S17(intconReg, 0);
-    }
+    // Enable only A3 (Bit 3), clear all other bits
+    currentInterrupts &= ~(1 << A3_PIN);  // Clear A3 first
+    currentInterrupts = (1 << A3_PIN);    // Enable A3 interrupt ONLY
+
+    writeMCP23S17(GPINTENA, currentInterrupts);
+
+    // Set DEFVALA: The default value to compare against (HIGH)
+    writeMCP23S17(DEFVALA, (1 << A3_PIN));  
+
+    // Set INTCONA: Interrupt fires when value changes from DEFVALA (FALLING)
+    writeMCP23S17(INTCONA, (1 << A3_PIN));  
 }
 
 

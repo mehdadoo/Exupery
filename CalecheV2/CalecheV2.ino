@@ -41,6 +41,8 @@ void setup()
   ignitionSwitch.setOnTurnedOnListener([]() {     start();                  });
   ignitionSwitch.setOnTurnedOffListener([]() {    shutdown();               });
   ignitionSwitch.setup();
+
+   
 }
 
 void loop()
@@ -84,6 +86,7 @@ void start()
   throttleSystem.start();
   steeringSystem.start();
   
+  WiFiPrinter::setup();
 }
 
 void shutdown()

@@ -17,6 +17,7 @@ class PortExpander
     void start();
     void shutdown();
     void update();
+    void clearInterrupt();
 
     uint8_t digitalReadMCP23S17(const PortExpanderPin& pin);
     void digitalWriteMCP23S17(const PortExpanderPin& pin,  uint8_t value);
@@ -33,7 +34,7 @@ class PortExpander
     PortExpander& operator=(const PortExpander&) = delete;
 
     // Private methods
-    void enableInterruptMCP23S17(const PortExpanderPin& pin, uint8_t mode);
+    void enableInterruptMCP23S17();
     void writeMCP23S17(uint8_t registerAddress, uint8_t data);
     uint8_t readMCP23S17(uint8_t registerAddress);
     void pinModeMCP23S17(const PortExpanderPin& pin, uint8_t mode);
