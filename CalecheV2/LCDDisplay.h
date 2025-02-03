@@ -23,9 +23,14 @@ class LCDDisplay
 
     void update(
         bool button1, bool button2, bool button3, bool button4, 
-        float speed, bool pedalSensorisStopped,
-        int joystick_throttle, int joystick_knob, int joystick_steering,
-        float voltage, int steeringPercentage, int brakePercentage, int throttle1_perentage, int throttle2_perentage, float inclinationAngle);
+        float speed, bool speedSensorIsStopped, bool pedalSensorIsStopped,
+        float voltage, 
+        int steeringPercentage,
+        int brakePercentage,
+        int throttle1_perentage, int throttle2_perentage,
+        float inclinationAngle);
+
+        
 
     void updateGauge(int value);
 

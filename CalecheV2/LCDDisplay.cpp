@@ -54,11 +54,13 @@ void LCDDisplay::start()
 
 
 void LCDDisplay::update(
-    bool button1, bool button2, bool button3, bool button4, 
-    float speed, bool pedalSensorisStopped,
-    int joystick_throttle, int joystick_knob, int joystick_steering,
-    float voltage, int steeringPercentage, int brakePercentage, int throttle1_perentage, int throttle2_perentage,
-    float inclinationAngle)
+        bool button1, bool button2, bool button3, bool button4, 
+        float speed, bool speedSensorIsStopped, bool pedalSensorIsStopped,
+        float voltage, 
+        int steeringPercentage,
+        int brakePercentage,
+        bool isLimitingSpeed, int throttle1_perentage, int throttle2_perentage,
+        float inclinationAngle)
 {
     if (!initialized) 
         return;
@@ -78,22 +80,15 @@ void LCDDisplay::update(
     drawButtonIndicator(centerX - 10, 15, button1);
     drawButtonIndicator(centerX + 10, 15, button4);
     drawButtonIndicator(centerX + 30, 15, button3);
-
-    // Draw Sliders
-    drawTextBox(60, 30, joystick_throttle, "Throttle");
-    drawTextBox(60, 50, joystick_knob, "Knob");
-    drawTextBox(60, 70, joystick_steering, "Joystick S");
-    drawTextBox(60, 90, steeringPercentage, "steering");
-    drawTextBox(60, 110, brakePercentage, "brake");
-    drawTextBox(60, 130, throttle1_perentage, "throttle1");
-    drawTextBox(60, 150, throttle2_perentage, "throttle2");
-    drawTextBox(60, 170, speed, "Speed");
-    drawTextBox(60, 190, voltage, "voltage");
-
-    drawButtonIndicator(gfx->width() - 30, centerY- 50, pedalSensorisStopped);
-
-    // Draw Inclination Arrow
-    drawInclinationArrow(centerX, 220, inclinationAngle);
+    drawTextBox(60, 30, speed, "KM/H");
+    drawTextBox(60, 50, voltage, "Volts");
+    drawSlider(60, 70, steeringPercentage, "Steering");
+    drawSlider(60, 90, brakePercentage, "Brake");
+    drawSlider(60, 110, throttle1_perentage, "Engine 1");
+    drawSlider(60, 130, throttle2_perentage, "Engine 2");
+    drawInclinationArrow(centerX, 160, inclinationAngle);
+    drawButtonIndicator(centerX-20, gfx->height() - 15, pedalSensorIsStopped);
+    drawButtonIndicator(centerX+10  , gfx->height() - 15, speedSensorIsStopped);
 }
 
 // ======================== DRAW HELPER FUNCTIONS ========================

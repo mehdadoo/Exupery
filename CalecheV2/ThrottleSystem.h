@@ -18,6 +18,7 @@ class ThrottleSystem
     int throttle1_percentage;           // Value for the first potentiometer
     int throttle2_percentage;           // Value for the second potentiometer
 
+
   private:
     // Private members
     DigiPot potentiometer1;  // First potentiometer

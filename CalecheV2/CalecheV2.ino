@@ -62,11 +62,13 @@ void loop()
   horn.update();
 
   lcdDisplay.update(dashboard.toggleState[0], !dashboard.buttonState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
-                          speedSensor.getSpeed(), pedalSensor.isStopped(), 
-                          dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
-                          voltageSensor.voltage,
-                          steeringSystem.steering_percentage, brakeSystem.brakePercentage, throttleSystem.throttle1_percentage, throttleSystem.throttle2_percentage,
-                          inclinationSensor.getInclinationAngle() );
+                    speedSensor.getSpeed(), speedSensor.isStopped(),
+                    pedalSensor.isStopped(), 
+                    voltageSensor.voltage,
+                    steeringSystem.steering_percentage,
+                    brakeSystem.brakePercentage,
+                    throttleSystem.throttle1_percentage, throttleSystem.throttle2_percentage,
+                    inclinationSensor.getInclinationAngle() );
   
   WiFiPrinterUpdate();
 }
