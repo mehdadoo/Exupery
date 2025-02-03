@@ -67,6 +67,8 @@
 #define THROTTLE_UPDATE_EASE_SPEED  40 // the more the slower the ease
 #define ENGINE_1 true
 #define ENGINE_2 false
+#define KNOB_MAX_VALUE  207
+#define KNOB_MIN_VALUE  0
 
 //WiFiPrinter
 #define WIFI_PASSWORD                 "cScrT9vJRTHCf3vzh2"

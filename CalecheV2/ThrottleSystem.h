@@ -27,8 +27,7 @@ class ThrottleSystem
     int targetPotValue1 = 0;
     int potValue2;           // Value for the second potentiometer
     int targetPotValue2 = 0;
-
-    int throttle_value = 0;
+    int throttle_percentage = 0;
 
     bool activeEngine;
 
@@ -42,7 +41,7 @@ class ThrottleSystem
     void setThrottleToZero();
     void chooseEngine();
     void easeEnginePowerTowardsTarget();
-    int updateThrottleValue();
+    int updateThrottlePercentage();
     void calculateTargetPotValues();
     void limitMaxSpeed();
     void updatePotentiometerValues();

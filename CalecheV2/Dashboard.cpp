@@ -199,7 +199,7 @@ void Dashboard::updateJoysticks()
 {
   joystick_steering = readJoystick(3);
   joystick_throttle = constrain(readJoystick(0), 0, JOYSTICK_THROTTLE_MAX_VALUE);
-  joystick_knob =     constrain(readJoystick(1), 0, JOYSTICK_THROTTLE_MAX_VALUE);
+  joystick_knob =     readJoystick(1);
 }
 
 // Update voltmeter readings

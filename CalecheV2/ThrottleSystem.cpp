@@ -66,31 +66,36 @@ void ThrottleSystem::easeEnginePowerTowardsTarget()
   potValue2 = constrain(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE); // Constrain the values (just in case)
 }
 
-int ThrottleSystem::updateThrottleValue()
+int ThrottleSystem::updateThrottlePercentage()
 {
-  //int joystick_knob = dashboard.joystick_knob;
+  int joystick_knob = dashboard.joystick_knob;
   int joystick_throttle = dashboard.joystick_throttle;
-  //map(joystick_knob, 0, JOYSTICK_THROTTLE_MAX_VALUE, 0, 100);
+  int joystick_percentage = 0;
+  int knob_percentage = 0;
 
-  if (joystick_throttle < JOYSTICK_THROTTLE_REST_MAX) 
-    throttle_value = 0;
+  joystick_percentage = map(joystick_throttle, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, 0, 100);
+  knob_percentage = map(joystick_knob, KNOB_MIN_VALUE, KNOB_MAX_VALUE, 0, 100);
+
+  // The knob_multiplier is 0 if knob is only at 5. From 5 to 207, we scale it from 20% to 100%
+  if (joystick_knob < 5 || joystick_throttle < JOYSTICK_THROTTLE_REST_MAX)
+    throttle_percentage = 0;
   else
-    throttle_value = joystick_throttle;
-  
-  return throttle_value;
+    throttle_percentage = (knob_percentage * joystick_percentage) / 100;
+
+  return throttle_percentage;
 }
 
 void ThrottleSystem::calculateTargetPotValues()
 {
   if( activeEngine == ENGINE_1)
   {
-    targetPotValue1 = map(throttle_value, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 63, more details in the constant definition line
+    targetPotValue1 = map(throttle_percentage, 0, 100, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 63, more details in the constant definition line
     targetPotValue2 = std::max(targetPotValue2 - 1, 0);
   }
   else
   {
     targetPotValue1 = std::max(targetPotValue1 - 1, 0);
-    targetPotValue2 = map(throttle_value, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 50, more details in the constant definition line
+    targetPotValue2 = map(throttle_percentage, 0, 100, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 50, more details in the constant definition line
   }
 }
 
@@ -150,7 +155,7 @@ void ThrottleSystem::update()
   {
     if ( enoughTimeHasPassed() )
     {
-      if ( updateThrottleValue() == 0) 
+      if ( updateThrottlePercentage() == 0) 
       {
         setThrottleToZero();
       }
