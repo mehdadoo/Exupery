@@ -27,9 +27,6 @@ void PedalSensor::update()
 
 void PedalSensor::shutdown() 
 {
-  if( initialized)
-  {
-  }
   initialized = false;
 }
 

@@ -53,11 +53,12 @@ Voltmeter 3: ledc 5, Channel: 7, Timer: 3
 
 //port expander
 #define CS_PIN 38    // Chip Select
+#define MCP23S17_INT_PIN 10
 
 
 struct PortExpanderPin 
 {
-    char port;
+    uint8_t port;
     uint8_t pin;
 };
 

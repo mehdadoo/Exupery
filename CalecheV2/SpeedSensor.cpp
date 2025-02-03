@@ -3,102 +3,102 @@
 #include "PortExpander.h"
 #include "PinDefinitions.h"
 #include "ConstantDefinitions.h"
+#include "Buzzer.h"
 #include <Arduino.h>
+
+
+// Global instance for ISR
+volatile bool sensorTriggered = false;
+// ISR function (called when sensor state changes)
+void IRAM_ATTR sensorISR() 
+{
+    sensorTriggered = true;
+}
+
 
 // Constructor
 SpeedSensor::SpeedSensor()
 {
-    // Set the static instance to this object
-    rpm = 0;
-    speed = 0.0;
-    lastSensorTriggerTime = 0;
+  // Set the static instance to this object
+  rpm = 0;
+  speed = 0.0;
+  lastSensorTriggerTime = millis();
+  lastSensorTriggerDuration = SENSOR_INTERVAL_50KMH;
 }
 
 void SpeedSensor::start() 
 {
-    initialized = true;
+  PortExpander& portExpander = PortExpander::getInstance();
+
+  if( !portExpander.initialized)
+    return;
+
+  initialized = true;
+  attachInterrupt(digitalPinToInterrupt(MCP23S17_INT_PIN), sensorISR, FALLING); // Attach interrupt to the MCP23S17 INT pin, Adjust FALLING/RISING as needed
 }
 
 void SpeedSensor::shutdown() 
 {
-  if( initialized)
-  {
-  }
   initialized = false;
+  detachInterrupt(digitalPinToInterrupt(MCP23S17_INT_PIN));
 }
-
-
 
 // Update the gearbox
 void SpeedSensor::update() 
 {
-  PortExpander& portExpander = PortExpander::getInstance();
-
-  if( !portExpander.initialized || !initialized)
-    return;
+  if (!initialized) return;
 
   unsigned long currentTime = millis();
   
-  // If enough time has passed since the last trigger, consider the car stopped
-  if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_3KMH) 
-  {
-      rpm = 0;
-      speed = 0.0;
-  }
-  
+  if( currentTime - lastSensorTriggerTime > lastSensorTriggerDuration)
+    calculateRPM();
 
-  uint8_t sensorState = portExpander.digitalReadMCP23S17(SENSOR_WHEEL_SPEED_PIN);  // Read current state of sensor
-  static int lastSensorState = LOW;
-
-  // Check for a HIGH to LOW transition (magnet passing the sensor)
-  if (sensorState == LOW && lastSensorState == HIGH) 
+  if (sensorTriggered) 
   {
-    lastSensorState = sensorState;
+    sensorTriggered = false;
+
     unsigned long currentTime = millis();
-    
-    // Ensure there is enough time since last calculation
-    if (currentTime - lastSensorTriggerTime >= SENSOR_INTERVAL_50KMH) 
+    if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_50KMH) 
     {
-        // Calculate RPM and Speed
-        calculateRPM();
+      calculateRPM();
+      saveTriggerTime();
+      Buzzer::getInstance().beep();
     }
   }
-  else if (sensorState == HIGH && lastSensorState == LOW)
-  {
-    lastSensorState = sensorState;
-  }
-  
 }
 
 void SpeedSensor::calculateRPM() 
 {
-    unsigned long currentTime = millis();
-    unsigned long timeSinceLastTrigger = currentTime - lastSensorTriggerTime;
+  unsigned long currentTime = millis();
+  unsigned long timeSinceLastTrigger = currentTime - lastSensorTriggerTime;
 
-    // Calculate RPM (Revolutions Per Minute)
+  if (timeSinceLastTrigger > 0)
+  {
     rpm = (60 * 1000) / timeSinceLastTrigger;
 
-    // Calculate speed in km/h using the wheel circumference
-    float wheelCircumference = WHEEL_DIAMETER * INCHES_TO_METERS * 3.14159; // Circumference in meters
-    speed = (rpm * wheelCircumference * 60) / 1000; // Speed in km/h
-
-    // Record the time of this sensor trigger
-    lastSensorTriggerTime = currentTime;
+    float wheelCircumference = WHEEL_DIAMETER * INCHES_TO_METERS * 3.14159;
+    speed = (rpm * wheelCircumference * 60) / 1000;
+  }
 }
 
 
+void SpeedSensor::saveTriggerTime() 
+{
+  unsigned long currentTime = millis();
+  // Record the time of this sensor trigger
+  lastSensorTriggerDuration = currentTime - lastSensorTriggerTime;
+  lastSensorTriggerTime = currentTime;
+}
 
 
 bool SpeedSensor::isStopped() 
 {
-    // If enough time has passed since the last trigger, consider the car stopped
-    unsigned long currentTime = millis();
-    if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_3KMH) 
-    {
-        rpm = 0;
-        speed = 0.0;
-        return true;
-    }
-    return false;
+  // If enough time has passed since the last trigger, consider the car stopped because we are cycling less than 3km/h
+  unsigned long currentTime = millis();
+  if (currentTime - lastSensorTriggerTime > SENSOR_INTERVAL_3KMH) 
+  {
+    return true;
+  }
+  return false;
 }
 

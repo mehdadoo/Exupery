@@ -3,6 +3,7 @@
 
 #include <Adafruit_ADS1X15.h>
 #include "VoltageSensor.h"
+#include "SpeedSensor.h"
 
 
 class Dashboard {
@@ -16,7 +17,7 @@ public:
     bool initialized = false;
 
     // Public methods
-    Dashboard(VoltageSensor& sensorInstance);
+    Dashboard(VoltageSensor& voltageSensorInstance, SpeedSensor& speedSensorInstance);
     void start();
     void shutdown();
     void update();
@@ -32,7 +33,8 @@ private:
     unsigned long joystickLastUpdateTime = 0;  // Variable to store the last update time
     unsigned long lastDebounceTime = 0;
     const long debounceDelay = 5;  // milliseconds
-    VoltageSensor voltageSensor;
+    VoltageSensor& voltageSensor;
+    SpeedSensor& speedSensor; // an instance of the speed sensor passed in to the constructor
 
     // Private methods
     int readJoystick(int adcPin);

@@ -27,12 +27,12 @@ void ThrottleSystem::shutdown()
   }
 
   // Set potentiometer control pins to INPUT to prevent backfeeding
-  digitalWrite(DigiPot_CS1, HIGH); // Pull CS high before disabling
-  digitalWrite(DigiPot_CS2, HIGH);
-  pinMode(DigiPot_CS1, INPUT);
-  pinMode(DigiPot_CS2, INPUT);
-  pinMode(DigiPot_NC, INPUT);
-  pinMode(DigiPot_UD, INPUT);
+  //digitalWrite(DigiPot_CS1, HIGH); // Pull CS high before disabling
+  //digitalWrite(DigiPot_CS2, HIGH);
+  //pinMode(DigiPot_CS1, INPUT);
+  //pinMode(DigiPot_CS2, INPUT);
+  //pinMode(DigiPot_NC, INPUT);
+  //pinMode(DigiPot_UD, INPUT);
 
   // Add a delay for stabilization
   delay(10);
@@ -51,6 +51,9 @@ void ThrottleSystem::update()
   {
     potValue1 = 0;
     potValue2 = 0;
+
+    throttle1_percentage = 0;
+    throttle2_percentage = 0;
   }
   else
   {
@@ -71,14 +74,14 @@ void ThrottleSystem::update()
   potValue1 = min(potValue1, POTENTIOMETER_MAX_VALUE);
   potValue2 = min(potValue2, POTENTIOMETER_MAX_VALUE); 
 
+  potentiometer1.set(potValue2);
+  potentiometer2.set(potValue1);
+
   throttle1_percentage = map(potValue1, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE, 0, 100);
   throttle2_percentage = map(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_MAX_VALUE, 0, 100);
 
   throttle1_percentage = constrain(throttle1_percentage, 0, 100);
   throttle2_percentage = constrain(throttle2_percentage, 0, 100);
-
-  potentiometer1.set(potValue2);
-  potentiometer2.set(potValue1);
 }
 
 // Method to start the throttle system, enabling potentiometer control

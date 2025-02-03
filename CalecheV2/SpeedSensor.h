@@ -1,6 +1,6 @@
 #ifndef SPEED_SENSOR_H
 #define SPEED_SENSOR_H
-
+#include <Arduino.h>
 
 class SpeedSensor 
 {
@@ -20,10 +20,11 @@ class SpeedSensor
     int rpm;       // Revolutions per minute
     float speed;     // Speed in km/h
     unsigned long lastSensorTriggerTime; // Last time the sensor detected the magnet
+    unsigned long lastSensorTriggerDuration; // Last time the sensor detected the magnet
     bool initialized = false;
-
     // Private methods
     void calculateRPM();
+    void saveTriggerTime();
 };
 
 #endif

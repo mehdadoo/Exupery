@@ -14,6 +14,7 @@ public:
     // Public methods
     void update();
     void beep();
+    void beep2();
     void beep3();
     void toggle();
     void off();
@@ -31,6 +32,7 @@ private:
 
     unsigned long beepStart; // Track start time for timeout
     bool is_beeping;
+    bool is_beeping_2;
     bool is_beeping_3;
     bool beep_state = LOW;
 };

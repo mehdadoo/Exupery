@@ -1,8 +1,11 @@
+#include <SPI.h>
+#include <Arduino.h>
+
 #include "esp32-hal-gpio.h"
 #include "PortExpander.h"
 #include "WiFiPrinter.h"
-#include <SPI.h>
-#include <Arduino.h>
+#include "Buzzer.h"
+
 
 // Initialize the MCP23S17
 void PortExpander::start() 
@@ -12,23 +15,24 @@ void PortExpander::start()
   // Initialize SPI Communication cs pin
   pinMode(CS_PIN, OUTPUT);
   digitalWrite(CS_PIN, HIGH);  // Keep CS pin high initially
+  pinMode(MCP23S17_INT_PIN, INPUT_PULLUP); // Configure INT pin as INPUT
 
   pinModeMCP23S17(BUTTON_0_PIN,             INPUT);
   pinModeMCP23S17(BUTTON_1_PIN,             INPUT);
   pinModeMCP23S17(BUTTON_2_PIN,             INPUT);
   pinModeMCP23S17(BUTTON_3_PIN,             INPUT);
-  pinModeMCP23S17(BUTTON_4_PIN,             INPUT_PULLUP);
-  pinModeMCP23S17(BUTTON_5_PIN,             INPUT_PULLUP);
-  pinModeMCP23S17(BUTTON_6_PIN,             INPUT_PULLUP);
+  pinModeMCP23S17(BUTTON_4_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_5_PIN,             INPUT);
+  pinModeMCP23S17(BUTTON_6_PIN,             INPUT);
   pinModeMCP23S17(BUZZER_PIN,               OUTPUT);
   pinModeMCP23S17(MOSFET_NIGH_LIGHT_PIN,    OUTPUT);
   pinModeMCP23S17(MOSFET_BRAKE_LIGHT_PIN,   OUTPUT);
   pinModeMCP23S17(MOSFET_HORN_PIN,          OUTPUT);
   pinModeMCP23S17(MOSFET_REVERSE_PIN,       OUTPUT);
   pinModeMCP23S17(MOSFET_BRAKE_PIN,         OUTPUT);
-  pinModeMCP23S17(SENSOR_WHEEL_SPEED_PIN,   INPUT_PULLDOWN);
-  pinModeMCP23S17(SENSOR_5V_EMPTY_PIN,      INPUT_PULLDOWN);
-  pinModeMCP23S17(SENSOR_PEDAL_TRIGGER_PIN, INPUT_PULLDOWN);
+  pinModeMCP23S17(SENSOR_WHEEL_SPEED_PIN,   INPUT);
+  pinModeMCP23S17(SENSOR_5V_EMPTY_PIN,      INPUT);
+  pinModeMCP23S17(SENSOR_PEDAL_TRIGGER_PIN, INPUT);
 
 
   digitalWriteMCP23S17(BUZZER_PIN,             LOW);
@@ -38,18 +42,25 @@ void PortExpander::start()
   digitalWriteMCP23S17(MOSFET_BRAKE_PIN,       LOW);
   digitalWriteMCP23S17(MOSFET_REVERSE_PIN,     LOW);
 
+
+  enableInterruptMCP23S17(SENSOR_WHEEL_SPEED_PIN, FALLING);
+
   //readMCP23S17(0x00) always reads 0 see there is no way for us to check if the module is working correctly ;(
   // Check if the module is initialized (simple check), Check IODIR register
-  //if (readMCP23S17(0x00) == 0x00) 
-  //{  
-  //  WiFiPrinter::print("MCP23S17 Initialization Failed!");
-  //} 
-  //else 
-  //{
-  unsigned long initialization_time = millis() - module_connection_time_Start;
-  WiFiPrinter::print("MCP23S17 initialized in " + String( initialization_time ) + "ms");
+  if (readMCP23S17(0x00) == 0x00) 
+  {  
+    WiFiPrinter::print("MCP23S17 Initialization Failed!");
+    Buzzer::getInstance().beep3();
+  } 
+  else 
+  {
+    unsigned long initialization_time = millis() - module_connection_time_Start;
+    WiFiPrinter::print("MCP23S17 initialized in " + String( initialization_time ) + "ms");
+    WiFiPrinter::print("MCP23S17 readMCP23S17: " + String( readMCP23S17(0x00)) );
+   
+  } 
+
   initialized = true;
-  //} 
 
   // Deactivate SPI device
   digitalWrite(CS_PIN, HIGH);
@@ -65,25 +76,15 @@ void PortExpander::shutdown()
   }
 
   // Set all MCP23S17 GPIOs to INPUT mode
-  pinModeMCP23S17(BUTTON_0_PIN,             INPUT);
-  pinModeMCP23S17(BUTTON_1_PIN,             INPUT);
-  pinModeMCP23S17(BUTTON_2_PIN,             INPUT);
-  pinModeMCP23S17(BUTTON_3_PIN,             INPUT);
-  pinModeMCP23S17(BUTTON_4_PIN,             INPUT);
-  pinModeMCP23S17(BUTTON_5_PIN,             INPUT);
-  pinModeMCP23S17(BUTTON_6_PIN,             INPUT);
   pinModeMCP23S17(BUZZER_PIN,               INPUT);
   pinModeMCP23S17(MOSFET_NIGH_LIGHT_PIN,    INPUT);
   pinModeMCP23S17(MOSFET_BRAKE_LIGHT_PIN,   INPUT);
   pinModeMCP23S17(MOSFET_HORN_PIN,          INPUT);
-  pinModeMCP23S17(SENSOR_WHEEL_SPEED_PIN,   INPUT);
-  pinModeMCP23S17(SENSOR_5V_EMPTY_PIN,      INPUT);
-  pinModeMCP23S17(SENSOR_PEDAL_TRIGGER_PIN, INPUT);
   pinModeMCP23S17(MOSFET_REVERSE_PIN,       INPUT);
   pinModeMCP23S17(MOSFET_BRAKE_PIN,         INPUT);
 
-  writeMCP23S17(0x12, 0x00); // Clear GPIOA
-  writeMCP23S17(0x13, 0x00); // Clear GPIOB
+  //writeMCP23S17(0x12, 0x00); // Clear GPIOA
+  //writeMCP23S17(0x13, 0x00); // Clear GPIOB
   
 
   // Disable SPI communication by setting CS pin HIGH and then INPUT
@@ -105,6 +106,30 @@ void PortExpander::shutdown()
 void PortExpander::update() 
 {
 }
+
+
+// Enable interrupt-on-change for a pin
+void PortExpander::enableInterruptMCP23S17(const PortExpanderPin& pin, uint8_t mode) 
+{
+    uint8_t registerAddress = (pin.port == 'A') ? 0x04 : 0x05;  // GPINTENA or GPINTENB
+    uint8_t currentInterrupts = readMCP23S17(registerAddress);
+    currentInterrupts |= (1 << pin.pin);  // Enable interrupt for pin
+    writeMCP23S17(registerAddress, currentInterrupts);
+
+    uint8_t defvalReg = (pin.port == 'A') ? 0x06 : 0x07;  // DEFVALA or DEFVALB
+    uint8_t intconReg = (pin.port == 'A') ? 0x08 : 0x09;  // INTCONA or INTCONB
+
+    if (mode == FALLING) {
+        writeMCP23S17(defvalReg, 1 << pin.pin);
+        writeMCP23S17(intconReg, 1 << pin.pin);
+    } else if (mode == RISING) {
+        writeMCP23S17(defvalReg, 0 << pin.pin);
+        writeMCP23S17(intconReg, 1 << pin.pin);
+    } else {  // CHANGE
+        writeMCP23S17(intconReg, 0);
+    }
+}
+
 
 // Private methods for MCP23S17 operations
 void PortExpander::writeMCP23S17(uint8_t registerAddress, uint8_t data) {

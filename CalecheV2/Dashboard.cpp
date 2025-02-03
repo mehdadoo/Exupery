@@ -7,8 +7,9 @@
 #include "Horn.h"
 
 // Constructor
-Dashboard::Dashboard(VoltageSensor& sensorInstance)
-  : voltageSensor(sensorInstance)
+Dashboard::Dashboard(VoltageSensor& voltageSensorInstance, SpeedSensor& speedSensorInstance)
+  : voltageSensor(voltageSensorInstance),      // Initialize the dashboard reference
+    speedSensor(speedSensorInstance)        // Initialize the pedal sensor reference
 {
 
 }
@@ -153,7 +154,7 @@ void Dashboard::updateButtons()
         }
         else if( i == 3)
         {
-          requestWiFiCallback();
+          //requestWiFiCallback();
         }
       }
     }
@@ -182,9 +183,9 @@ void Dashboard::updateButtons()
 
   
 
-  if( buttonState[0] == LOW &&  buttonState[1] == LOW && buttonState[2] == HIGH &&  buttonState[3] == HIGH)
+  if( buttonState[0] == HIGH &&  buttonState[1] == HIGH && buttonState[2] == LOW &&  buttonState[3] == LOW)
   {
-    //requestWiFiCallback();
+    requestWiFiCallback();
   }
 
 }
@@ -219,11 +220,11 @@ void Dashboard::updateVoltmeters()
     
     //map the voltage percentage
     int pwmVoltagePercentageValue = map(voltageSensor.batteryPercentage, 0, 100, 0, 255);// Map percentage to PWM range (0-255)
+    int pwmSpeedPercentageValue = map(speedSensor.getSpeed(), 0, 25, 0, 255);// Map percentage to PWM range (0-255)
 
-    //setVoltmeterPWM(VOLTMETER_BATTERY,  pwmVoltagePercentageValue,  VOLTMETER_CHARGING_CHANNEL);
-    setVoltmeterPWM(VOLTMETER_SPEED,      joystick_steering,          VOLTMETER_SPEED_CHANNEL);
-    setVoltmeterPWM(VOLTMETER_CHARGING,   joystick_knob,              VOLTMETER_BATTERY_CHANNEL);
-    setVoltmeterPWM(VOLTMETER_BATTERY,    pwmVoltagePercentageValue,  VOLTMETER_CHARGING_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_SPEED,      joystick_knob,              VOLTMETER_SPEED_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_CHARGING,   pwmSpeedPercentageValue,    VOLTMETER_CHARGING_CHANNEL);
+    setVoltmeterPWM(VOLTMETER_BATTERY,    pwmVoltagePercentageValue,  VOLTMETER_BATTERY_CHANNEL);
 
     voltMetersLastUpdateTime = currentTime;  // Update the last update time
   }

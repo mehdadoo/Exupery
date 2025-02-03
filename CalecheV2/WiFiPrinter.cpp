@@ -74,6 +74,7 @@ void WiFiPrinter::setup()
     Serial.println(WiFi.localIP());
 
     Buzzer::getInstance().off();
+    Buzzer::getInstance().beep();
   } 
   else 
   {

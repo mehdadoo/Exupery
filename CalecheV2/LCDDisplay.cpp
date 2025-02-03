@@ -33,7 +33,6 @@ void LCDDisplay::start()
     if ( gfx->begin() ) 
     {
         gfx->fillScreen(BACKGROUND);
-        //drawGauge();
 
         unsigned long initialization_time = millis() - module_connection_time_Start; // Calculate how long it took to initialize in ms
         WiFiPrinter::print("LCDDisplay initialized in " + String( initialization_time ) + "ms");// Print the initialization time
@@ -75,10 +74,10 @@ void LCDDisplay::update(
     int centerY = gfx->height() / 2;
     
     // Draw buttons as indicators
-    drawButtonIndicator(centerX - 30, 15, button1);
-    drawButtonIndicator(centerX - 10, 15, button2);
-    drawButtonIndicator(centerX + 10, 15, button3);
-    drawButtonIndicator(centerX + 30, 15, button4);
+    drawButtonIndicator(centerX - 30, 15, button2);
+    drawButtonIndicator(centerX - 10, 15, button1);
+    drawButtonIndicator(centerX + 10, 15, button4);
+    drawButtonIndicator(centerX + 30, 15, button3);
 
     // Draw Sliders
     drawTextBox(60, 30, joystick_throttle, "Throttle");
@@ -94,7 +93,7 @@ void LCDDisplay::update(
     drawButtonIndicator(gfx->width() - 30, centerY- 50, pedalSensorisStopped);
 
     // Draw Inclination Arrow
-    drawInclinationArrow(centerX, 210, inclinationAngle);
+    drawInclinationArrow(centerX, 220, inclinationAngle);
 }
 
 // ======================== DRAW HELPER FUNCTIONS ========================
@@ -143,13 +142,13 @@ void LCDDisplay::drawInclinationArrow(int x, int y, float angle)
     static float prev_angle = 0;
 
     float rad = prev_angle * DEG_TO_RAD;
-    int length = 30;
+    int length = 10;
     int arrowX = x + cos(rad) * length;
     int arrowY = y + sin(rad) * length;
     gfx->drawLine(x, y, arrowX, arrowY, BLACK);
 
     rad = angle * DEG_TO_RAD;
-    length = 30;
+    length = 10;
     arrowX = x + cos(rad) * length;
     arrowY = y + sin(rad) * length;
     gfx->drawLine(x, y, arrowX, arrowY, YELLOW);

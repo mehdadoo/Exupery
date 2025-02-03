@@ -30,10 +30,10 @@
 #define PEDAL_SENSOR_STOP_DELAY 200
 
 //InclinationSensor
-#define MPU_UPDATE_INTERVAL     100
+#define MPU_UPDATE_INTERVAL     50
 
 //Dashboard
-#define DASHBOARD_BUTTON_DEBOUNCE_DELAY 50
+#define DASHBOARD_BUTTON_DEBOUNCE_DELAY 10
 #define VOLTMETER_UPDATE_INTERVAL       10
 
 //BrakeSystem
@@ -42,8 +42,10 @@
 #define JOYSTICK_THROTTLE_REST_MIN         90
 #define JOYSTICK_THROTTLE_REST_MAX         120
 #define JOYSTICK_THROTTLE_MAX_VALUE        182
-#define BRAKE_SERVO_MIN_VALUE              20
-#define BRAKE_SERVO_MAX_VALUE              88
+#define BRAKE_SERVO_1_MIN_VALUE              20
+#define BRAKE_SERVO_1_MAX_VALUE              88
+#define BRAKE_SERVO_2_MIN_VALUE              38
+#define BRAKE_SERVO_2_MAX_VALUE              93
 #define BRAKE_BLINK_RATE                   45 //ms
 #define BRAKE_BLINK_MULTIPLIER             4
 

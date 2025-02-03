@@ -34,14 +34,14 @@ void BrakeSystem::updateServo()
 
   if (joystick_throttle > JOYSTICK_THROTTLE_SERVO_BRAKE_MIN)
   {
-    servoPosition1 = BRAKE_SERVO_MIN_VALUE; // Set servoPosition1 to max if above 100
-    servoPosition2 = BRAKE_SERVO_MAX_VALUE; // Set servoPosition1 to 0 if above 100, this servo is in reverse!
+    servoPosition1 = BRAKE_SERVO_1_MIN_VALUE; // Set servoPosition1 to max if above 100
+    servoPosition2 = BRAKE_SERVO_2_MIN_VALUE; // Set servoPosition1 to 0 if above 100, this servo is in reverse!
   }
   else
   {
     // Map joystick_throttle from 100 to 200 to brake from 0 to 270
-    servoPosition1 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_MAX_VALUE, BRAKE_SERVO_MIN_VALUE);
-    servoPosition2 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_MIN_VALUE, BRAKE_SERVO_MAX_VALUE);
+    servoPosition1 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_1_MAX_VALUE, BRAKE_SERVO_1_MIN_VALUE);
+    servoPosition2 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_2_MAX_VALUE, BRAKE_SERVO_2_MIN_VALUE);
   }
 
   static bool previousBrakeState = LOW;
@@ -54,12 +54,12 @@ void BrakeSystem::updateServo()
   }
   
   // do not update servo positions if they are at rest already
-  if( servoPosition1 == BRAKE_SERVO_MIN_VALUE && previousServoPosition1 == servoPosition1)
+  if( servoPosition1 == BRAKE_SERVO_1_MIN_VALUE && previousServoPosition1 == servoPosition1)
     return;
 
   previousServoPosition1 = servoPosition1;
 
-  brakePercentage = map(servoPosition1, BRAKE_SERVO_MIN_VALUE, BRAKE_SERVO_MAX_VALUE, 0, 100);
+  brakePercentage = map(servoPosition1, BRAKE_SERVO_1_MIN_VALUE, BRAKE_SERVO_1_MAX_VALUE, 0, 100);
 
   servoBrake1.write( servoPosition1 );
   servoBrake2.write( servoPosition2 );

@@ -5,7 +5,7 @@
 
 class PortExpander 
 {
-public:
+  public:
     // Singleton access method
     static PortExpander& getInstance() 
     {
@@ -23,9 +23,7 @@ public:
     // Public member variables
     bool initialized = false;
 
-    uint8_t readMCP23S17(uint8_t registerAddress);
-
-private:
+  private:
     // Private constructor for Singleton
     PortExpander() {}
     ~PortExpander() {}
@@ -35,11 +33,11 @@ private:
     PortExpander& operator=(const PortExpander&) = delete;
 
     // Private methods
+    void enableInterruptMCP23S17(const PortExpanderPin& pin, uint8_t mode);
     void writeMCP23S17(uint8_t registerAddress, uint8_t data);
-    
+    uint8_t readMCP23S17(uint8_t registerAddress);
     void pinModeMCP23S17(const PortExpanderPin& pin, uint8_t mode);
-    void pullUpMCP23S17(const PortExpanderPin& pin, bool enable);
-    
+    void pullUpMCP23S17(const PortExpanderPin& pin, bool enable); 
 };
 
 #endif // PORT_EXPANDER_H
