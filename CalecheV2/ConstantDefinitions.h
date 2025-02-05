@@ -44,18 +44,20 @@
 #define JOYSTICK_THROTTLE_REST_MAX         120
 #define JOYSTICK_THROTTLE_MAX_VALUE        182
 #define BRAKE_SERVO_1_MIN_VALUE            20
-#define BRAKE_SERVO_1_MAX_VALUE            95
+#define BRAKE_SERVO_1_MAX_VALUE            125 // <- front brakes
 #define BRAKE_SERVO_2_MIN_VALUE            38
-#define BRAKE_SERVO_2_MAX_VALUE            103
+#define BRAKE_SERVO_2_MAX_VALUE            125 // <- back brakes 103
 #define BRAKE_BLINK_RATE                   45 //ms
 #define BRAKE_BLINK_MULTIPLIER             4
+#define BRAKE_EASE_OUT_MULTIPLIER           3.0
+
 
 //SteeringSystem
 #define JOYSTICK_STEERING_MAX_VALUE     206
 #define JOYSTICK_STEERING_MIN_VALUE     0
 #define JOYSTICK_STEERING_REST_GAP      14
 #define STEERING_SERVO_MAX_VALUE        178
-#define STEERING_SERVO_MIN_VALUE        14
+#define STEERING_SERVO_MIN_VALUE        0//14
 #define STEERING_SPEED_SCALE_FACTOR     0.9 // steering can be affected upto 70% by speed
 
 //ThrottleSystem

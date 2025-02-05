@@ -25,7 +25,7 @@ PortExpander& portExpander = PortExpander::getInstance();
 VoltageSensor voltageSensor;
 SpeedSensor speedSensor;
 PedalSensor pedalSensor;
-Dashboard dashboard(voltageSensor, speedSensor);
+Dashboard dashboard(voltageSensor, speedSensor, pedalSensor);
 InclinationSensor inclinationSensor;
 BrakeSystem brakeSystem(dashboard, speedSensor);
 ThrottleSystem throttleSystem(dashboard, pedalSensor, speedSensor);
@@ -59,11 +59,9 @@ void loop()
   buzzer.update();
   horn.update();
 
-  lcdDisplay.update(dashboard.toggleState[0], !dashboard.buttonState[1], dashboard.toggleState[2], dashboard.toggleState[3], 
-                    speedSensor.getSpeed(), speedSensor.isStopped(),
-                    pedalSensor.isStopped(), 
+  lcdDisplay.update(dashboard.toggleState[3], 
+                    speedSensor.getSpeed(),
                     voltageSensor.voltage,
-                    steeringSystem.steering_percentage,
                     brakeSystem.brakePercentage,
                     throttleSystem.throttle1_percentage, throttleSystem.throttle2_percentage,
                     inclinationSensor.getInclinationAngle() );

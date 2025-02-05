@@ -22,7 +22,7 @@ void LCDDisplay::shutdown()
 {
   if( initialized)
   {
-    gfx->fillScreen(BACKGROUND);
+    gfx->fillScreen(BLACK);
   }
 
   initialized = false;
@@ -37,7 +37,7 @@ void LCDDisplay::start()
     if ( gfx->begin() ) 
     {
         gfx->setRotation(2);
-        gfx->fillScreen(BACKGROUND);
+        gfx->fillScreen(BLACK);
 
         unsigned long initialization_time = millis() - module_connection_time_Start; // Calculate how long it took to initialize in ms
         WiFiPrinter::print("LCDDisplay initialized in " + String( initialization_time ) + "ms");// Print the initialization time
@@ -57,12 +57,10 @@ void LCDDisplay::start()
 }
 
 
-
 void LCDDisplay::update(
-        bool button1, bool button2, bool button3, bool button4, 
-        float speed, bool speedSensorIsStopped, bool pedalSensorIsStopped,
+        bool handbrake, 
+        float speed, 
         float voltage, 
-        int steeringPercentage,
         int brakePercentage,
         int throttle1_perentage, int throttle2_perentage,
         float inclinationAngle)
@@ -75,26 +73,16 @@ void LCDDisplay::update(
         return;
 
     lastDisplayUpdate = currentMillis;
-    //gfx->fillScreen(BACKGROUND);
 
     int centerX = gfx->width() / 2;
     int centerY = gfx->height() / 2;
-    
-    // Draw buttons as indicators
-    //drawButtonIndicator(centerX - 30, 50, button2);
-    //drawButtonIndicator(centerX - 10, 50, button1);
-    //drawButtonIndicator(centerX + 10, 50, button4);
-    drawButtonIndicator(centerX, centerY + 50, button3);
 
-    drawTextBox(80, centerY - 30, speed, "KM/H");
-    drawTextBox(80, centerY +  0, voltage, "v");
-    drawTextBox(80, centerY + 30, inclinationAngle, "°");
+    drawTextBox(70, centerY - 30, speed, "KM/H");
+    drawTextBox(70, centerY +  0, voltage, "v");
+    drawTextBox(70, centerY + 30, (int)inclinationAngle, "°");
 
-    //drawSlider(60, 110, steeringPercentage, "Steering");
-    //drawButtonIndicator(centerX - 10, 170, pedalSensorIsStopped);
-    //drawButtonIndicator(centerX + 10, 170, speedSensorIsStopped);
 
-    drawBrakeSlider(  brakePercentage,              0xd867, 0x5823);
+    drawBrakeSlider(  brakePercentage,              handbrake ? 0xdbe1: 0xd867,  handbrake ? BLACK : 0x5823);
     drawArcSlider(    throttle1_perentage, true,    0x9648, 0x4b25);
     drawArcSlider(    throttle2_perentage, false,   0x7e1d, 0x2a8d);
 }
@@ -103,8 +91,8 @@ void LCDDisplay::update(
 
 void LCDDisplay::drawTextBox(int x, int y, float value, const char* label) 
 {
-    // Define a fixed-size box for text clearing
-    int textWidth = 80;  // Adjust width as needed
+    // Clear the background
+    int textWidth = 40;  // Adjust width as needed
     int textHeight = 30; // Adjust height as needed
 
     // Erase previous value by drawing a black rectangle
@@ -113,15 +101,24 @@ void LCDDisplay::drawTextBox(int x, int y, float value, const char* label)
     // Draw the new text
     gfx->setTextColor(WHITE);
     gfx->setFont(&FreeSansBold10pt7b);
-    //gfx->setTextSize(2);
     gfx->setCursor(x + 5, y + 5); // Small padding inside the box
-    gfx->print( String(value, 1));
+    if (value == (int)value) 
+        gfx->print((int)value); // Print as integer if no fraction
+    else
+        gfx->print(String(value, 1)); // Print with 1 decimal place otherwise
 
     gfx->setTextColor( 0x9492 );
-    //gfx->setTextSize(3);
     gfx->setFont(&FreeMono8pt7b);
     gfx->setCursor(x + 47, y + 5); // Small padding inside the box
     gfx->print( String(label) );
+}
+
+void LCDDisplay::clearTextBox(int x, int y, float value) 
+{
+    gfx->setTextColor(BLACK);
+    gfx->setFont(&FreeSansBold10pt7b);
+    gfx->setCursor(x + 5, y + 5); // Small padding inside the box
+    gfx->print( String(value, 1));
 }
 
 
@@ -146,7 +143,7 @@ void LCDDisplay::drawArcSlider(int value, bool isLeft, uint16_t fillColor, uint1
 
     if( isLeft )
     {
-      startAngle  = 90; 
+      startAngle  = 90.0; 
       endAngle    = startAngle + 180.0;
       filledAngle = map(value, 100, 0, endAngle, startAngle);
 
@@ -157,7 +154,7 @@ void LCDDisplay::drawArcSlider(int value, bool isLeft, uint16_t fillColor, uint1
     }
     else
     {
-      startAngle  = 270; 
+      startAngle  = 270.0; 
       endAngle    = startAngle + 180.0;
       filledAngle = map(value, 0, 100, endAngle, startAngle);
 
@@ -173,7 +170,7 @@ void LCDDisplay::drawBrakeSlider(int value, uint16_t fillColor, uint16_t emptyCo
 {
     int cx = 120, cy = 120;  // Center of the round display (assuming 240x240)
     int rOuter = 100;        // Outer radius of the arc
-    int rInner = 80; // Inner radius (defines thickness)
+    int rInner = 70; // Inner radius (defines thickness)
     int rFilled = map(value, 0, 100, rOuter, rInner);
     
     if( prevBrakeSlider != rFilled)

@@ -4,6 +4,7 @@
 #include <Adafruit_ADS1X15.h>
 #include "VoltageSensor.h"
 #include "SpeedSensor.h"
+#include "PedalSensor.h"
 
 
 class Dashboard {
@@ -17,7 +18,7 @@ public:
     bool initialized = false;
 
     // Public methods
-    Dashboard(VoltageSensor& voltageSensorInstance, SpeedSensor& speedSensorInstance);
+    Dashboard(VoltageSensor& voltageSensorInstance, SpeedSensor& speedSensorInstance, PedalSensor& pedalSensorInstance);
     void start();
     void shutdown();
     void update();
@@ -33,6 +34,7 @@ private:
     unsigned long lastDebounceTime = 0;
     VoltageSensor& voltageSensor;
     SpeedSensor& speedSensor;
+    PedalSensor& pedalSensor;
 
     // Private methods
     int readJoystick(int adcPin);

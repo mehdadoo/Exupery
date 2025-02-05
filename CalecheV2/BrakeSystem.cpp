@@ -35,10 +35,10 @@ void BrakeSystem::updateServo()
   bool currentBrakeState = dashboard.hasBraked() ? HIGH : LOW;
 
   //handbrake!
-  if( dashboard.toggleState[2] )
+  if( dashboard.toggleState[3] )
   {
-    servoPosition1 = BRAKE_SERVO_1_MAX_VALUE;
-    servoPosition2 = BRAKE_SERVO_2_MAX_VALUE; 
+    servoPosition1 = BRAKE_SERVO_1_MAX_VALUE - 20;
+    servoPosition2 = BRAKE_SERVO_2_MAX_VALUE - 20; 
 
     currentBrakeState = true;
   }
@@ -51,8 +51,23 @@ void BrakeSystem::updateServo()
   else
   {
     // Map joystick_throttle from 100 to 200 to brake from 0 to 270
-    servoPosition1 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_1_MAX_VALUE, BRAKE_SERVO_1_MIN_VALUE);
-    servoPosition2 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_2_MAX_VALUE, BRAKE_SERVO_2_MIN_VALUE);
+    //servoPosition1 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_1_MAX_VALUE, BRAKE_SERVO_1_MIN_VALUE);
+    //servoPosition2 = map(joystick_throttle, JOYSTICK_THROTTLE_SERVO_BRAKE_MAX, JOYSTICK_THROTTLE_SERVO_BRAKE_MIN, BRAKE_SERVO_2_MAX_VALUE, BRAKE_SERVO_2_MIN_VALUE);
+
+    // Normalize joystick throttle position
+    float normalizedThrottle = 
+        (float)(joystick_throttle - JOYSTICK_THROTTLE_SERVO_BRAKE_MIN) /
+        (JOYSTICK_THROTTLE_SERVO_BRAKE_MAX - JOYSTICK_THROTTLE_SERVO_BRAKE_MIN);
+
+    // Apply ease-out (cubic root)
+    float easedThrottle = pow(normalizedThrottle, 1.0 / BRAKE_EASE_OUT_MULTIPLIER);
+
+    // Map eased value to servo range
+    servoPosition1 = BRAKE_SERVO_1_MIN_VALUE + 
+        (int)(easedThrottle * (BRAKE_SERVO_1_MAX_VALUE - BRAKE_SERVO_1_MIN_VALUE));
+
+    servoPosition2 = BRAKE_SERVO_2_MIN_VALUE + 
+        (int)(easedThrottle * (BRAKE_SERVO_2_MAX_VALUE - BRAKE_SERVO_2_MIN_VALUE));
   }
 
   
@@ -138,15 +153,13 @@ void BrakeSystem::shutdown()
   if( initialized)
   {
      //handbrake!
-    servoPosition1 = BRAKE_SERVO_1_MAX_VALUE;
-    servoPosition2 = BRAKE_SERVO_2_MAX_VALUE; 
+    servoPosition1 = BRAKE_SERVO_1_MAX_VALUE - 20;
+    servoPosition2 = BRAKE_SERVO_2_MAX_VALUE - 20; 
 
     servoBrake1.write( servoPosition1 );
     servoBrake2.write( servoPosition2 );
 
     delay( 300 );
-
-
 
     servoBrake1.detach();
     servoBrake2.detach();

@@ -7,9 +7,10 @@
 #include "Horn.h"
 
 // Constructor
-Dashboard::Dashboard(VoltageSensor& voltageSensorInstance, SpeedSensor& speedSensorInstance)
+Dashboard::Dashboard(VoltageSensor& voltageSensorInstance, SpeedSensor& speedSensorInstance, PedalSensor& pedalSensorInstance)
   : voltageSensor(voltageSensorInstance),      // Initialize the dashboard reference
-    speedSensor(speedSensorInstance)        // Initialize the pedal sensor reference
+    speedSensor(speedSensorInstance),
+    pedalSensor(pedalSensorInstance)
 {
 
 }
@@ -29,8 +30,8 @@ void Dashboard::start()
 
   toggleState[0] = LOW;
   toggleState[1] = LOW;
-  toggleState[2] = HIGH;
-  toggleState[3] = LOW;
+  toggleState[2] = LOW;
+  toggleState[3] = HIGH;//HIGH to have handbrake on startup
 
   unsigned long module_connection_time_Start = millis(); // Record the time when the connection attempt starts
 
@@ -148,14 +149,14 @@ void Dashboard::updateButtons()
         updateToggleState[i] = true;
         Buzzer::getInstance().beep();
 
-        if (i == 1)
+        if (i == 1 || i == 2)
         {
           Horn::getInstance().beep();
         }
-        else if( i == 2 && !speedSensor.isStopped())
+        else if( i == 3)
         {
-          toggleState[i] = LOW;
-          //requestWiFiCallback();
+          if( !speedSensor.isStopped() || !pedalSensor.isStopped())
+            toggleState[i] = LOW;
         }
       }
     }
@@ -174,6 +175,7 @@ void Dashboard::updateButtons()
 
   if( updateToggleState[2] )
   {
+   
     updateToggleState[2]= false;
   }
 
@@ -184,7 +186,7 @@ void Dashboard::updateButtons()
 
   
 
-  if( buttonState[0] == HIGH &&  buttonState[1] == HIGH && buttonState[2] == LOW &&  buttonState[3] == LOW)
+  if( buttonState[0] == LOW &&  buttonState[1] == HIGH && buttonState[2] == HIGH &&  buttonState[3] == LOW)
   {
     requestWiFiCallback();
   }
