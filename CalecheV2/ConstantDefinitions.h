@@ -44,12 +44,12 @@
 #define JOYSTICK_THROTTLE_REST_MAX         120
 #define JOYSTICK_THROTTLE_MAX_VALUE        182
 #define BRAKE_SERVO_1_MIN_VALUE            20
-#define BRAKE_SERVO_1_MAX_VALUE            125 // <- front brakes
+#define BRAKE_SERVO_1_MAX_VALUE            127 // <- front brakes
 #define BRAKE_SERVO_2_MIN_VALUE            38
-#define BRAKE_SERVO_2_MAX_VALUE            125 // <- back brakes 103
+#define BRAKE_SERVO_2_MAX_VALUE            132 // <- back brakes 103
 #define BRAKE_BLINK_RATE                   45 //ms
 #define BRAKE_BLINK_MULTIPLIER             4
-#define BRAKE_EASE_OUT_MULTIPLIER           3.0
+#define BRAKE_EASE_OUT_MULTIPLIER          5.0
 
 
 //SteeringSystem
@@ -57,18 +57,19 @@
 #define JOYSTICK_STEERING_MIN_VALUE     0
 #define JOYSTICK_STEERING_REST_GAP      14
 #define STEERING_SERVO_MAX_VALUE        178
-#define STEERING_SERVO_MIN_VALUE        0//14
+#define STEERING_SERVO_MIN_VALUE        7//14
 #define STEERING_SPEED_SCALE_FACTOR     0.9 // steering can be affected upto 70% by speed
 
 //ThrottleSystem
-#define POTENTIOMETER_MIN_VALUE     30    //.84v is the motor throttle min voltage
-#define POTENTIOMETER_1_MIN_VALUE   30    //.84v is the motor throttle min voltage
-#define POTENTIOMETER_1_MAX_VALUE   63    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
-#define POTENTIOMETER_2_MIN_VALUE   30    //.84v is the motor throttle min voltage
-#define POTENTIOMETER_2_MAX_VALUE   63    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
+//20(.84v) is the min, 82(3.6v) is the max
+
+#define POTENTIOMETER_1_MIN_VALUE   30    //20% of the throttle is the minimum we start with
+#define POTENTIOMETER_1_MAX_VALUE   65    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
+#define POTENTIOMETER_2_MIN_VALUE   30    //20% of the throttle is the minimum we start with
+#define POTENTIOMETER_2_MAX_VALUE   43    //40% of the second engine is the max we use it, at 500W
 #define THROTTLE_UPDATE_EASE_SPEED  40 // the more the slower the ease
 #define DOWN_SHIFT_SPEED            6
-#define UP_SHIFT_SPEED              9
+#define UP_SHIFT_SPEED              6
 #define ENGINE_1 true
 #define ENGINE_2 false
 #define KNOB_MAX_VALUE  207

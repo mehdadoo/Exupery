@@ -57,13 +57,13 @@ void ThrottleSystem::easeEnginePowerTowardsTarget()
     potValue1 ++;
   else if (potValue1 > targetPotValue1)
     potValue1 --;
-  potValue1 = constrain(potValue1, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE); // Constrain the values (just in case)
+  potValue1 = constrain(potValue1, POTENTIOMETER_1_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE); // Constrain the values (just in case)
 
   if (potValue2 < targetPotValue2)
-    potValue2 +=2;
+    potValue2 ++;
   else if (potValue2 > targetPotValue2)
     potValue2 --;
-  potValue2 = constrain(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE); // Constrain the values (just in case)
+  potValue2 = constrain(potValue2, POTENTIOMETER_2_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE); // Constrain the values (just in case)
 }
 
 int ThrottleSystem::updateThrottlePercentage()
@@ -87,28 +87,46 @@ int ThrottleSystem::updateThrottlePercentage()
 
 void ThrottleSystem::calculateTargetPotValues()
 {
+  targetPotValue1 = map(throttle_percentage, 0, 100, POTENTIOMETER_1_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 63, more details in the constant definition line
+
+  if( activeEngine == ENGINE_2)
+  {
+    targetPotValue2 = map(throttle_percentage, 0, 100, POTENTIOMETER_2_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 50, more details in the constant definition line
+  }
+  else
+  {
+    targetPotValue2 = std::max(targetPotValue2 --, 0);
+  }
+  
+  /*
   if( activeEngine == ENGINE_1)
   {
-    targetPotValue1 = map(throttle_percentage, 0, 100, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 63, more details in the constant definition line
+    targetPotValue1 = map(throttle_percentage, 0, 100, POTENTIOMETER_1_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 63, more details in the constant definition line
     targetPotValue2 = std::max(targetPotValue2 - 1, 0);
   }
   else
   {
     targetPotValue1 = std::max(targetPotValue1 - 1, 0);
-    targetPotValue2 = map(throttle_percentage, 0, 100, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 50, more details in the constant definition line
+    targetPotValue2 = map(throttle_percentage, 0, 100, POTENTIOMETER_2_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 50, more details in the constant definition line
   }
+  */
 }
 
 void ThrottleSystem::limitMaxSpeed()
 {
   if( speedSensor.getSpeed() > LIMIT_AUTHORISED_SPEED )
   {
+    int currentPotValue1 = targetPotValue1;
     int currentPotValue2 = targetPotValue2;
+
     float speedRange = MAX_AUTHORISED_SPEED - LIMIT_AUTHORISED_SPEED; // Calculate the range between LIMIT_AUTHORISED_SPEED and MAX_AUTHORISED_SPEED
     float speedPercentage = (speedSensor.getSpeed() - LIMIT_AUTHORISED_SPEED) / speedRange;// Calculate the percentage of speed within this range
     speedPercentage = constrain(speedPercentage, 0, 1);// Ensure the percentage doesn't exceed 1 or go below 0
-    potValue2 = currentPotValue2 - ((currentPotValue2 - POTENTIOMETER_MIN_VALUE) * speedPercentage); // Calculate the new potValue2 by reducing it from its current value to POTENTIOMETER_MIN_VALUE
-    potValue2 = max(potValue2, POTENTIOMETER_MIN_VALUE);// Ensure potValue2 doesn't go below POTENTIOMETER_MIN_VALUE
+    
+    potValue1 = currentPotValue1 - ((currentPotValue1 - POTENTIOMETER_1_MIN_VALUE) * speedPercentage); // Calculate the new potValue2 by reducing it from its current value to POTENTIOMETER_1_MIN_VALUE
+    potValue1 = max(potValue1, POTENTIOMETER_1_MIN_VALUE);// Ensure potValue1 doesn't go below POTENTIOMETER_1_MIN_VALUE
+    potValue2 = currentPotValue2 - ((currentPotValue2 - POTENTIOMETER_2_MIN_VALUE) * speedPercentage); // Calculate the new potValue2 by reducing it from its current value to POTENTIOMETER_2_MIN_VALUE
+    potValue2 = max(potValue2, POTENTIOMETER_2_MIN_VALUE);// Ensure potValue2 doesn't go below POTENTIOMETER_2_MIN_VALUE
   }
 }
 
@@ -117,8 +135,8 @@ void ThrottleSystem::updatePotentiometerValues()
   potentiometer1.set(potValue1);
   potentiometer2.set(potValue2);
 
-  throttle1_percentage = map(potValue1, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE, 0, 100);
-  throttle2_percentage = map(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE, 0, 100);
+  throttle1_percentage = map(potValue1, POTENTIOMETER_1_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE, 0, 100);
+  throttle2_percentage = map(potValue2, POTENTIOMETER_2_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE, 0, 100);
 
   throttle1_percentage = constrain(throttle1_percentage, 0, 100);
   throttle2_percentage = constrain(throttle2_percentage, 0, 100);
