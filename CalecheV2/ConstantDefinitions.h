@@ -41,10 +41,10 @@
 #define JOYSTICK_THROTTLE_SERVO_BRAKE_MAX  12
 #define JOYSTICK_THROTTLE_SERVO_BRAKE_MIN  80
 #define JOYSTICK_THROTTLE_REST_MIN         90
-#define JOYSTICK_THROTTLE_REST_MAX         120
+#define JOYSTICK_THROTTLE_REST_MAX         110
 #define JOYSTICK_THROTTLE_MAX_VALUE        182
 #define BRAKE_SERVO_1_MIN_VALUE            20
-#define BRAKE_SERVO_1_MAX_VALUE            125 // <- front brakes
+#define BRAKE_SERVO_1_MAX_VALUE            120 // <- front brakes
 #define BRAKE_SERVO_2_MIN_VALUE            38
 #define BRAKE_SERVO_2_MAX_VALUE            125 // <- back brakes 103
 #define BRAKE_BLINK_RATE                   45 //ms
@@ -63,12 +63,12 @@
 //ThrottleSystem
 #define POTENTIOMETER_MIN_VALUE     30    //.84v is the motor throttle min voltage
 #define POTENTIOMETER_1_MIN_VALUE   30    //.84v is the motor throttle min voltage
-#define POTENTIOMETER_1_MAX_VALUE   63    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
-#define POTENTIOMETER_2_MIN_VALUE   30    //.84v is the motor throttle min voltage
-#define POTENTIOMETER_2_MAX_VALUE   63    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
-#define THROTTLE_UPDATE_EASE_SPEED  40 // the more the slower the ease
-#define DOWN_SHIFT_SPEED            6
-#define UP_SHIFT_SPEED              9
+#define POTENTIOMETER_1_MAX_VALUE   60    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
+#define POTENTIOMETER_2_MIN_VALUE   25    //.84v is the motor throttle min voltage
+#define POTENTIOMETER_2_MAX_VALUE   50    //60% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
+#define THROTTLE_UPDATE_EASE_SPEED  40    // the more the slower the ease
+#define DOWN_SHIFT_SPEED            5
+#define UP_SHIFT_SPEED              8
 #define ENGINE_1 true
 #define ENGINE_2 false
 #define KNOB_MAX_VALUE  207
