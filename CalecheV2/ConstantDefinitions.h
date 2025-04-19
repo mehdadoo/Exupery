@@ -22,8 +22,8 @@
 #define INCHES_TO_METERS        0.0254
 #define SENSOR_INTERVAL_25KMH   276 // Time in milliseconds for one magnet read at 30 km/h (24-inch wheel)
 #define SENSOR_INTERVAL_50KMH   138 // Time in milliseconds for one magnet read at 50 km/h (24-inch wheel)
-#define LIMIT_AUTHORISED_SPEED  12
-#define MAX_AUTHORISED_SPEED    17
+#define LIMIT_AUTHORISED_SPEED  13
+#define MAX_AUTHORISED_SPEED    20
 #define SPEED_SAMPLES           5  // Number of samples for smoothing
 
 
@@ -43,10 +43,15 @@
 #define JOYSTICK_THROTTLE_REST_MIN         90
 #define JOYSTICK_THROTTLE_REST_MAX         110
 #define JOYSTICK_THROTTLE_MAX_VALUE        182
-#define BRAKE_SERVO_1_MIN_VALUE            20
-#define BRAKE_SERVO_1_MAX_VALUE            120 // <- front brakes
-#define BRAKE_SERVO_2_MIN_VALUE            38
-#define BRAKE_SERVO_2_MAX_VALUE            125 // <- back brakes 103
+
+#define BRAKE_SERVO_1_MIN_VALUE            85  // <- front brakes
+#define BRAKE_SERVO_1_HAND_BRAKE_VALUE     35
+#define BRAKE_SERVO_1_MAX_VALUE            27 
+
+#define BRAKE_SERVO_2_MIN_VALUE            60 // <- back brakes
+#define BRAKE_SERVO_2_HAND_BRAKE_VALUE     100
+#define BRAKE_SERVO_2_MAX_VALUE            125
+
 #define BRAKE_BLINK_RATE                   45 //ms
 #define BRAKE_BLINK_MULTIPLIER             4
 #define BRAKE_EASE_OUT_MULTIPLIER           3.0
@@ -63,11 +68,11 @@
 //ThrottleSystem
 #define POTENTIOMETER_MIN_VALUE     30    //.84v is the motor throttle min voltage
 #define POTENTIOMETER_1_MIN_VALUE   30    //.84v is the motor throttle min voltage
-#define POTENTIOMETER_1_MAX_VALUE   60    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
+#define POTENTIOMETER_1_MAX_VALUE   55    //75% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
 #define POTENTIOMETER_2_MIN_VALUE   25    //.84v is the motor throttle min voltage
-#define POTENTIOMETER_2_MAX_VALUE   50    //60% of the max throttle of the motors. it will translate roughly to 2.85v (the throttle full range is 3.6v)
+#define POTENTIOMETER_2_MAX_VALUE   40    //less than 50% of the max throttle of the motors. it will translate roughly to 2.2v (the throttle full range is 3.6v)
 #define THROTTLE_UPDATE_EASE_SPEED  40    // the more the slower the ease
-#define DOWN_SHIFT_SPEED            5
+#define DOWN_SHIFT_SPEED            6
 #define UP_SHIFT_SPEED              8
 #define ENGINE_1 true
 #define ENGINE_2 false

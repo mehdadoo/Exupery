@@ -37,8 +37,8 @@ void BrakeSystem::updateServo()
   //handbrake!
   if( dashboard.toggleState[3] )
   {
-    servoPosition1 = BRAKE_SERVO_1_MAX_VALUE - 20;
-    servoPosition2 = BRAKE_SERVO_2_MAX_VALUE - 20; 
+    servoPosition1 = BRAKE_SERVO_1_HAND_BRAKE_VALUE;
+    servoPosition2 = BRAKE_SERVO_2_HAND_BRAKE_VALUE; 
 
     currentBrakeState = true;
   }
@@ -152,9 +152,9 @@ void BrakeSystem::shutdown()
 {
   if( initialized)
   {
-     //handbrake!
-    servoPosition1 = BRAKE_SERVO_1_MAX_VALUE - 20;
-    servoPosition2 = BRAKE_SERVO_2_MAX_VALUE - 20; 
+    //handbrake!
+    servoPosition1 = BRAKE_SERVO_1_HAND_BRAKE_VALUE;
+    servoPosition2 = BRAKE_SERVO_2_HAND_BRAKE_VALUE; 
 
     servoBrake1.write( servoPosition1 );
     servoBrake2.write( servoPosition2 );
