@@ -36,6 +36,9 @@ void ThrottleSystem::shutdown()
 
 void ThrottleSystem::setThrottleToZero()
 {
+  targetPotValue1 = 0;
+  targetPotValue2 = 0;
+
   potValue1 = 0;
   potValue2 = 0;
 
@@ -53,17 +56,33 @@ void ThrottleSystem::chooseEngine()
 
 void ThrottleSystem::easeEnginePowerTowardsTarget()
 {
-  if (potValue1 < targetPotValue1)
-    potValue1 ++;
-  else if (potValue1 > targetPotValue1)
-    potValue1 --;
-  potValue1 = constrain(potValue1, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE); // Constrain the values (just in case)
+  if( targetPotValue1 == 0 )
+  {
+    potValue1 = 0;
+  }
+  else
+  {
+    potValue1 = targetPotValue1;
+    /*if (potValue1 < targetPotValue1)
+      potValue1 ++;
+    else if (potValue1 > targetPotValue1)
+      potValue1 --;*/
+    potValue1 = constrain(potValue1, POTENTIOMETER_1_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE); // Constrain the values (just in case)
+  }
 
-  if (potValue2 < targetPotValue2)
-    potValue2 +=2;
-  else if (potValue2 > targetPotValue2)
-    potValue2 --;
-  potValue2 = constrain(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE); // Constrain the values (just in case)
+  if( targetPotValue2 == 0 )
+  {
+    potValue2 = 0;
+  }
+  else
+  {
+    potValue2 = targetPotValue2;
+    /*if (potValue2 < targetPotValue2)
+      potValue2 +=2;
+    else if (potValue2 > targetPotValue2)
+      potValue2 --;*/
+    potValue2 = constrain(potValue2, POTENTIOMETER_2_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE); // Constrain the values (just in case)
+  }
 }
 
 int ThrottleSystem::updateThrottlePercentage()
@@ -85,6 +104,7 @@ int ThrottleSystem::updateThrottlePercentage()
   return throttle_percentage;
 }
 
+
 void ThrottleSystem::calculateTargetPotValues()
 {
   if( activeEngine == ENGINE_1)
@@ -94,8 +114,37 @@ void ThrottleSystem::calculateTargetPotValues()
   }
   else
   {
-    targetPotValue1 = std::max(targetPotValue1 - 1, 0);
+    targetPotValue1 = std::max(targetPotValue1 - 1, POTENTIOMETER_1_MAX_VALUE - (POTENTIOMETER_1_MAX_VALUE - POTENTIOMETER_1_MIN_VALUE) / 2); // ease set engine 1 throttle to 50 percent
     targetPotValue2 = map(throttle_percentage, 0, 100, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE);// Map joystick_throttle throttle zone to potValue2 from 30 to 50, more details in the constant definition line
+  }
+}
+
+void ThrottleSystem::experimentalThrottle()
+{
+  int joystick_throttle = dashboard.joystick_throttle;
+  int joystick_knob = dashboard.joystick_knob;
+  int joystick_percentage = 0;
+  int knob_percentage = 0;
+
+  joystick_percentage = map(joystick_throttle, JOYSTICK_THROTTLE_REST_MAX, JOYSTICK_THROTTLE_MAX_VALUE, 0, 100);
+  knob_percentage = map(joystick_knob, KNOB_MIN_VALUE, KNOB_MAX_VALUE, 0, 100);
+
+  joystick_percentage = constrain(joystick_percentage, 0, 100);
+  knob_percentage = constrain(knob_percentage, 0, 100);
+
+  throttle1_percentage = joystick_percentage;
+  throttle2_percentage = knob_percentage;
+
+  // if input is less than 5% then we discard the input and set motor to 0
+  if( joystick_percentage < 5 || knob_percentage < 5)
+  {
+    targetPotValue1 = 0;
+    targetPotValue2 = 0;
+  }
+  else
+  {
+    targetPotValue1 = map(joystick_percentage, 0, 100, POTENTIOMETER_2_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE);
+    targetPotValue2 = targetPotValue1; //map(knob_percentage, 0, 100, POTENTIOMETER_2_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE);
   }
 }
 
@@ -117,11 +166,11 @@ void ThrottleSystem::updatePotentiometerValues()
   potentiometer1.set(potValue1);
   potentiometer2.set(potValue2);
 
-  throttle1_percentage = map(potValue1, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE, 0, 100);
-  throttle2_percentage = map(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE, 0, 100);
+  //throttle1_percentage = map(potValue1, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_1_MAX_VALUE, 0, 100);
+  //throttle2_percentage = map(potValue2, POTENTIOMETER_MIN_VALUE, POTENTIOMETER_2_MAX_VALUE, 0, 100);
 
-  throttle1_percentage = constrain(throttle1_percentage, 0, 100);
-  throttle2_percentage = constrain(throttle2_percentage, 0, 100);
+  //throttle1_percentage = constrain(throttle1_percentage, 0, 100);
+  //throttle2_percentage = constrain(throttle2_percentage, 0, 100);
 }
 
 bool ThrottleSystem::enoughTimeHasPassed()
@@ -151,6 +200,18 @@ void ThrottleSystem::update()
   {
     setThrottleToZero();
   }
+  else if ( enoughTimeHasPassed() )
+  {
+    experimentalThrottle();
+    easeEnginePowerTowardsTarget();
+  }
+
+  limitMaxSpeed();
+
+  /*if( pedalSensor.isStopped() || dashboard.hasBraked())
+  {
+    setThrottleToZero();
+  }
   else
   {
     if ( enoughTimeHasPassed() )
@@ -166,8 +227,10 @@ void ThrottleSystem::update()
         easeEnginePowerTowardsTarget();
       }
     }
+
     limitMaxSpeed();
   }
+  */
 
   updatePotentiometerValues();
 }

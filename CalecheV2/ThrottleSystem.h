@@ -17,16 +17,17 @@ class ThrottleSystem
 
     int throttle1_percentage;           // Value for the first potentiometer
     int throttle2_percentage;           // Value for the second potentiometer
-
+    int potValue1;           // Value for the first potentiometer
+    int potValue2;           // Value for the second potentiometer
 
   private:
     // Private members
     DigiPot potentiometer1;  // First potentiometer
     DigiPot potentiometer2;  // Second potentiometer
 
-    int potValue1;           // Value for the first potentiometer
+    
     int targetPotValue1 = 0;
-    int potValue2;           // Value for the second potentiometer
+    
     int targetPotValue2 = 0;
     int throttle_percentage = 0;
 
@@ -44,6 +45,7 @@ class ThrottleSystem
     void easeEnginePowerTowardsTarget();
     int updateThrottlePercentage();
     void calculateTargetPotValues();
+    void experimentalThrottle();
     void limitMaxSpeed();
     void updatePotentiometerValues();
     bool enoughTimeHasPassed();

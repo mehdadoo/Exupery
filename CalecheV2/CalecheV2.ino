@@ -64,7 +64,9 @@ void loop()
                     voltageSensor.voltage,
                     brakeSystem.brakePercentage,
                     throttleSystem.throttle1_percentage, throttleSystem.throttle2_percentage,
-                    inclinationSensor.getInclinationAngle() );
+                    inclinationSensor.getInclinationAngle(),
+                    throttleSystem.potValue1,
+                    throttleSystem.potValue2 );
   
   WiFiPrinterUpdate();
 }
@@ -118,7 +120,7 @@ void WiFiPrinterUpdate()
                           dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
                           voltageSensor.batteryPercentage,
-                          inclinationSensor.getInclinationAngle() );
+                          inclinationSensor.getInclinationAngle());
   }
   WiFiPrinter::update();
 }

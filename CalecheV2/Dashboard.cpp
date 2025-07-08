@@ -96,7 +96,12 @@ void Dashboard::update()
 
 bool Dashboard::hasBraked()
 {
-  return (joystick_throttle < JOYSTICK_THROTTLE_REST_MIN);
+  if (joystick_throttle < JOYSTICK_THROTTLE_REST_MIN)
+    return true;
+  else if( toggleState[3] == HIGH )
+    return true;
+  else
+    return false;
 }
 
 // Update button states

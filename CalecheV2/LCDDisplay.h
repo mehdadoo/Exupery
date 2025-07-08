@@ -20,7 +20,10 @@ class LCDDisplay
         float voltage, 
         int brakePercentage,
         int throttle1_perentage, int throttle2_perentage,
-        float inclinationAngle);
+        float inclinationAngle,
+        int potValue1,
+        int potValue2
+        );
 
         
 

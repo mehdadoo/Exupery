@@ -58,12 +58,14 @@ void LCDDisplay::start()
 
 
 void LCDDisplay::update(
-        bool handbrake, 
-        float speed, 
-        float voltage, 
+        bool handbrake,
+        float speed,
+        float voltage,
         int brakePercentage,
         int throttle1_perentage, int throttle2_perentage,
-        float inclinationAngle)
+        float inclinationAngle,
+        int potValue1,
+        int potValue2)
 {
     if (!initialized) 
         return;
@@ -79,7 +81,10 @@ void LCDDisplay::update(
 
     drawTextBox(70, centerY - 30, speed, "KM/H");
     drawTextBox(70, centerY +  0, voltage, "v");
-    drawTextBox(70, centerY + 30, (int)inclinationAngle, "°");
+    //drawTextBox(70, centerY + 30, (int)inclinationAngle, "°");
+
+    //drawTextBox(70, centerY +  0, potValue1, "v");
+    drawTextBox(70, centerY + 30, potValue2, " ");
 
 
     drawBrakeSlider(  brakePercentage,              handbrake ? 0xdbe1: 0xd867,  handbrake ? BLACK : 0x5823);
