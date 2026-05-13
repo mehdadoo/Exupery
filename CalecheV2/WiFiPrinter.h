@@ -21,6 +21,7 @@ class WiFiPrinter
     static void setupOTA();
     static WebServer server;
     static WebSocketsServer webSocket;
+    static bool apStarted;
 };
 
 #endif

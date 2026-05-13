@@ -80,11 +80,9 @@
 #define KNOB_MAX_VALUE  207
 #define KNOB_MIN_VALUE  0
 
-//WiFiPrinter
-#define WIFI_PASSWORD                 "qxmu7sxb47thpv8zcv22"
-#define WIFI_SSID                     "SFR_BD80"
-#define MAX_WIFI_CONNECTION_RETRIES   4
-#define RETRY_INTERVAL                1500  //ms
+//WiFiPrinter (Access Point mode — ESP32 hosts its own network)
+#define AP_SSID                       "Caleche"
+#define AP_PASSWORD                   "caleche48v"
 #define UPDATE_OVER_WS_FREQUENCY      50    //ms
 
 //LCDDisplay

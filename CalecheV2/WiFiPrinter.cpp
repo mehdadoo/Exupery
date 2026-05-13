@@ -1,5 +1,6 @@
 #include "WiFiPrinter.h"
 #include "ConstantDefinitions.h"
+#include "WebPage.h"
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <ArduinoOTA.h>
@@ -7,52 +8,39 @@
 
 WebServer WiFiPrinter::server(80);
 WebSocketsServer WiFiPrinter::webSocket(81);
+bool WiFiPrinter::apStarted = false;
 
 void WiFiPrinter::setup()
 {
-  if (WiFi.status() == WL_CONNECTED)
+  if (apStarted)
     return;
 
-  Serial.println("Connecting to WiFi...");
+  Serial.println("Starting WiFi Access Point...");
+  Buzzer::getInstance().beep();
 
-  int retryCount = 0;
+  apStarted = WiFi.softAP(AP_SSID, AP_PASSWORD);
 
-  while (retryCount < MAX_WIFI_CONNECTION_RETRIES)
+  if (apStarted)
   {
-    unsigned long startMillis = millis();
-    Buzzer::getInstance().beep();
-
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-    while (WiFi.status() != WL_CONNECTED && millis() - startMillis < RETRY_INTERVAL)
-    {
-      delay(10);
-      if (millis() - startMillis >= 50)
-        Buzzer::getInstance().off();
-    }
-
-    if (WiFi.status() == WL_CONNECTED)
-      break;
-
-    retryCount++;
-  }
-
-  if (WiFi.status() == WL_CONNECTED)
-  {
+    server.on("/", HTTP_GET, []() {
+      server.send_P(200, "text/html", INDEX_HTML);
+    });
     server.begin();
     webSocket.begin();
     setupOTA();
 
-    Serial.println("Connected to Wi-Fi");
+    Serial.println("Access Point started");
+    Serial.print("SSID: ");
+    Serial.println(AP_SSID);
     Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
+    Serial.println(WiFi.softAPIP());
 
     Buzzer::getInstance().off();
     Buzzer::getInstance().beep();
   }
   else
   {
-    Serial.println("Failed to connect to WiFi");
+    Serial.println("Failed to start Access Point");
     Buzzer::getInstance().beep3();
   }
 
@@ -66,7 +54,7 @@ void WiFiPrinter::setupOTA()
 
 void WiFiPrinter::update()
 {
-  if (WiFi.status() == WL_CONNECTED)
+  if (apStarted)
   {
     server.handleClient();
     webSocket.loop();
@@ -76,7 +64,7 @@ void WiFiPrinter::update()
 
 void WiFiPrinter::print(const String& value)
 {
-  if (WiFi.status() != WL_CONNECTED)
+  if (!apStarted)
     return;
 
   StaticJsonDocument<256> doc;
@@ -93,7 +81,7 @@ void WiFiPrinter::printAll(bool powerSwitch,
                            float voltage,
                            float inclinationAngle)
 {
-  if (WiFi.status() != WL_CONNECTED)
+  if (!apStarted)
     return;
 
   StaticJsonDocument<512> doc;

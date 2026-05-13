@@ -1,3 +1,9 @@
+#ifndef WEBPAGE_H
+#define WEBPAGE_H
+
+#include <pgmspace.h>
+
+const char INDEX_HTML[] PROGMEM = R"HTMLPAGE(
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -72,23 +78,23 @@
     .joystick-card{grid-column: 1 / -1; display:flex;flex-direction:column; gap:10px; padding:12px}
     .charts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 
-	.charts-row > div {
-	  display: flex;
-	  justify-content: center;
-	  align-items: center;
-	}
+    .charts-row > div {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-	.chart-canvas {
-	  width: 160px !important;
-	  height: 160px !important;
-	}
+    .chart-canvas {
+      width: 160px !important;
+      height: 160px !important;
+    }
 
 
     /* sensors / small values */
     .mini{grid-column:span 4; display:flex;flex-direction:column;gap:8px}
     .mini .value{font-weight:700;font-size:15px;color:#eaf6ff}
     .mini .label{font-size:12px;color:var(--muted)}
-	.card .label{font-size:12px;color:var(--muted)}
+    .card .label{font-size:12px;color:var(--muted)}
 
     /* Message box (raw) */
     .full{grid-column:1 / -1;min-height:120px;white-space:pre-wrap;color:var(--muted);padding:14px}
@@ -111,37 +117,37 @@
     .toggle-pill.handbrake.on .toggle-dot{background:var(--bad)}
 
     /* inclinometer */
-.incline-card {
-  grid-column: span 4;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  position: relative;
-}
+    .incline-card {
+      grid-column: span 4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      position: relative;
+    }
 
-.incline-card .label {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  color: var(--muted);
-  margin: 0;
-}
+    .incline-card .label {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
 
-.ball-wrap {
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  position: relative;
-  border: 1px solid rgba(255,255,255,0.04);
-  overflow: hidden;
-}
+    .ball-wrap {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
 
     /* responsive tweaks */
     @media (max-width:1100px){
@@ -159,13 +165,13 @@
     <div class="logo">
       <div class="dot"></div>
       <div>
-        <h1>Calèche ARAMI Telemetry</h1>
+        <h1>Cal&egrave;che ARAMI Telemetry</h1>
         <div style="font-size:12px;color:var(--muted)">ESP32 Live</div>
       </div>
     </div>
     <div class="ip">
       <div class="status-dot" id="statusDot"></div>
-      <span class="status-label" id="statusLabel">Connecting…</span>
+      <span class="status-label" id="statusLabel">Connecting&hellip;</span>
       <span style="color:var(--muted);margin-left:6px" id="ipDisplay"></span>
     </div>
   </header>
@@ -174,7 +180,7 @@
     <div class="grid">
       <!-- Speed gauge -->
       <div class="card speed-card">
-	  <div class="label">Speed (km/h)</div>
+        <div class="label">Speed (km/h)</div>
         <div class="gauge-wrap">
           <canvas id="speedCanvas" width="220" height="220"></canvas>
         </div>
@@ -196,13 +202,12 @@
       </div>
 
       <!-- Inclinometer -->
-		<div class="card incline-card">
-		  <div class="label">Inclination</div>
-		  <div class="ball-wrap">
-			<canvas id="inclineCanvas" width="220" height="220"></canvas>
-		  </div>
-		</div>
-
+      <div class="card incline-card">
+        <div class="label">Inclination</div>
+        <div class="ball-wrap">
+          <canvas id="inclineCanvas" width="220" height="220"></canvas>
+        </div>
+      </div>
 
       <!-- Joysticks animated gauges -->
       <div class="card joystick-card">
@@ -211,23 +216,20 @@
           <div style="font-size:12px;color:var(--muted)">Realtime</div>
         </div>
 
-
-
         <div class="charts-row">
-		  <div>
-			<canvas id="gaugeThrottle" class="chart-canvas" width="160" height="160"></canvas>
-			<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_throttle</div>
-		  </div>
-		  <div>
-			<canvas id="gaugeKnob" class="chart-canvas" width="160" height="160"></canvas>
-			<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_knob</div>
-		  </div>
-		  <div>
-			<canvas id="gaugeSteer" class="chart-canvas" width="160" height="160"></canvas>
-			<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_steering</div>
-		  </div>
-		</div>
-
+          <div>
+            <canvas id="gaugeThrottle" class="chart-canvas" width="160" height="160"></canvas>
+            <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_throttle</div>
+          </div>
+          <div>
+            <canvas id="gaugeKnob" class="chart-canvas" width="160" height="160"></canvas>
+            <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_knob</div>
+          </div>
+          <div>
+            <canvas id="gaugeSteer" class="chart-canvas" width="160" height="160"></canvas>
+            <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_steering</div>
+          </div>
+        </div>
       </div>
 
       <!-- small values -->
@@ -235,7 +237,7 @@
         <div class="label">Pedal</div>
         <div id="pedalStatus" class="pedal-status">
           <span class="pedal-dot"></span>
-          <span id="pedalLabel" class="pedal-text">—</span>
+          <span id="pedalLabel" class="pedal-text">&mdash;</span>
         </div>
       </div>
 
@@ -243,8 +245,6 @@
         <div class="label">Voltage</div>
         <div class="value" id="voltageValue">voltage: Waiting...</div>
       </div>
-
-      
 
       <!-- Toggle buttons -->
       <div class="card mini">
@@ -336,11 +336,12 @@
     }
 
     // ====== Inclinometer gauge ======
-	const inclineCanvas = document.getElementById('inclineCanvas');
-	const inclineCtx = inclineCanvas.getContext('2d');
-	const inclineCenter = { x: inclineCanvas.width/2, y: inclineCanvas.height/2 };
-	const inclineRadius = 100;
-    function drawInclineGauge(pitchDeg = 0) {
+    const inclineCanvas = document.getElementById('inclineCanvas');
+    const inclineCtx = inclineCanvas.getContext('2d');
+    const inclineCenter = { x: inclineCanvas.width/2, y: inclineCanvas.height/2 };
+    const inclineRadius = 100;
+    function drawInclineGauge(pitchDeg) {
+      pitchDeg = pitchDeg || 0;
       const ctx = inclineCtx;
       const radius = inclineRadius;
       const cx = inclineCenter.x;
@@ -400,9 +401,8 @@
       ctx.font = 'bold 20px Georgia,serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(pitch.toFixed(1) + '°', cx, cy);
+      ctx.fillText(pitch.toFixed(1) + '\xB0', cx, cy);
     }
-
 
     // ====== Joystick gauges ======
     const joystickGauges = [
@@ -480,7 +480,6 @@
     }
 
     function handleMessage(data) {
-      // Telemetry packet
       if (data.speedSensor !== undefined) {
         const speed = clamp(Number(data.speedSensor), 0, 30);
         speedTextEl.innerText = `speedSensor: ${speed.toFixed(1)}`;
@@ -491,7 +490,6 @@
         voltageEl.innerText = `voltage: ${v.toFixed(2)} V`;
         updateBattery(v);
       }
-      
       if (data.pedalSensor !== undefined) {
         updatePedal(data.pedalSensor);
       }
@@ -508,8 +506,6 @@
       if (data.inclinationAngle !== undefined) {
         drawInclineGauge(Number(data.inclinationAngle));
       }
-
-      // Log message packet
       if (data.message !== undefined) {
         if (String(data.message).toLowerCase().includes("bonjour")) {
           messageEl.innerText = "";
@@ -521,35 +517,27 @@
     function connect() {
       clearTimeout(reconnectTimer);
       ws = new WebSocket(WS_URL);
-
-      ws.onopen = () => {
-        setStatus(true);
-      };
-
+      ws.onopen = () => { setStatus(true); };
       ws.onmessage = (event) => {
-        try {
-          handleMessage(JSON.parse(event.data));
-        } catch(e) {
-          console.error('parse error', e);
-        }
+        try { handleMessage(JSON.parse(event.data)); }
+        catch(e) { console.error('parse error', e); }
       };
-
       ws.onclose = () => {
         setStatus(false);
         reconnectTimer = setTimeout(connect, 2000);
       };
-
-      ws.onerror = () => {
-        ws.close(); // triggers onclose → reconnect
-      };
+      ws.onerror = () => { ws.close(); };
     }
 
     // ====== Init ======
     document.getElementById('ipDisplay').innerText = `${ESP_IP}:81`;
     drawGauge(0);
     updateBattery(BAT_MIN);
-    drawInclineGauge(0.0);
+    drawInclineGauge(0);
     connect();
   </script>
 </body>
 </html>
+)HTMLPAGE";
+
+#endif
