@@ -269,7 +269,8 @@
 
   <script>
     // ====== Config ======
-    const ESP_IP = "192.168.1.45";
+    const ESP_IP = location.hash.slice(1) || "192.168.1.45";
+    document.getElementById('ipDisplay').innerText = `${ESP_IP}:81`;
     const WS_URL = `ws://${ESP_IP}:81`;
 
     function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
@@ -287,6 +288,7 @@
     const center = {x:speedCanvas.width/2, y:speedCanvas.height/2};
     const radius = 86;
     let currentNeedle = 0;
+    let targetSpeed = 0, currentSpeed = 0;
     function drawGauge(value){
       const ctx = spCtx;
       ctx.clearRect(0,0,speedCanvas.width,speedCanvas.height);
@@ -433,6 +435,9 @@
     }
     function updateGauges(){
       joystickGauges.forEach(g=>{ g.current += (g.value-g.current)*0.15; drawJoystickGauge(g); });
+      currentSpeed += (targetSpeed - currentSpeed) * 0.1;
+      drawGauge(currentSpeed);
+      speedTextEl.innerText = `${currentSpeed.toFixed(1)} km/h`;
       requestAnimationFrame(updateGauges);
     }
     updateGauges();
@@ -485,9 +490,7 @@
     function handleMessage(data) {
       // Telemetry packet
       if (data.speedSensor !== undefined) {
-        const speed = clamp(Number(data.speedSensor), 0, 30);
-        speedTextEl.innerText = `speedSensor: ${speed.toFixed(1)}`;
-        drawGauge(speed);
+        targetSpeed = clamp(Number(data.speedSensor), 0, 30);
       }
       if (data.voltage !== undefined) {
         const v = Number(data.voltage);
