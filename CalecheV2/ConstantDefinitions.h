@@ -81,8 +81,8 @@
 #define KNOB_MIN_VALUE  0
 
 //WiFiPrinter
-#define WIFI_PASSWORD                 "cScrT9vJRTHCf3vzh2"
-#define WIFI_SSID                     "Bbox-B3A9B36F"
+#define WIFI_PASSWORD                 "qxmu7sxb47thpv8zcv22"
+#define WIFI_SSID                     "SFR_BD80"
 #define MAX_WIFI_CONNECTION_RETRIES   4
 #define RETRY_INTERVAL                1500  //ms
 #define UPDATE_OVER_HTTP_FREQUENCY    300   //ms

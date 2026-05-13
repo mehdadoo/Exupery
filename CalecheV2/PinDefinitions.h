@@ -21,9 +21,9 @@ Voltmeter 3: ledc 5, Channel: 7, Timer: 3
 */
 
 // voltmeter
-#define VOLTMETER_SPEED            1       
-#define VOLTMETER_CHARGING         5   
-#define VOLTMETER_BATTERY          3   
+#define VOLTMETER_SPEED            3       
+#define VOLTMETER_CHARGING         1   
+#define VOLTMETER_BATTERY          5   
 #define VOLTMETER_SPEED_CHANNEL    5
 #define VOLTMETER_CHARGING_CHANNEL 7
 #define VOLTMETER_BATTERY_CHANNEL  6

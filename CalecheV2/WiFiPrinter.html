@@ -1,224 +1,547 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ESP32 Dashboard</title>
-  
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ESP32 Modern Dashboard</title>
+
+  <!-- Inter font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f9;
-      color: #333;
+    :root{
+      --bg:#071226;
+      --card: rgba(255,255,255,0.04);
+      --glass: rgba(255,255,255,0.03);
+      --accent:#00d6ff;
+      --accent-2:#7c3aed;
+      --muted:#aab8c9;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --glass-border: rgba(255,255,255,0.06);
     }
-    h2 {
-      font-weight: 700;
-      color: #555;
-      margin: 10px 0;
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:#e6eef8;background:
+      radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.08), transparent 8%),
+      radial-gradient(900px 500px at 90% 90%, rgba(0,214,255,0.04), transparent 6%),
+      var(--bg);
+      -webkit-font-smoothing:antialiased;}
+    header{display:flex;align-items:center;gap:16px;padding:18px 28px;border-bottom:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(6px)}
+    .logo {
+      display:flex;align-items:center;gap:10px;
     }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 20px;
+    .logo .dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 18px rgba(0,214,255,0.08);}
+    h1{font-size:16px;margin:0;font-weight:700;letter-spacing:1px;color:var(--accent);}
+    header .ip{margin-left:auto;color:var(--muted);font-size:13px}
+
+    main{padding:22px;max-width:1400px;margin:0 auto;width:100%}
+
+    .grid {
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
     }
-    .box {
-      flex: 1 1 calc(25% - 10px);
-      background-color: #ffffff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid var(--glass-border);
+      border-radius:12px;
+      padding:12px;
+      box-shadow: 0 8px 30px rgba(3,7,18,0.55);
+      min-height:80px;
+      overflow:hidden;
     }
-    .box.boolean {
-      color: #333;
-      text-transform: capitalize;
-    }
-    .box.joystick {
-      position: relative;
-      background-color: #eaeaea;
-      border: 1px solid #bbb;
-      overflow: hidden;
-    }
-    .box.joystick .fill {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      background-color: rgba(255, 0, 0, 0.6);
-      z-index: -1;
-      transition: width 0.3s ease;
-    }
-    .full-width-box {
-      flex: 1 1 100%;
-      background-color: #ffffff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      text-align: left;
-      white-space: pre-wrap;
-    }
-    pre {
-      margin: 0;
-      font-family: 'Roboto Mono', monospace;
-      font-size: 14px;
-      color: #444;
-      overflow-x: auto;
-    }
-	.red-dot {
-  display: inline-block;
+
+    /* Speed gauge */
+    .speed-card{grid-column: span 4; display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+    .gauge-wrap{width:100%;display:flex;align-items:center;gap:12px;justify-content:center}
+    #speedCanvas{width:220px;height:220px}
+
+    .speed-value { font-weight:800;font-size:22px;color:#eaf6ff; margin-top:6px; text-align:center; }
+	
+
+
+    /* Battery */
+    .battery-card{grid-column:span 4; display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;padding:18px}
+    .battery-outer{width:100%;display:flex;gap:12px;align-items:center;justify-content:center}
+    .battery-bar { width: 70%; height: 28px; border-radius: 14px; background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); position: relative; overflow:hidden; border:1px solid rgba(255,255,255,0.04);}
+    .battery-fill { position:absolute; left:0; top:0; bottom:0; width:0%; transition: width 0.35s ease; border-radius:14px; }
+    .battery-metrics{font-weight:600;color:var(--muted);font-size:14px}
+
+    /* Joystick gauges */
+    .joystick-card{grid-column: 1 / -1; display:flex;flex-direction:column; gap:10px; padding:12px}
+    .charts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+
+	.charts-row > div {
+	  display: flex;
+	  justify-content: center;
+	  align-items: center;
+	}
+
+	.chart-canvas {
+	  width: 160px !important;   /* match HTML width */
+	  height: 160px !important;  /* match HTML height */
+	}
+
+
+    /* sensors / small values */
+    .mini{grid-column:span 4; display:flex;flex-direction:column;gap:8px}
+    .mini .value{font-weight:700;font-size:15px;color:#eaf6ff}
+    .mini .label{font-size:12px;color:var(--muted)}
+	.card .label{font-size:12px;color:var(--muted)}
+
+    /* Message box (raw) */
+    .full{grid-column:1 / -1;min-height:120px;white-space:pre-wrap;font-family:monospace;color:var(--muted);padding:14px}
+
+    /* inclinometer */
+.incline-card {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  position: relative; /* needed for label positioning */
+}
+
+.incline-card .label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+
+  color: var(--muted);
+  margin: 0;
+}
+
+.ball-wrap {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto; /* centers the canvas horizontally */
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+
+.horizon-ball {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #dff9ff 0%, #8dd6ff 50%, #3fa9ff 100%);
+  position: relative;
+  box-shadow: inset 0 -20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.horizon-sky {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 50%;
+  transform-origin: center top;
+  background: #dff9ff;
+}
+
+.horizon-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50%;
+  background: #e6e6e6;
+}
+
+.ball-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: 10px;
   height: 10px;
-  background-color: red;
   border-radius: 50%;
-  visibility: hidden; /* Initially hidden */
+  background: #111;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
-  </style>
-  
-  <script>
-	let star = false;  // Initial state of the star flag
-    // Function to fetch data from ESP32
-    function fetchData() {
-      fetch("http://192.168.1.181/getData") // Update the IP to the correct one
-        .then(response => response.json())
-        .then(data => {
-          //console.log(data); // Log for debugging
-
-          // Update boolean boxes
-          ["powerSwitch", "button1", "button2", "button3", "button4",].forEach(key => {
-            const element = document.getElementById(key + "Value");
-            if (element && data[key] !== undefined) {
-              element.style.backgroundColor = data[key] 
-                ?  "#ffffff"// Beautiful desaturated red for true
-                : "rgba(255, 80, 80, 0.6)"; // White for false
-            }
-          });
-
-          // Update joystick boxes
-         ["joystick_throttle", "joystick_knob", "joystick_steering"].forEach(key => {
-		  const element = document.getElementById(key + "Value");
-		  if (element && data[key] !== undefined) {
-			let percentage;
-
-			if (key === "joystick_knob") {
-			  // Normalize joystick_knob value to a 0–100 percentage based on the range 7–194
-			  percentage = ((data[key] - 17) / (194 - 17)) * 100;
-			  percentage = Math.max(0, Math.min(percentage, 100)); // Clamp percentage to 0–100
-			} else if (key === "joystick_throttle") {
-			  // Default range for joystick_throttle (0–256)
-			  percentage = (data[key] / 207) * 100;
-			}
-			else {
-			  // Default range for joystick_throttle (0–256)
-			  percentage = (data[key] / 256) * 100;
-			}
-
-			element.style.background = `linear-gradient(to right, #eeeeee ${percentage}%, white ${percentage}%)`;
-			element.innerText = `${key}: ${data[key]}`; // Display the value
-		  }
-		});
 
 
+	.ball-wrap {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.04);
+  overflow: hidden;
+  margin: 0 auto; /* centers ball-wrap horizontally */
+}
 
-          // Update other values
-          ["current"].forEach(key => {
-			  const element = document.getElementById(key + "Value");
-			  if (element && data[key] !== undefined) {
-				element.innerText = `${key}: ${data[key]}`;
-			  }
-			});
-
-			["voltage", "inclinationAngle", "speedSensor", "pedalSensor"].forEach(key => {
-			  const element = document.getElementById(key + "Value");
-			  if (element && data[key] !== undefined) {
-				element.innerText = `${key}: ${data[key].toFixed(1)}`;
-			  }
-			});
-
-		  
-			  // Update Message if present in the response
-			if (data.message !== undefined) 
-			{
-				const messageField = document.getElementById("messageValue");
-
-				// Check if the message contains "bonjour"
-				if (data.message.toLowerCase().includes("bonjour")) 
-					messageField.innerText = ""; // Clear the message field
-
-				messageField.innerText += "\n" + data.message; // Append the new message
-			}
-
-
-			const rawResponseText = document.getElementById("rawResponseText");
-			if (!star) {
-			  rawResponseText.style.visibility = "visible"; // Show the red dot
-			  star = true;
-			} else {
-			  rawResponseText.style.visibility = "hidden"; // Hide the red dot
-			  star = false;
-			}
-		  
-		  
-		  
-        })
-        .catch(error => {
-          console.error('Error fetching data:', error);
-        });
+    /* responsive tweaks */
+    @media (max-width:1100px){
+      .joystick-card{grid-column:1 / -1}
+      .charts-row{grid-template-columns:repeat(1,1fr)}
+      .speed-card,.battery-card,.incline-card{grid-column: span 6}
     }
-
-    setInterval(fetchData, 300);
-  </script>
+    @media (max-width:700px){
+      .speed-card,.battery-card,.incline-card{grid-column: span 12}
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Boolean values -->
-    <div class="box boolean" id="powerSwitchValue">powerSwitch</div>
-    <div class="box boolean" id="button1Value">button1</div>
-    <div class="box boolean" id="button2Value">button2</div>
-    <div class="box boolean" id="button3Value">button3</div>
-    <div class="box boolean" id="button4Value">button4</div>
-
-    <!-- Joystick values -->
-    <div class="box joystick" id="joystick_throttleValue">
-      joystick throttle
-      <div class="fill"></div>
-      <div class="value-text" style="position: relative; z-index: 1; margin-top: 5px; font-size: 14px; font-weight: bold;">0</div>
+  <header>
+    <div class="logo">
+      <div class="dot"></div>
+      <div>
+        <h1>Blue Calèche Telemetry</h1>
+        <div style="font-size:12px;color:var(--muted)">ESP32 Live</div>
+      </div>
     </div>
-    <div class="box joystick" id="joystick_knobValue">
-      joystick knob
-      <div class="fill"></div>
-      <div class="value-text" style="position: relative; z-index: 1; margin-top: 5px; font-size: 14px; font-weight: bold;">0</div>
+    <div class="ip" id="ipDisplay">IP: 192.168.1.66</div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <!-- Speed gauge -->
+      <div class="card speed-card">
+	  <div class="label">Speed (km/h)</div>
+        <div class="gauge-wrap">
+          <canvas id="speedCanvas" width="220" height="220"></canvas>
+        </div>
+        <div class="speed-value" id="speedText">speedSensor: 0.0</div>
+      </div>
+
+      <!-- Battery -->
+      <div class="card battery-card">
+        <div style="font-weight:700;color:var(--muted);font-size:13px">Battery (48V pack)</div>
+        <div class="battery-outer">
+          <div class="battery-bar" aria-hidden="true">
+            <div id="batteryFill" class="battery-fill"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:0 12px">
+          <div class="battery-metrics" id="batteryPercent">--%</div>
+          <div class="battery-metrics" id="batteryVolt">-- V</div>
+        </div>
+      </div>
+
+      <!-- Inclinometer -->
+		<div class="card incline-card">
+		  <div class="label">Inclination</div>
+		  <div class="ball-wrap">
+			<canvas id="inclineCanvas" width="220" height="220"></canvas>
+		  </div>
+		</div>
+
+
+      <!-- Joysticks animated gauges -->
+      <div class="card joystick-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="label">Joysticks</div>
+          <div style="font-size:12px;color:var(--muted)">Realtime</div>
+        </div>
+		
+
+
+        <div class="charts-row">
+		  <div>
+			<canvas id="gaugeThrottle" class="chart-canvas" width="160" height="160"></canvas>
+			<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_throttle</div>
+		  </div>
+		  <div>
+			<canvas id="gaugeKnob" class="chart-canvas" width="160" height="160"></canvas>
+			<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_knob</div>
+		  </div>
+		  <div>
+			<canvas id="gaugeSteer" class="chart-canvas" width="160" height="160"></canvas>
+			<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:6px">joystick_steering</div>
+		  </div>
+		</div>
+
+      </div>
+
+      <!-- small values -->
+      <div class="card mini">
+        <div class="label">Pedal Sensor</div>
+        <div class="value" id="pedalSensorValue">Pedal Sensor</div>
+      </div>
+
+      <div class="card mini">
+        <div class="label">Voltage</div>
+        <div class="value" id="voltageValue">voltage: Waiting...</div>
+      </div>
+
+      <div class="card mini">
+        <div class="label">Current</div>
+        <div class="value" id="currentValue">current: Waiting...</div>
+      </div>
+
+      <div class="card full">
+        <div style="font-weight:700;color:var(--muted);margin-bottom:8px">Messages</div>
+        <div id="messageValue" style="white-space:pre-wrap;color:var(--muted)"></div>
+      </div>
     </div>
-	<div class="box joystick" id="joystick_steeringValue">
-      joystick steering
-      <div class="fill"></div>
-      <div class="value-text" style="position: relative; z-index: 1; margin-top: 5px; font-size: 14px; font-weight: bold;">0</div>
-    </div>
+  </main>
 
-    <!-- Other values -->
-    <div class="box" id="speedSensorValue">Speed Sensor:</div>
-    <div class="box" id="pedalSensorValue">Pedal Sensor</div>
-    <div class="box" id="voltageValue">voltage: Waiting for data...</div>
-    <div class="box" id="currentValue">current: Waiting for data...</div>
-    <div class="box" id="inclinationAngleValue">inclinationAngle: Waiting for data...</div>
+  <script>
+    // ====== Config & helper functions ======
+    const ESP_IP = "192.168.1.45";
+    const FETCH_INTERVAL = 500;
+    function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+    const BAT_MIN=42.0, BAT_MAX=54.0;
+    function voltageToPercent(v){ return clamp(Math.round((v-BAT_MIN)/(BAT_MAX-BAT_MIN)*100),0,100); }
+    function speedColor(speed){ 
+      if(speed>25) return '#ef4444';
+      if(speed>=20) return '#f59e0b';
+      return '#00d6ff';
+    }
 
-    <!-- Full-width raw JSON response -->
-    <!-- Full-width message box -->
-    <div class="full-width-box" id="messageValue"></div>
+    // ====== Speed Gauge ======
+    const speedCanvas = document.getElementById('speedCanvas');
+    const spCtx = speedCanvas.getContext('2d');
+    const center = {x:speedCanvas.width/2, y:speedCanvas.height/2};
+    const radius = 86;
+    let currentNeedle = 0;
+    function drawGauge(value){
+      const ctx = spCtx;
+      ctx.clearRect(0,0,speedCanvas.width,speedCanvas.height);
+      ctx.save(); ctx.translate(center.x, center.y);
 
-    <!-- Full-width raw response box -->
-     <h2><span id="rawResponseText" class="red-dot"></span></h2>
-	 
-	 
-  </div>
+      // Background
+      ctx.beginPath();
+      ctx.arc(0,0,radius+16, Math.PI*0.75, Math.PI*0.25, false);
+      ctx.lineWidth=18; ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.stroke();
+
+      // Segments
+      const segments=[{from:0,to:20,color:'#00d6ff'},{from:20,to:25,color:'#f59e0b'},{from:25,to:30,color:'#ef4444'}];
+      const totalAngle=Math.PI*1.5;
+      segments.forEach(seg=>{
+        ctx.beginPath();
+        ctx.arc(0,0,radius+16, Math.PI*0.75 + (seg.from/30)*totalAngle, Math.PI*0.75 + (seg.to/30)*totalAngle);
+        ctx.lineWidth=18; ctx.strokeStyle=seg.color; ctx.stroke();
+      });
+
+      // Ticks
+      ctx.lineWidth=2;
+      for(let i=0;i<=30;i++){
+        const angle=Math.PI*0.75+(i/30)*totalAngle;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(angle)*(radius+2), Math.sin(angle)*(radius+2));
+        ctx.lineTo(Math.cos(angle)*(radius+12), Math.sin(angle)*(radius+12));
+        ctx.strokeStyle=(i%5===0)?'rgba(255,255,255,0.15)':'rgba(255,255,255,0.06)';
+        ctx.stroke();
+      }
+
+      // Center dial
+      ctx.beginPath(); ctx.arc(0,0,radius-10,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fill();
+
+      // Needle
+      const targetAngle=Math.PI*0.75+(value/30)*totalAngle;
+      currentNeedle = targetAngle;
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(currentNeedle)*(radius+2), Math.sin(currentNeedle)*(radius+2));
+      ctx.lineWidth=4; ctx.strokeStyle=speedColor(value); ctx.stroke();
+
+      // Hub
+      ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2); ctx.fillStyle='#ffffff'; ctx.fill();
+      ctx.restore();
+    }
+
+    // ====== Battery ======
+    const batteryFill=document.getElementById('batteryFill');
+    const batteryPercentEl=document.getElementById('batteryPercent');
+    const batteryVoltEl=document.getElementById('batteryVolt');
+    function updateBattery(v){
+      const p=voltageToPercent(v);
+      batteryFill.style.width=`${p}%`;
+      let color = p<=30?'rgba(239,68,68,0.95)':p<=60?'rgba(245,158,11,0.95)':'rgba(34,197,94,0.95)';
+      batteryFill.style.background=`linear-gradient(90deg, ${color}, rgba(255,255,255,0.02))`;
+      batteryPercentEl.innerText=`${p}%`;
+      batteryVoltEl.innerText=`${v.toFixed(2)} V`;
+    }
+
+    // ====== Inclinometer gauge ======
+	const inclineCanvas = document.getElementById('inclineCanvas');
+	const inclineCtx = inclineCanvas.getContext('2d');
+	const inclineCenter = { x: inclineCanvas.width/2, y: inclineCanvas.height/2 };
+	const inclineRadius = 100;
+function drawInclineGauge(pitchDeg = 0) {
+  const ctx = inclineCtx;
+  const radius = inclineRadius;
+  const cx = inclineCenter.x;
+  const cy = inclineCenter.y;
+
+  // Clamp pitch to [-30,30]
+  const pitch = -90 - Math.max(-95, Math.min(30, pitchDeg));
+
+  // Clear canvas
+  ctx.clearRect(0, 0, inclineCanvas.width, inclineCanvas.height);
+
+  // --- Draw circular horizon background ---
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.clip(); // clip everything to circle
+
+  ctx.translate(cx, cy);
+  const angleRad = (Math.PI / 180) * pitch; // rotation for horizon
+
+  ctx.save();
+  ctx.rotate(angleRad);
+
+  // Draw sky (top half of circle)
+  ctx.beginPath();
+  ctx.arc(0, 0, radius*1.5, Math.PI, 0, false); // semicircle above
+  ctx.fillStyle = '#00aaff'; // blue
+  ctx.fill();
+
+  // Draw ground (bottom half of circle)
+  ctx.beginPath();
+  ctx.arc(0, 0, radius*1.5, 0, Math.PI, false); // semicircle below
+  ctx.fillStyle = '#22c55e'; // green
+  ctx.fill();
+
+  ctx.restore();
+  ctx.restore();
+
+  // --- Draw outer circle ---
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.stroke();
+
+  // --- Draw fixed side ticks ---
+  const sideTicks = [-110, -100, -90, -80, -70, 110, 100, 90, 80, 70];
+  sideTicks.forEach(deg => {
+    const rad = (Math.PI/180) * deg;
+    const x1 = cx + Math.sin(rad) * (radius - 12);
+    const y1 = cy - Math.cos(rad) * (radius - 12);
+    const x2 = cx + Math.sin(rad) * radius;
+    const y2 = cy - Math.cos(rad) * radius;
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.stroke();
+  });
+
+  // --- Draw center numeric value ---
+  ctx.fillStyle = '#e6eef8';
+  ctx.font = 'bold 20px Inter';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(pitch.toFixed(1) + '°', cx, cy);
+}
+
+
+    // ====== Joystick gauges ======
+    const joystickGauges = [
+      {id:'gaugeThrottle', value:100, max:200, color:'#00d6ff'},
+      {id:'gaugeKnob', value:0, max:200, color:'#7c3aed'},
+      {id:'gaugeSteer', value:100, max:200, color:'#00ffa8'}
+    ];
+    joystickGauges.forEach(g=>{
+      const canvas=document.getElementById(g.id);
+      const ctx=canvas.getContext('2d');
+      g.ctx=ctx; g.current=0; g.width=canvas.width; g.height=canvas.height;
+    });
+    function drawJoystickGauge(g){
+      const ctx=g.ctx,w=g.width,h=g.height;
+      const center={x:w/2,y:h/2}; const radius=Math.min(w,h)/2-10;
+      ctx.clearRect(0,0,w,h);
+      ctx.beginPath();
+      ctx.arc(center.x,center.y,radius,0,Math.PI*2);
+      ctx.lineWidth=14; ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.stroke();
+      const endAngle=-Math.PI/2+(g.current/g.max)*Math.PI*2;
+      ctx.beginPath(); ctx.arc(center.x,center.y,radius,-Math.PI/2,endAngle);
+      ctx.lineWidth=14; ctx.strokeStyle=g.color; ctx.lineCap='round'; ctx.stroke();
+      ctx.fillStyle='#e6eef8'; ctx.font='bold 20px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(Math.round(g.current),center.x,center.y);
+    }
+    function updateGauges(){
+      joystickGauges.forEach(g=>{ g.current += (g.value-g.current)*0.15; drawJoystickGauge(g); });
+      requestAnimationFrame(updateGauges);
+    }
+    updateGauges();
+    function setJoystickValues(throttle, knob, steer){
+      joystickGauges[0].value=throttle;
+      joystickGauges[1].value=knob;
+      joystickGauges[2].value=steer;
+    }
+
+    // ====== DOM elements ======
+    const speedTextEl=document.getElementById('speedText');
+    const pedalEl=document.getElementById('pedalSensorValue');
+    const voltageEl=document.getElementById('voltageValue');
+    const currentEl=document.getElementById('currentValue');
+    const messageEl=document.getElementById('messageValue');
+
+    // ====== Main fetch loop ======
+    let star=false;
+    async function fetchData(){
+      try{
+        const resp=await fetch(`http://${ESP_IP}/getData`,{cache:'no-store'});
+        const data=await resp.json();
+
+        // speed
+        if(data.speedSensor!==undefined){
+          const speed=clamp(Number(data.speedSensor),0,30);
+          speedTextEl.innerText=`speedSensor: ${speed.toFixed(1)}`;
+          drawGauge(speed);
+        }
+
+        // battery
+        if(data.voltage!==undefined){
+          const v=Number(data.voltage);
+          voltageEl.innerText=`voltage: ${v.toFixed(2)} V`;
+          updateBattery(v);
+        }
+
+        // current
+        if(data.current!==undefined){ currentEl.innerText=`current: ${data.current}`; }
+
+        // pedal
+        if(data.pedalSensor!==undefined){ pedalEl.innerText=`Pedal Sensor: ${data.pedalSensor}`; }
+
+        // joystick values
+        setJoystickValues(
+          Number(data.joystick_throttle||0),
+          Number(data.joystick_knob||17),
+          Number(data.joystick_steering||0)
+        );
+
+        // inclination
+		let pitch = 0;
+		if(data.inclinationAngle !== undefined){ pitch = Number(data.inclinationAngle); }
+		drawInclineGauge(pitch);
+
+        // messages
+        if(data.message!==undefined){
+          if(String(data.message).toLowerCase().includes("bonjour")){ messageEl.innerText=""; }
+          messageEl.innerText += "\n" + data.message;
+        }
+
+        // header IP heartbeat
+        const ipEl=document.getElementById('ipDisplay');
+        ipEl.style.opacity = star ? 0.8 : 1.0;
+        star=!star;
+
+      }catch(err){ console.error('fetch error',err); }
+    }
+
+    drawGauge(0);              // speed gauge
+	updateBattery(BAT_MIN);     // battery
+	drawInclineGauge(0.0);        // inclinometer default 0°
+    setInterval(fetchData,FETCH_INTERVAL);
+    fetchData();
+  </script>
 </body>
 </html>
