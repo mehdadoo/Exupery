@@ -15,6 +15,8 @@ private:
     SpeedSensor& speedSensor;
     PedalSensor& pedalSensor;
     bool pendingToggle[4];
+    int steeringOverride;
+    unsigned long steeringLastMs;
 
     void applyToggle(uint8_t i);
 };

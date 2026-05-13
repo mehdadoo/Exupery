@@ -84,6 +84,7 @@
 #define AP_SSID                       "Caleche"
 #define AP_PASSWORD                   "caleche48v"
 #define UPDATE_OVER_WS_FREQUENCY      50    //ms
+#define WEB_STEER_TIMEOUT_MS          300   //ms — release if no steer message received
 
 //LCDDisplay
 #define DISPLAY_FPS 30

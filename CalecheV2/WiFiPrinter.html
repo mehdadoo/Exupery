@@ -19,7 +19,7 @@
       --glass-border: rgba(255,255,255,0.06);
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Georgia,"Times New Roman",Times,serif;color:#e6eef8;background:
+    html,body{height:100%;margin:0;font-family:Menlo,Monaco,Consolas,"Courier New",monospace;color:#e6eef8;background:
       radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.08), transparent 8%),
       radial-gradient(900px 500px at 90% 90%, rgba(0,214,255,0.04), transparent 6%),
       var(--bg);
@@ -85,7 +85,7 @@
 
 
     /* sensors / small values */
-    .mini{grid-column:span 4; display:flex;flex-direction:column;gap:8px}
+    .mini{grid-column:span 6; display:flex;flex-direction:column;gap:8px}
     .mini .value{font-weight:700;font-size:15px;color:#eaf6ff}
     .mini .label{font-size:12px;color:var(--muted)}
 	.card .label{font-size:12px;color:var(--muted)}
@@ -143,6 +143,13 @@
   overflow: hidden;
 }
 
+    /* Remote steering */
+    .steer-card{grid-column:1 / -1;padding:14px 18px}
+    .steer-track{position:relative;height:44px;border-radius:22px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:ew-resize;touch-action:none;margin:10px 0 4px;overflow:hidden}
+    .steer-center-mark{position:absolute;left:50%;top:15%;height:70%;width:1px;background:rgba(255,255,255,0.12);transform:translateX(-50%);pointer-events:none}
+    .steer-thumb{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.2);pointer-events:none;transition:background 0.15s,border-color 0.15s,box-shadow 0.15s}
+    .steer-track.active .steer-thumb{background:var(--accent);border-color:var(--accent);box-shadow:0 0 14px rgba(0,214,255,0.45)}
+
     /* responsive tweaks */
     @media (max-width:1100px){
       .joystick-card{grid-column:1 / -1}
@@ -150,7 +157,7 @@
       .speed-card,.battery-card,.incline-card{grid-column: span 6}
     }
     @media (max-width:700px){
-      .speed-card,.battery-card,.incline-card{grid-column: span 12}
+      .speed-card,.battery-card,.incline-card,.mini{grid-column: span 12}
     }
   </style>
 </head>
@@ -230,6 +237,16 @@
 
       </div>
 
+      <!-- Remote steering -->
+      <div class="card steer-card">
+        <div class="label">Remote Steering</div>
+        <div id="steerTrack" class="steer-track">
+          <div class="steer-center-mark"></div>
+          <div id="steerThumb" class="steer-thumb"></div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--muted)">drag to steer &mdash; release to hand back to physical</div>
+      </div>
+
       <!-- small values -->
       <div class="card mini">
         <div class="label">Pedal</div>
@@ -239,20 +256,13 @@
         </div>
       </div>
 
-      <div class="card mini">
-        <div class="label">Voltage</div>
-        <div class="value" id="voltageValue">voltage: Waiting...</div>
-      </div>
-
-      
-
       <!-- Toggle buttons -->
       <div class="card mini">
         <div class="label">Toggles</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
-          <div class="toggle-pill" id="btn1"><span class="toggle-dot"></span><span class="toggle-name">Button 1</span></div>
-          <div class="toggle-pill" id="btn2"><span class="toggle-dot"></span><span class="toggle-name">Button 2</span></div>
-          <div class="toggle-pill" id="btn3"><span class="toggle-dot"></span><span class="toggle-name">Button 3</span></div>
+          <div class="toggle-pill" id="btn1"><span class="toggle-dot"></span><span class="toggle-name">Night Light</span></div>
+          <div class="toggle-pill" id="btn2"><span class="toggle-dot"></span><span class="toggle-name">Horn</span></div>
+          <div class="toggle-pill" id="btn3"><span class="toggle-dot"></span><span class="toggle-name">Horn</span></div>
           <div class="toggle-pill handbrake" id="btn4"><span class="toggle-dot"></span><span class="toggle-name">Handbrake</span></div>
         </div>
       </div>
@@ -397,7 +407,7 @@
       });
 
       ctx.fillStyle = '#e6eef8';
-      ctx.font = 'bold 20px Georgia,serif';
+      ctx.font = 'bold 20px Menlo,Monaco,Consolas,monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(pitch.toFixed(1) + '°', cx, cy);
@@ -425,7 +435,7 @@
       const endAngle=-Math.PI/2+(g.current/g.max)*Math.PI*2;
       ctx.beginPath(); ctx.arc(center.x,center.y,radius,-Math.PI/2,endAngle);
       ctx.lineWidth=14; ctx.strokeStyle=g.color; ctx.lineCap='round'; ctx.stroke();
-      ctx.fillStyle='#e6eef8'; ctx.font='bold 20px Georgia,serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle='#e6eef8'; ctx.font='bold 20px Menlo,Monaco,Consolas,monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(Math.round(g.current),center.x,center.y);
     }
     function updateGauges(){
@@ -441,7 +451,6 @@
 
     // ====== DOM elements ======
     const speedTextEl   = document.getElementById('speedText');
-    const voltageEl     = document.getElementById('voltageValue');
     const pedalStatus   = document.getElementById('pedalStatus');
     const pedalLabel    = document.getElementById('pedalLabel');
 
@@ -487,9 +496,7 @@
         drawGauge(speed);
       }
       if (data.voltage !== undefined) {
-        const v = Number(data.voltage);
-        voltageEl.innerText = `voltage: ${v.toFixed(2)} V`;
-        updateBattery(v);
+        updateBattery(Number(data.voltage));
       }
       
       if (data.pedalSensor !== undefined) {
@@ -504,6 +511,8 @@
           Number(data.joystick_knob    || 0),
           Number(data.joystick_steering || 0)
         );
+        if (!steerActive)
+          steerUpdateThumb(Number(data.joystick_steering || 128));
       }
       if (data.inclinationAngle !== undefined) {
         drawInclineGauge(Number(data.inclinationAngle));
@@ -543,6 +552,53 @@
         ws.close(); // triggers onclose → reconnect
       };
     }
+
+    // ====== Remote Steering ======
+    const steerTrack  = document.getElementById('steerTrack');
+    const steerThumb  = document.getElementById('steerThumb');
+    let steerActive   = false;
+    let steerValue    = 128;
+    let steerInterval = null;
+
+    function steerUpdateThumb(value) {
+      steerThumb.style.left = ((value / 255) * 100) + '%';
+    }
+    function steerFromX(clientX) {
+      const r = steerTrack.getBoundingClientRect();
+      return Math.max(0, Math.min(255, Math.round(((clientX - r.left) / r.width) * 255)));
+    }
+    function sendSteer() {
+      if (ws && ws.readyState === WebSocket.OPEN)
+        ws.send(JSON.stringify({steer: steerValue}));
+    }
+    function steerBegin(clientX) {
+      steerActive = true;
+      steerTrack.classList.add('active');
+      steerValue = steerFromX(clientX);
+      steerUpdateThumb(steerValue);
+      sendSteer();
+      steerInterval = setInterval(sendSteer, 50);
+    }
+    function steerDrag(clientX) {
+      if (!steerActive) return;
+      steerValue = steerFromX(clientX);
+      steerUpdateThumb(steerValue);
+    }
+    function steerEnd() {
+      if (!steerActive) return;
+      steerActive = false;
+      steerTrack.classList.remove('active');
+      clearInterval(steerInterval);
+      steerInterval = null;
+      if (ws && ws.readyState === WebSocket.OPEN)
+        ws.send(JSON.stringify({steerRelease: true}));
+    }
+    steerTrack.addEventListener('mousedown',  e => { e.preventDefault(); steerBegin(e.clientX); });
+    window.addEventListener('mousemove',      e => steerDrag(e.clientX));
+    window.addEventListener('mouseup',        steerEnd);
+    steerTrack.addEventListener('touchstart', e => { e.preventDefault(); steerBegin(e.touches[0].clientX); }, {passive: false});
+    steerTrack.addEventListener('touchmove',  e => { e.preventDefault(); steerDrag(e.touches[0].clientX); }, {passive: false});
+    steerTrack.addEventListener('touchend',   steerEnd);
 
     // ====== Toggle button remote control ======
     [0,1,2,3].forEach(i => {

@@ -2,12 +2,14 @@
 #include "WiFiPrinter.h"
 #include "PortExpander.h"
 #include "PinDefinitions.h"
+#include "ConstantDefinitions.h"
 #include "Buzzer.h"
 #include "Horn.h"
 #include <ArduinoJson.h>
 
 WebRemote::WebRemote(Dashboard& d, SpeedSensor& s, PedalSensor& p)
-    : dashboard(d), speedSensor(s), pedalSensor(p)
+    : dashboard(d), speedSensor(s), pedalSensor(p),
+      steeringOverride(-1), steeringLastMs(0)
 {
     memset(pendingToggle, 0, sizeof(pendingToggle));
 
@@ -15,11 +17,16 @@ WebRemote::WebRemote(Dashboard& d, SpeedSensor& s, PedalSensor& p)
         StaticJsonDocument<64> doc;
         if (deserializeJson(doc, msg) != DeserializationError::Ok)
             return;
-        if (!doc.containsKey("toggleButton"))
-            return;
-        uint8_t i = doc["toggleButton"].as<uint8_t>();
-        if (i < 4)
-            pendingToggle[i] = true;
+        if (doc.containsKey("toggleButton")) {
+            uint8_t i = doc["toggleButton"].as<uint8_t>();
+            if (i < 4)
+                pendingToggle[i] = true;
+        } else if (doc.containsKey("steer")) {
+            steeringOverride = doc["steer"].as<int>();
+            steeringLastMs   = millis();
+        } else if (doc.containsKey("steerRelease")) {
+            steeringOverride = -1;
+        }
     });
 }
 
@@ -29,6 +36,14 @@ void WebRemote::update()
         if (pendingToggle[i]) {
             pendingToggle[i] = false;
             applyToggle(i);
+        }
+    }
+
+    if (steeringOverride >= 0) {
+        if (millis() - steeringLastMs > WEB_STEER_TIMEOUT_MS) {
+            steeringOverride = -1;
+        } else {
+            dashboard.joystick_steering = steeringOverride;
         }
     }
 }
