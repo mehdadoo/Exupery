@@ -10,31 +10,31 @@ WebSocketsServer WiFiPrinter::webSocket(81);
 
 void WiFiPrinter::setup()
 {
-  if (WiFi.status() != WL_CONNECTED)
+  if (WiFi.status() == WL_CONNECTED)
+    return;
+
+  Serial.println("Connecting to WiFi...");
+
+  int retryCount = 0;
+
+  while (retryCount < MAX_WIFI_CONNECTION_RETRIES)
   {
-    Serial.println("Connecting to WiFi...");
+    unsigned long startMillis = millis();
+    Buzzer::getInstance().beep();
 
-    int retryCount = 0;
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    while (retryCount < MAX_WIFI_CONNECTION_RETRIES)
+    while (WiFi.status() != WL_CONNECTED && millis() - startMillis < RETRY_INTERVAL)
     {
-      unsigned long startMillis = millis();
-      Buzzer::getInstance().beep();
-
-      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-      while (WiFi.status() != WL_CONNECTED && millis() - startMillis < RETRY_INTERVAL)
-      {
-        delay(10);
-        if (millis() - startMillis >= 50)
-          Buzzer::getInstance().off();
-      }
-
-      if (WiFi.status() == WL_CONNECTED)
-        break;
-
-      retryCount++;
+      delay(10);
+      if (millis() - startMillis >= 50)
+        Buzzer::getInstance().off();
     }
+
+    if (WiFi.status() == WL_CONNECTED)
+      break;
+
+    retryCount++;
   }
 
   if (WiFi.status() == WL_CONNECTED)
