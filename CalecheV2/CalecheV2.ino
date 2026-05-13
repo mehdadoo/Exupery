@@ -111,7 +111,7 @@ void WiFiPrinterUpdate()
   unsigned long currentTime = millis();
 
   // Check if enough time has been passed since last print call
-  if (currentTime - lastUpdateTime >= UPDATE_OVER_HTTP_FREQUENCY) 
+  if (currentTime - lastUpdateTime >= UPDATE_OVER_WS_FREQUENCY) 
   {
       lastUpdateTime = currentTime;
       WiFiPrinter::printAll( ignitionSwitch.isKeyOn,
@@ -119,7 +119,6 @@ void WiFiPrinterUpdate()
                           speedSensor.getSpeed(), pedalSensor.isStopped(),
                           dashboard.joystick_throttle, dashboard.joystick_knob,  dashboard.joystick_steering,
                           voltageSensor.voltage,
-                          voltageSensor.batteryPercentage,
                           inclinationSensor.getInclinationAngle());
   }
   WiFiPrinter::update();

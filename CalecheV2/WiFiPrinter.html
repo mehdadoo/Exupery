@@ -33,7 +33,10 @@
     }
     .logo .dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 18px rgba(0,214,255,0.08);}
     h1{font-size:16px;margin:0;font-weight:700;letter-spacing:1px;color:var(--accent);}
-    header .ip{margin-left:auto;color:var(--muted);font-size:13px}
+    header .ip{margin-left:auto;font-size:13px;display:flex;align-items:center;gap:10px}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--bad);transition:background 0.3s}
+    .status-dot.connected{background:var(--ok)}
+    .status-label{color:var(--muted)}
 
     main{padding:22px;max-width:1400px;margin:0 auto;width:100%}
 
@@ -59,7 +62,6 @@
     #speedCanvas{width:220px;height:220px}
 
     .speed-value { font-weight:800;font-size:22px;color:#eaf6ff; margin-top:6px; text-align:center; }
-	
 
 
     /* Battery */
@@ -80,8 +82,8 @@
 	}
 
 	.chart-canvas {
-	  width: 160px !important;   /* match HTML width */
-	  height: 160px !important;  /* match HTML height */
+	  width: 160px !important;
+	  height: 160px !important;
 	}
 
 
@@ -102,14 +104,13 @@
   align-items: center;
   justify-content: center;
   padding: 12px;
-  position: relative; /* needed for label positioning */
+  position: relative;
 }
 
 .incline-card .label {
   position: absolute;
   top: 12px;
   left: 12px;
-
   color: var(--muted);
   margin: 0;
 }
@@ -122,65 +123,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto; /* centers the canvas horizontally */
+  margin: 0 auto;
   position: relative;
   border: 1px solid rgba(255,255,255,0.04);
   overflow: hidden;
-}
-
-.horizon-ball {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #dff9ff 0%, #8dd6ff 50%, #3fa9ff 100%);
-  position: relative;
-  box-shadow: inset 0 -20px 40px rgba(0, 0, 0, 0.15);
-}
-
-.horizon-sky {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 50%;
-  transform-origin: center top;
-  background: #dff9ff;
-}
-
-.horizon-ground {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 50%;
-  background: #e6e6e6;
-}
-
-.ball-center {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #111;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-}
-
-
-	.ball-wrap {
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  border: 1px solid rgba(255,255,255,0.04);
-  overflow: hidden;
-  margin: 0 auto; /* centers ball-wrap horizontally */
 }
 
     /* responsive tweaks */
@@ -199,11 +145,15 @@
     <div class="logo">
       <div class="dot"></div>
       <div>
-        <h1>Blue Calèche Telemetry</h1>
+        <h1>Calèche ARAMI Telemetry</h1>
         <div style="font-size:12px;color:var(--muted)">ESP32 Live</div>
       </div>
     </div>
-    <div class="ip" id="ipDisplay">IP: 192.168.1.66</div>
+    <div class="ip">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-label" id="statusLabel">Connecting…</span>
+      <span style="color:var(--muted);margin-left:6px" id="ipDisplay">192.168.1.45:81</span>
+    </div>
   </header>
 
   <main>
@@ -246,7 +196,7 @@
           <div class="label">Joysticks</div>
           <div style="font-size:12px;color:var(--muted)">Realtime</div>
         </div>
-		
+
 
 
         <div class="charts-row">
@@ -277,10 +227,7 @@
         <div class="value" id="voltageValue">voltage: Waiting...</div>
       </div>
 
-      <div class="card mini">
-        <div class="label">Current</div>
-        <div class="value" id="currentValue">current: Waiting...</div>
-      </div>
+      
 
       <div class="card full">
         <div style="font-weight:700;color:var(--muted);margin-bottom:8px">Messages</div>
@@ -290,13 +237,14 @@
   </main>
 
   <script>
-    // ====== Config & helper functions ======
+    // ====== Config ======
     const ESP_IP = "192.168.1.45";
-    const FETCH_INTERVAL = 500;
+    const WS_URL = `ws://${ESP_IP}:81`;
+
     function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
     const BAT_MIN=42.0, BAT_MAX=54.0;
     function voltageToPercent(v){ return clamp(Math.round((v-BAT_MIN)/(BAT_MAX-BAT_MIN)*100),0,100); }
-    function speedColor(speed){ 
+    function speedColor(speed){
       if(speed>25) return '#ef4444';
       if(speed>=20) return '#f59e0b';
       return '#00d6ff';
@@ -313,12 +261,10 @@
       ctx.clearRect(0,0,speedCanvas.width,speedCanvas.height);
       ctx.save(); ctx.translate(center.x, center.y);
 
-      // Background
       ctx.beginPath();
       ctx.arc(0,0,radius+16, Math.PI*0.75, Math.PI*0.25, false);
       ctx.lineWidth=18; ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.stroke();
 
-      // Segments
       const segments=[{from:0,to:20,color:'#00d6ff'},{from:20,to:25,color:'#f59e0b'},{from:25,to:30,color:'#ef4444'}];
       const totalAngle=Math.PI*1.5;
       segments.forEach(seg=>{
@@ -327,7 +273,6 @@
         ctx.lineWidth=18; ctx.strokeStyle=seg.color; ctx.stroke();
       });
 
-      // Ticks
       ctx.lineWidth=2;
       for(let i=0;i<=30;i++){
         const angle=Math.PI*0.75+(i/30)*totalAngle;
@@ -338,16 +283,13 @@
         ctx.stroke();
       }
 
-      // Center dial
       ctx.beginPath(); ctx.arc(0,0,radius-10,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fill();
 
-      // Needle
       const targetAngle=Math.PI*0.75+(value/30)*totalAngle;
       currentNeedle = targetAngle;
       ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(currentNeedle)*(radius+2), Math.sin(currentNeedle)*(radius+2));
       ctx.lineWidth=4; ctx.strokeStyle=speedColor(value); ctx.stroke();
 
-      // Hub
       ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2); ctx.fillStyle='#ffffff'; ctx.fill();
       ctx.restore();
     }
@@ -370,76 +312,68 @@
 	const inclineCtx = inclineCanvas.getContext('2d');
 	const inclineCenter = { x: inclineCanvas.width/2, y: inclineCanvas.height/2 };
 	const inclineRadius = 100;
-function drawInclineGauge(pitchDeg = 0) {
-  const ctx = inclineCtx;
-  const radius = inclineRadius;
-  const cx = inclineCenter.x;
-  const cy = inclineCenter.y;
+    function drawInclineGauge(pitchDeg = 0) {
+      const ctx = inclineCtx;
+      const radius = inclineRadius;
+      const cx = inclineCenter.x;
+      const cy = inclineCenter.y;
 
-  // Clamp pitch to [-30,30]
-  const pitch = -90 - Math.max(-95, Math.min(30, pitchDeg));
+      const pitch = -90 - Math.max(-95, Math.min(30, pitchDeg));
 
-  // Clear canvas
-  ctx.clearRect(0, 0, inclineCanvas.width, inclineCanvas.height);
+      ctx.clearRect(0, 0, inclineCanvas.width, inclineCanvas.height);
 
-  // --- Draw circular horizon background ---
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI*2);
-  ctx.clip(); // clip everything to circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI*2);
+      ctx.clip();
 
-  ctx.translate(cx, cy);
-  const angleRad = (Math.PI / 180) * pitch; // rotation for horizon
+      ctx.translate(cx, cy);
+      const angleRad = (Math.PI / 180) * pitch;
 
-  ctx.save();
-  ctx.rotate(angleRad);
+      ctx.save();
+      ctx.rotate(angleRad);
 
-  // Draw sky (top half of circle)
-  ctx.beginPath();
-  ctx.arc(0, 0, radius*1.5, Math.PI, 0, false); // semicircle above
-  ctx.fillStyle = '#00aaff'; // blue
-  ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, 0, radius*1.5, Math.PI, 0, false);
+      ctx.fillStyle = '#00aaff';
+      ctx.fill();
 
-  // Draw ground (bottom half of circle)
-  ctx.beginPath();
-  ctx.arc(0, 0, radius*1.5, 0, Math.PI, false); // semicircle below
-  ctx.fillStyle = '#22c55e'; // green
-  ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, 0, radius*1.5, 0, Math.PI, false);
+      ctx.fillStyle = '#22c55e';
+      ctx.fill();
 
-  ctx.restore();
-  ctx.restore();
+      ctx.restore();
+      ctx.restore();
 
-  // --- Draw outer circle ---
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI*2);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-  ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI*2);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.stroke();
 
-  // --- Draw fixed side ticks ---
-  const sideTicks = [-110, -100, -90, -80, -70, 110, 100, 90, 80, 70];
-  sideTicks.forEach(deg => {
-    const rad = (Math.PI/180) * deg;
-    const x1 = cx + Math.sin(rad) * (radius - 12);
-    const y1 = cy - Math.cos(rad) * (radius - 12);
-    const x2 = cx + Math.sin(rad) * radius;
-    const y2 = cy - Math.cos(rad) * radius;
+      const sideTicks = [-110, -100, -90, -80, -70, 110, 100, 90, 80, 70];
+      sideTicks.forEach(deg => {
+        const rad = (Math.PI/180) * deg;
+        const x1 = cx + Math.sin(rad) * (radius - 12);
+        const y1 = cy - Math.cos(rad) * (radius - 12);
+        const x2 = cx + Math.sin(rad) * radius;
+        const y2 = cy - Math.cos(rad) * radius;
 
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.stroke();
-  });
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.stroke();
+      });
 
-  // --- Draw center numeric value ---
-  ctx.fillStyle = '#e6eef8';
-  ctx.font = 'bold 20px Inter';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(pitch.toFixed(1) + '°', cx, cy);
-}
+      ctx.fillStyle = '#e6eef8';
+      ctx.font = 'bold 20px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pitch.toFixed(1) + '°', cx, cy);
+    }
 
 
     // ====== Joystick gauges ======
@@ -478,70 +412,95 @@ function drawInclineGauge(pitchDeg = 0) {
     }
 
     // ====== DOM elements ======
-    const speedTextEl=document.getElementById('speedText');
-    const pedalEl=document.getElementById('pedalSensorValue');
-    const voltageEl=document.getElementById('voltageValue');
-    const currentEl=document.getElementById('currentValue');
-    const messageEl=document.getElementById('messageValue');
+    const speedTextEl   = document.getElementById('speedText');
+    const pedalEl       = document.getElementById('pedalSensorValue');
+    const voltageEl     = document.getElementById('voltageValue');
+    
+    const messageEl     = document.getElementById('messageValue');
+    const statusDot     = document.getElementById('statusDot');
+    const statusLabel   = document.getElementById('statusLabel');
 
-    // ====== Main fetch loop ======
-    let star=false;
-    async function fetchData(){
-      try{
-        const resp=await fetch(`http://${ESP_IP}/getData`,{cache:'no-store'});
-        const data=await resp.json();
+    // ====== WebSocket connection ======
+    let ws = null;
+    let reconnectTimer = null;
 
-        // speed
-        if(data.speedSensor!==undefined){
-          const speed=clamp(Number(data.speedSensor),0,30);
-          speedTextEl.innerText=`speedSensor: ${speed.toFixed(1)}`;
-          drawGauge(speed);
-        }
-
-        // battery
-        if(data.voltage!==undefined){
-          const v=Number(data.voltage);
-          voltageEl.innerText=`voltage: ${v.toFixed(2)} V`;
-          updateBattery(v);
-        }
-
-        // current
-        if(data.current!==undefined){ currentEl.innerText=`current: ${data.current}`; }
-
-        // pedal
-        if(data.pedalSensor!==undefined){ pedalEl.innerText=`Pedal Sensor: ${data.pedalSensor}`; }
-
-        // joystick values
-        setJoystickValues(
-          Number(data.joystick_throttle||0),
-          Number(data.joystick_knob||17),
-          Number(data.joystick_steering||0)
-        );
-
-        // inclination
-		let pitch = 0;
-		if(data.inclinationAngle !== undefined){ pitch = Number(data.inclinationAngle); }
-		drawInclineGauge(pitch);
-
-        // messages
-        if(data.message!==undefined){
-          if(String(data.message).toLowerCase().includes("bonjour")){ messageEl.innerText=""; }
-          messageEl.innerText += "\n" + data.message;
-        }
-
-        // header IP heartbeat
-        const ipEl=document.getElementById('ipDisplay');
-        ipEl.style.opacity = star ? 0.8 : 1.0;
-        star=!star;
-
-      }catch(err){ console.error('fetch error',err); }
+    function setStatus(connected) {
+      if (connected) {
+        statusDot.classList.add('connected');
+        statusLabel.innerText = 'Connected';
+      } else {
+        statusDot.classList.remove('connected');
+        statusLabel.innerText = 'Disconnected';
+      }
     }
 
-    drawGauge(0);              // speed gauge
-	updateBattery(BAT_MIN);     // battery
-	drawInclineGauge(0.0);        // inclinometer default 0°
-    setInterval(fetchData,FETCH_INTERVAL);
-    fetchData();
+    function handleMessage(data) {
+      // Telemetry packet
+      if (data.speedSensor !== undefined) {
+        const speed = clamp(Number(data.speedSensor), 0, 30);
+        speedTextEl.innerText = `speedSensor: ${speed.toFixed(1)}`;
+        drawGauge(speed);
+      }
+      if (data.voltage !== undefined) {
+        const v = Number(data.voltage);
+        voltageEl.innerText = `voltage: ${v.toFixed(2)} V`;
+        updateBattery(v);
+      }
+      
+      if (data.pedalSensor !== undefined) {
+        pedalEl.innerText = `Pedal Sensor: ${data.pedalSensor}`;
+      }
+      if (data.joystick_throttle !== undefined) {
+        setJoystickValues(
+          Number(data.joystick_throttle || 0),
+          Number(data.joystick_knob    || 0),
+          Number(data.joystick_steering || 0)
+        );
+      }
+      if (data.inclinationAngle !== undefined) {
+        drawInclineGauge(Number(data.inclinationAngle));
+      }
+
+      // Log message packet
+      if (data.message !== undefined) {
+        if (String(data.message).toLowerCase().includes("bonjour")) {
+          messageEl.innerText = "";
+        }
+        messageEl.innerText += "\n" + data.message;
+      }
+    }
+
+    function connect() {
+      clearTimeout(reconnectTimer);
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        setStatus(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          handleMessage(JSON.parse(event.data));
+        } catch(e) {
+          console.error('parse error', e);
+        }
+      };
+
+      ws.onclose = () => {
+        setStatus(false);
+        reconnectTimer = setTimeout(connect, 2000);
+      };
+
+      ws.onerror = () => {
+        ws.close(); // triggers onclose → reconnect
+      };
+    }
+
+    // ====== Init ======
+    drawGauge(0);
+    updateBattery(BAT_MIN);
+    drawInclineGauge(0.0);
+    connect();
   </script>
 </body>
 </html>

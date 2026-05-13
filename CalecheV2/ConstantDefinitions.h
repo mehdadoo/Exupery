@@ -85,7 +85,7 @@
 #define WIFI_SSID                     "SFR_BD80"
 #define MAX_WIFI_CONNECTION_RETRIES   4
 #define RETRY_INTERVAL                1500  //ms
-#define UPDATE_OVER_HTTP_FREQUENCY    300   //ms
+#define UPDATE_OVER_WS_FREQUENCY      50    //ms
 
 //LCDDisplay
 #define DISPLAY_FPS 30
