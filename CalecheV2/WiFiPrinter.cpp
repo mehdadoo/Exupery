@@ -9,6 +9,7 @@
 WebServer WiFiPrinter::server(80);
 WebSocketsServer WiFiPrinter::webSocket(81);
 bool WiFiPrinter::apStarted = false;
+std::function<void(const String&)> WiFiPrinter::messageCallback = nullptr;
 
 void WiFiPrinter::setup()
 {
@@ -27,6 +28,10 @@ void WiFiPrinter::setup()
     });
     server.begin();
     webSocket.begin();
+    webSocket.onEvent([](uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
+      if (type == WStype_TEXT && messageCallback)
+        messageCallback(String((char*)payload));
+    });
     setupOTA();
 
     Serial.println("Access Point started");
@@ -45,6 +50,11 @@ void WiFiPrinter::setup()
   }
 
   print("Blue Calèche, Bonjour!");
+}
+
+void WiFiPrinter::onMessage(std::function<void(const String&)> callback)
+{
+  messageCallback = callback;
 }
 
 void WiFiPrinter::setupOTA()

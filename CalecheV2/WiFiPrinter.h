@@ -3,6 +3,7 @@
 
 #include <WebServer.h>
 #include <WebSocketsServer.h>
+#include <functional>
 
 class WiFiPrinter
 {
@@ -16,12 +17,14 @@ class WiFiPrinter
                         int joystick_throttle, int joystick_knob, int joystick_steering,
                         float voltage,
                         float inclinationAngle);
+    static void onMessage(std::function<void(const String&)> callback);
 
   private:
     static void setupOTA();
     static WebServer server;
     static WebSocketsServer webSocket;
     static bool apStarted;
+    static std::function<void(const String&)> messageCallback;
 };
 
 #endif

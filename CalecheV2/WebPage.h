@@ -110,7 +110,7 @@ const char INDEX_HTML[] PROGMEM = R"HTMLPAGE(
     @keyframes pedal-pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.45)}60%{box-shadow:0 0 0 7px rgba(34,197,94,0)}}
 
     /* Toggle buttons */
-    .toggle-pill{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05)}
+    .toggle-pill{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);cursor:pointer;user-select:none}
     .toggle-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0;transition:background 0.2s}
     .toggle-name{font-size:11px;color:var(--muted)}
     .toggle-pill.on .toggle-dot{background:var(--ok)}
@@ -528,6 +528,14 @@ const char INDEX_HTML[] PROGMEM = R"HTMLPAGE(
       };
       ws.onerror = () => { ws.close(); };
     }
+
+    // ====== Toggle button remote control ======
+    [0,1,2,3].forEach(i => {
+      document.getElementById('btn' + (i+1)).addEventListener('click', () => {
+        if (ws && ws.readyState === WebSocket.OPEN)
+          ws.send(JSON.stringify({toggleButton: i}));
+      });
+    });
 
     // ====== Init ======
     document.getElementById('ipDisplay').innerText = `${ESP_IP}:81`;

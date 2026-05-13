@@ -18,6 +18,7 @@
 #include "LCDDisplay.h"
 #include "Buzzer.h"
 #include "Horn.h"
+#include "WebRemote.h"
 
 
 IgnitionSwitch ignitionSwitch;
@@ -31,6 +32,7 @@ BrakeSystem brakeSystem(dashboard, speedSensor);
 ThrottleSystem throttleSystem(dashboard, pedalSensor, speedSensor);
 SteeringSystem steeringSystem(dashboard, speedSensor);
 LCDDisplay lcdDisplay;
+WebRemote webRemote(dashboard, speedSensor, pedalSensor);
 Buzzer& buzzer = Buzzer::getInstance();
 Horn& horn = Horn::getInstance();
 
@@ -52,6 +54,7 @@ void loop()
   pedalSensor.update();
   voltageSensor.update();
   dashboard.update();
+  webRemote.update();
   inclinationSensor.update();
   brakeSystem.update();
   throttleSystem.update();
