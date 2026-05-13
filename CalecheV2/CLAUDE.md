@@ -27,7 +27,8 @@ Required libraries (install via Arduino Library Manager):
 - `Adafruit ADS1X15`
 - `Arduino_GFX`
 - `ArduinoJson`
-- `ArduinoOTA` / `WebServer` (bundled with ESP32 core)
+- `WebSockets` by Markus Sattler
+- `ArduinoOTA` / `WebServer` / `WebSocketsServer` (bundled with ESP32 core)
 
 ## Architecture
 
@@ -68,7 +69,7 @@ SteeringSystem(Dashboard, SpeedSensor)
 
 - **Dashboard** — Reads a 4-axis joystick (ADS1115 ADC channels), 4 toggle buttons (via PortExpander Port B), and drives 3 analog voltmeters via PWM channels 5/6/7. Button 4 (`toggleState[3]`) = handbrake; long-press button sequence triggers WiFi setup via callback.
 
-- **WiFiPrinter** — Optional; activated by `dashboard.onRequestWiFi`. Serves `/getData` as JSON at 300 ms intervals for monitoring. Also handles OTA firmware updates. The companion HTML dashboard is `WiFiPrinter.html`. SSID/password are hardcoded in `ConstantDefinitions.h`.
+- **WiFiPrinter** — Optional; activated by `dashboard.onRequestWiFi`. Runs two servers: HTTP on port 80 (OTA only) and WebSocket on port 81 (telemetry). `printAll()` broadcasts a JSON telemetry frame via WebSocket at `UPDATE_OVER_WS_FREQUENCY` (50 ms); `print()` pushes log messages immediately as `{"message":"..."}`. No polling — the browser (`WiFiPrinter.html`) connects to `ws://<ip>:81` and auto-reconnects on drop. SSID/password are hardcoded in `ConstantDefinitions.h`.
 
 - **LCDDisplay** — TFT via SPI (Arduino_GFX). Initialized before `SPI.begin()` because it calls `start()` independently; it targets 30 FPS (`DISPLAY_FPS`).
 
@@ -82,4 +83,4 @@ All tunable values (servo min/max, speed limits, throttle mapping, timing interv
 
 - Singletons (`PortExpander`, `Buzzer`, `Horn`) are accessed via `::getInstance()` — never constructed directly.
 - All subsystems check `initialized` before acting in `update()`.
-- WiFiPrinter::print() is the debug log — messages accumulate in the JSON `"message"` field and are cleared after each HTTP GET to `/getData`.
+- `WiFiPrinter::print()` is the debug log — each call immediately broadcasts `{"message":"..."}` via WebSocket; there is no buffering or polling.
