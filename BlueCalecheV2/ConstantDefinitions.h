@@ -33,7 +33,7 @@
 #define HEARTBEAT_INTERVAL_MS     2000
 #define HEARTBEAT_DURATION_MS     30
 #define HEARTBEAT_BRIGHTNESS      16
-#define BRAKE_POT_MIN_READING     2240  // Joystick center/rest position
+#define BRAKE_POT_MIN_READING     2300  // Joystick center/rest position
 #define BRAKE_POT_MAX_READING     4095
 #define BRAKE_POT_DEAD_ZONE       0
 #define BRAKE_POT_FILTER_SAMPLES  8
