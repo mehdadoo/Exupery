@@ -1,0 +1,37 @@
+#ifndef SPEED_SENSOR_H
+#define SPEED_SENSOR_H
+
+#include <Arduino.h>
+#include "PinDefinitions.h"
+#include "ConstantDefinitions.h"
+
+class SpeedSensor 
+{
+  public:
+    // Constructor
+    SpeedSensor();
+
+    // Public methods
+    void setup();
+    void update();
+    bool isCarStopped(); // Check if RPM is 0
+    int getRPM() const { return rpm; }
+    float getSpeed() const { return speed; }
+
+  private:
+    int rpm;       // Revolutions per minute
+    float speed;     // Speed in km/h
+    unsigned long lastSensorTriggerTime; // Last time the sensor detected the magnet
+    volatile unsigned long pendingTriggerTime;
+    volatile unsigned long lastInterruptTriggerTime;
+    volatile bool triggerPending;
+
+    // Private methods
+    void calculateRPM(unsigned long triggerTime);
+
+    // Static for the interrupt
+    static void IRAM_ATTR onTriggerSpeedSensor();
+    static SpeedSensor* instance; // Singleton-like instance for static callback
+};
+
+#endif
