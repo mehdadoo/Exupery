@@ -26,19 +26,20 @@
 #define NIGHT_LIGHT_DEBOUNCE_MS   50
 
 //Horn
-#define HORN_DURATION             150   //ms
+#define HORN_DURATION             200   //ms
 #define HORN_BUTTON_DEBOUNCE_MS   50    //ms
 
 //Built-in LED heartbeat
 #define HEARTBEAT_INTERVAL_MS     2000
 #define HEARTBEAT_DURATION_MS     30
+#define HEARTBEAT_GAP_MS          100
 #define HEARTBEAT_BRIGHTNESS      16
-#define BRAKE_POT_MIN_READING     2300  // Joystick center/rest position
-#define BRAKE_POT_MAX_READING     4095
-#define BRAKE_POT_DEAD_ZONE       0
+#define BRAKE_POT_MIN_READING     200   // Joystick maximum-brake endpoint
+#define BRAKE_POT_MAX_READING     1830  // Joystick neutral/rest position
+#define BRAKE_POT_DEAD_ZONE       130
 #define BRAKE_POT_FILTER_SAMPLES  8
 #define BRAKE_POT_SAMPLE_INTERVAL 5     //ms
-#define BRAKE_POT_REVERSED        false
+#define BRAKE_POT_REVERSED        true
 
 
 //SpeedSensor

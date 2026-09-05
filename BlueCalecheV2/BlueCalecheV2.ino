@@ -62,18 +62,41 @@ void setupHeartbeat()
 
 void updateHeartbeat()
 {
-  static unsigned long lastFlashStart = 0;
+  static unsigned long lastCycleStart = 0;
+  static unsigned long phaseStart = 0;
+  static uint8_t heartbeatPhase = 0;
   static bool ledOn = false;
   unsigned long currentTime = millis();
 
-  if (!ledOn && currentTime - lastFlashStart >= HEARTBEAT_INTERVAL_MS)
+  if (heartbeatPhase == 0 &&
+      currentTime - lastCycleStart >= HEARTBEAT_INTERVAL_MS)
   {
-    lastFlashStart = currentTime;
+    lastCycleStart = currentTime;
+    phaseStart = currentTime;
+    heartbeatPhase = 1;
     ledOn = true;
     setHeartbeatLed(true);
   }
-  else if (ledOn && currentTime - lastFlashStart >= HEARTBEAT_DURATION_MS)
+  else if (heartbeatPhase == 1 &&
+           currentTime - phaseStart >= HEARTBEAT_DURATION_MS)
   {
+    phaseStart = currentTime;
+    heartbeatPhase = 2;
+    ledOn = false;
+    setHeartbeatLed(false);
+  }
+  else if (heartbeatPhase == 2 &&
+           currentTime - phaseStart >= HEARTBEAT_GAP_MS)
+  {
+    phaseStart = currentTime;
+    heartbeatPhase = 3;
+    ledOn = true;
+    setHeartbeatLed(true);
+  }
+  else if (heartbeatPhase == 3 &&
+           currentTime - phaseStart >= HEARTBEAT_DURATION_MS)
+  {
+    heartbeatPhase = 0;
     ledOn = false;
     setHeartbeatLed(false);
   }
